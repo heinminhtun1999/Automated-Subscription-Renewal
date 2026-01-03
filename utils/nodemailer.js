@@ -3,12 +3,12 @@ const { convert } = require('html-to-text');
 
 // Nodemailer Setup
 const transporter = nodemailer.createTransport({
-    host: "smtp.bizmail.yahoo.com",
+    host: process.env.smtpHost,
     port: 465,
     secure: true, // Use true for port 465, false for port 587
     auth: {
-        user: "acct.notify@arvending.com.my",
-        pass: "yxayhhaywupimyqf",
+        user: process.env.smtpUsername,
+        pass: process.env.smtpPassword,
     },
     pool: true,
     maxConnections: 1,
