@@ -26,7 +26,7 @@ const auth = new google.auth.GoogleAuth({
 });
 
 // Routes
-app.get('/', (req, res) => homeController(req, res, auth, google));
+app.get('/send-email', (req, res) => homeController(req, res, auth, google));
 
 app.get('/return', (req, res) => {
     res.render('return', { query: req.query });
