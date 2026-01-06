@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [development]
+    branches: [development, production]
 
 jobs:
   lint:
@@ -27,25 +27,42 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --only=production
+
+      - name: Determine deployment target
+        run: |
+          if [[ "${GITHUB_REF}" == "refs/heads/development" ]]; then
+            echo "DEPLOY_PATH=/home/subscription-renewal-dev" >> $GITHUB_ENV
+            echo "PM2_APP=subscription-renewal-dev " >> $GITHUB_ENV
+          else
+            echo "DEPLOY_PATH=/home/subscription-renewal-prod" >> $GITHUB_ENV
+            echo "PM2_APP=subscription-renewal" >> $GITHUB_ENV
+          fi
+
       - name: Deploy to VPS
         env:
           DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
+          PM2_APP: ${{ env.PM2_APP }}
         run: |
           mkdir -p ~/.ssh
           echo "$DEPLOY_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts
 
-          rsync -az --delete \
-            --exclude=node_modules \
-            --exclude=.git \
-            ./ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH
+          rsync -az --delete --exclude=node_modules --exclude=.git ./ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH
 
-          ssh $DEPLOY_USER@$DEPLOY_HOST << 'EOF'
+          ssh $DEPLOY_USER@$DEPLOY_HOST << EOF
             cd $DEPLOY_PATH
             npm ci --only=production
-            pm2 reload subscription-renewal || pm2 start app.js --name subscription-renewal
+            pm2 reload $PM2_APP || pm2 start app.js --name $PM2_APP
           EOF
