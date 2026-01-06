@@ -1,4 +1,4 @@
-const { uid } = require("./utils");
+const { uid } = require('./utils');
 
 const dueDateTemplate = (paymentLink, uid, expireDate) => `<!DOCTYPE html>
 <html>
@@ -60,12 +60,12 @@ const failListTemplate = (failedRecipients) => `<!DOCTYPE html>
                             <th style="border: 1px solid #dddddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Sheet Name</th>
                         </tr>
                         ${failedRecipients.map(recipient => {
-                            return `<tr>
+        return `<tr>
                                 <td style="border: 1px solid #dddddd; padding: 8px; text-align: left;">${recipient['Email Address']}</td>
                                 <td style="border: 1px solid #dddddd; padding: 8px; text-align: left;">${uid(recipient)}</td>
                                 <td style="border: 1px solid #dddddd; padding: 8px; text-align: left;">${recipient['Sheet Name']}</td>
                             </tr>`;
-                        }).join('')}
+    }).join('')}
                 </table>
             </td>
         </tr>

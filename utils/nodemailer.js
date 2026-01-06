@@ -1,4 +1,4 @@
-const nodemailer = require("nodemailer");
+const nodemailer = require('nodemailer');
 const { convert } = require('html-to-text');
 
 // Nodemailer Setup
@@ -37,11 +37,11 @@ async function sendEmail(to, subject, body) {
             }
         });
 
-        console.log("Message sent to", to, ":", info.messageId);
+        console.log('Message sent to', to, ':', info.messageId);
 
         return { ok: true, messageId: info.messageId };
     } catch (error) {
-        console.error("Error sending to", to, ":", error);
+        console.error('Error sending to', to, ':', error);
         return { ok: false, error: error };
     }
 }

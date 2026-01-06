@@ -29,19 +29,19 @@ const homeController = async (req, res, auth, google) => {
     const data = response.data.valueRanges;
 
     // Find due dates from all sheets
-    const uidList = findDueDates(formatSheetData(data[0].values, "beep"), 'End Date', 'Renewal End Date');
-    const mi20List = findDueDates(formatSheetData(data[1].values, "mi20"), 'Paysys End Date', 'Arv Renewal End Date');
-    const arv2_5List = findDueDates(formatSheetData(data[2].values, "arv2.5"), 'End Date', 'Renewal End Date');
-    const u20List = findDueDates(formatSheetData(data[3].values, "u20"), 'End Date', 'Renewal End Date');
+    const uidList = findDueDates(formatSheetData(data[0].values, 'beep'), 'End Date', 'Renewal End Date');
+    const mi20List = findDueDates(formatSheetData(data[1].values, 'mi20'), 'Paysys End Date', 'Arv Renewal End Date');
+    const arv2_5List = findDueDates(formatSheetData(data[2].values, 'arv2.5'), 'End Date', 'Renewal End Date');
+    const u20List = findDueDates(formatSheetData(data[3].values, 'u20'), 'End Date', 'Renewal End Date');
 
     const combinedData = [...uidList, ...mi20List, ...arv2_5List, ...u20List];
-
+    return res.send(combinedData);
     // Send Emails to all due dates found
     const failList = [];
     let i = 0;
     for (const recipient of combinedData) {
 
-        if (i == 5) {
+        if (i === 5) {
             break;
         }
 
@@ -53,20 +53,20 @@ const homeController = async (req, res, auth, google) => {
         const body = dueDateTemplate(paymentLink, uidValue, dueDate);
 
         // Send email
-        const mailResult = await sendEmail(recipient["Email Address"].value, `|AR VENDING| Subscription Expiry Reminder – TID: ${uidValue}`, body);
+        const mailResult = await sendEmail(recipient['Email Address'].value, `|AR VENDING| Subscription Expiry Reminder – TID: ${uidValue}`, body);
 
         // Handle result
         if (mailResult.ok) {
 
             // Update Google Sheet to mark as notified
-            const updateResult = await updateCellValue(sheets, spreadsheet, "Notified", recipient, "Yes")
+            const updateResult = await updateCellValue(sheets, spreadsheet, 'Notified', recipient, 'Yes');
 
             console.log('%d cells updated.', updateResult.data.updatedCells);
 
         } else {
             failList.push(recipient);
-            if (mailResult.error && (mailResult.error.code === "EAUTH" || mailResult.error.responseCode === 535)) {
-                console.error("Auth error detected; stopping further sends.");
+            if (mailResult.error && (mailResult.error.code === 'EAUTH' || mailResult.error.responseCode === 535)) {
+                console.error('Auth error detected; stopping further sends.');
                 break;
             }
         }
@@ -78,16 +78,16 @@ const homeController = async (req, res, auth, google) => {
 
     if (failList.length > 0) {
         const failBody = failListTemplate(failList);
-        const result = await sendEmail("customerservice@arvending.com.my", "|AR VENDING| Failed Email List", failBody, transporter, req);
+        const result = await sendEmail('customerservice@arvending.com.my', '|AR VENDING| Failed Email List', failBody);
 
         if (!result.ok) {
-            console.error("Failed to send email list to customer service.");
+            console.error('Failed to send email list to customer service.');
         } else {
-            console.log("Failed email list sent to customer service.");
+            console.log('Failed email list sent to customer service.');
         }
     }
 
     return res.send(combinedData);
-}
+};
 
 module.exports = { homeController };

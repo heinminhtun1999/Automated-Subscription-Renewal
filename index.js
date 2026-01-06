@@ -26,9 +26,9 @@ const auth = new google.auth.GoogleAuth({
 });
 
 // Routes
-app.get("/", (req, res) => homeController(req, res, auth, google));
+app.get('/', (req, res) => homeController(req, res, auth, google));
 
-app.post("/return", (req, res) => {
+app.get('/return', (req, res) => {
     res.render('return', { query: req.query });
 });
 

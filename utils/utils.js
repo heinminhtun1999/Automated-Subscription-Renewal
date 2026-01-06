@@ -1,18 +1,20 @@
 const crypto = require('crypto');
-const { sheetNames } = require('./constants');
+const { sheetNames, alphabet } = require('./constants');
 
 function formatSheetData(rows, sheet) {
+    if (!rows || rows.length === 0) {
+        return [];
+    }
     const formattedData = [];
 
     const headers = rows[0];
-
 
     for (let i = 1; i < rows.length; i++) {
 
         const data = {};
 
         for (let j = 0; j < headers.length; j++) {
-            const cellValue = generateCellValue(j) + i.toString();
+            const cellValue = generateCellValue(j) + (i + 1).toString();
             data[headers[j]] = {
                 value: rows[i][j],
                 cell: cellValue
@@ -29,23 +31,25 @@ function formatSheetData(rows, sheet) {
 function findDueDates(data, endDateColumn, renewalEndDateColumn) {
     return data.filter(row => {
 
-        if (row["Email Address"].value == "" || !row["Email Address"].value) {
+        if (row['Email Address'].value === '' || !row['Email Address'].value) {
             return false;
         }
 
         const now = new Date().getTime();
 
+        const DAY_MS = 24 * 60 * 60 * 1000;
+
         // Need to check for two different columns as there are two different columns for the renewal date
         // Get the end date and renewal end date in milliseconds
         const endDate = new Date(row[endDateColumn].value).getTime()
-            + (24 * 3600 * 1000) - 1;
+            + DAY_MS - 1;
 
         const renewalEndDate = new Date(row[renewalEndDateColumn].value).getTime()
-            + (24 * 3600 * 1000) - 1;
+            + DAY_MS - 1;
 
         // Calculate remaining days
-        const remainingEndDate = (endDate - now) / (1000 * 3600 * 24);
-        const remainingRenewalEndDate = (renewalEndDate - now) / (1000 * 3600 * 24);
+        const remainingEndDate = (endDate - now) / DAY_MS;
+        const remainingRenewalEndDate = (renewalEndDate - now) / DAY_MS;
 
         const isEndValid =
             !isNaN(endDate) &&
@@ -55,7 +59,7 @@ function findDueDates(data, endDateColumn, renewalEndDateColumn) {
         // Check if the remaining day is within 30 days and is not notified. 
         // If already notified, notify again only on every 7th day.
         if (isEndValid) {
-            if (row["Notified"].value == "No" || !row["Notified"].value) {
+            if (row['Notified'].value === 'No' || !row['Notified'].value) {
                 return true;
             } else {
                 if (Math.floor(remainingEndDate) % 7 === 0) {
@@ -72,7 +76,7 @@ function findDueDates(data, endDateColumn, renewalEndDateColumn) {
             remainingRenewalEndDate <= 365;
 
         if (isRenewalValid) {
-            if (row["Notified"].value == "No" || !row["Notified"].value) {
+            if (row['Notified'].value === 'No' || !row['Notified'].value) {
                 return true;
             } else {
                 if (Math.floor(remainingRenewalEndDate) % 7 === 0) {
@@ -91,7 +95,7 @@ function generatePaymentLink(data, baseUrl) {
     const date = new Date().getTime();
 
     // Determine terminalId based on sheet name
-    let terminalId = uid(data);
+    const terminalId = uid(data);
 
     const orderid = `${terminalId}-${date}-${data['Sheet Name']}`;
 
@@ -101,19 +105,19 @@ function generatePaymentLink(data, baseUrl) {
 
     const body = {
         // amount: parseFloat(data["Renewal Fee (RM)"]).toFixed(2),
-        amount: "1.00",
+        amount: '1.00',
         orderid: orderid,
-        bill_name: data["Beneficiary Name"].value,
-        bill_email: data["Email Address"].value,
-        bill_mobile: data["Contact Number"].value,
+        bill_name: data['Beneficiary Name'].value,
+        bill_email: data['Email Address'].value,
+        bill_mobile: data['Contact Number'].value,
         bill_desc: `Renewal Payment for TID - ${terminalId}`,
-        currency: "MYR",
+        currency: 'MYR',
         returnurl: returnURL,
         callbackurl: callbackURL,
         cancelurl: cancelURL,
-        waittime: "300", // 1 Day
+        waittime: '300', // 1 Day
         metadata: JSON.stringify({ sheet: data['Sheet Name'], terminalId: terminalId }),
-    }
+    };
 
     const string = `${body.amount}${process.env.merchantID}${body.orderid}${process.env.verifyKey}`;
     const vcode = generateVCode(string);
@@ -130,10 +134,10 @@ async function updateCellValue(sheets, spreadsheet, field, recipient, value) {
     const range = `${sheetName}!${recipient[field].cell}`;
     const resource = { values: [[value]] };
 
-    const result = sheets.spreadsheets.values.update({
+    const result = await sheets.spreadsheets.values.update({
         spreadsheetId: spreadsheet,
         range: range,
-        valueInputOption: "RAW",
+        valueInputOption: 'RAW',
         resource: resource,
     });
 
@@ -141,20 +145,20 @@ async function updateCellValue(sheets, spreadsheet, field, recipient, value) {
 }
 
 function uid(recipient) {
-    if (recipient['Sheet Name'] === "beep") {
-        return recipient["UID"].value;
-    } else if (recipient['Sheet Name'] === "mi20") {
-        return recipient["TERMINAL-ID"].value;
+    if (recipient['Sheet Name'] === 'beep') {
+        return recipient['UID'].value;
+    } else if (recipient['Sheet Name'] === 'mi20') {
+        return recipient['TERMINAL-ID'].value;
     } else {
-        return recipient["TID"].value;
+        return recipient['TID'].value;
     }
 }
 
 function getDueDate(recipient) {
-    if (recipient["Sheet Name"] == "mi20") {
+    if (recipient['Sheet Name'] === 'mi20') {
         return recipient['Arv Renewal End Date'].value ? recipient['Arv Renewal End Date'].value : recipient['Paysys End Date'].value;
     } else {
-        dueDate = recipient['Renewal End Date'].value ? recipient['Renewal End Date'].value : recipient['End Date'].value;
+        return recipient['Renewal End Date'].value ? recipient['Renewal End Date'].value : recipient['End Date'].value;
     }
 }
 
@@ -162,18 +166,16 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// The reminder: This ain't bullshit magic. It's just converting a number to base 26 with A-Z characters. Took me whole fricking day to figure it out.
+// The reminder: This ain't bullshit magic. It's just converting a number to base 26 with A-Z characters. Took me whole freaking day to figure it out.
 // E.g., 0 -> A, 1 -> B, ..., 25 -> Z, 26 -> AA, 27 -> AB, ...
-function generateCellValue(j) {
+function generateCellValue(colIndex) {
 
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-    if (j < 0) {
-        return "";
+    if (colIndex < 0) {
+        return '';
     }
 
-    const q = Math.floor(j / 26); // Quotient
-    const r = j % 26;              // Remainder
+    const q = Math.floor(colIndex / 26); // Quotient
+    const r = colIndex % 26;              // Remainder
     const value = alphabet[r]; //
 
     return generateCellValue(q - 1) + value;
