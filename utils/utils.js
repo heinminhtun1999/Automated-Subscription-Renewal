@@ -1,6 +1,7 @@
 const crypto = require('crypto');
-const { sheetNames, alphabet } = require('./constants');
+const { alphabet } = require('./constants');
 
+// Format the raw sheet data into an array of objects with key as column header and value as cell value and cell reference
 function formatSheetData(rows, sheet) {
     if (!rows || rows.length === 0) {
         return [];
@@ -22,20 +23,21 @@ function formatSheetData(rows, sheet) {
         }
 
         data['Sheet Name'] = sheet;
+
+        if (data['Email Address'].value === '' || !data['Email Address'].value) {
+            continue;
+        }
+
         formattedData.push(data);
     }
 
     return formattedData;
 }
 
-function findDueDates(data, endDateColumn, renewalEndDateColumn) {
+function filterByDate(data, endDateColumn, renewalEndDateColumn, daysBefore) {
     return data.filter(row => {
 
-        if (row['Email Address'].value === '' || !row['Email Address'].value) {
-            return false;
-        }
-
-        const now = new Date().getTime();
+        if (!row[endDateColumn] || !row[renewalEndDateColumn]) return false;
 
         const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -47,46 +49,63 @@ function findDueDates(data, endDateColumn, renewalEndDateColumn) {
         const renewalEndDate = new Date(row[renewalEndDateColumn].value).getTime()
             + DAY_MS - 1;
 
+
         // Calculate remaining days
+        const now = new Date().getTime();
+        // Move expiry to 23:59:59.999 so the user gets full expiry day by adding 1 day
         const remainingEndDate = (endDate - now) / DAY_MS;
         const remainingRenewalEndDate = (renewalEndDate - now) / DAY_MS;
 
         const isEndValid =
             !isNaN(endDate) &&
             remainingEndDate >= 0 &&
-            remainingEndDate <= 365;
+            remainingEndDate <= daysBefore;
 
-        // Check if the remaining day is within 30 days and is not notified. 
-        // If already notified, notify again only on every 7th day.
-        if (isEndValid) {
-            if (row['Notified'].value === 'No' || !row['Notified'].value) {
-                return true;
-            } else {
-                if (Math.floor(remainingEndDate) % 7 === 0) {
-                    return true;
-                }
-            }
-        }
+        if (isEndValid) return true;
 
         // Check if the remaining day is within 30 days and is not notified. 
         // If already notified, notify again only on every 7th day. 
         const isRenewalValid =
             !isNaN(renewalEndDate) &&
             remainingRenewalEndDate >= 0 &&
-            remainingRenewalEndDate <= 365;
-
-        if (isRenewalValid) {
-            if (row['Notified'].value === 'No' || !row['Notified'].value) {
-                return true;
-            } else {
-                if (Math.floor(remainingRenewalEndDate) % 7 === 0) {
-                    return true;
-                }
-            }
-        }
+            remainingRenewalEndDate <= daysBefore;
+        
+        if (isRenewalValid) return true;
 
         return false;
+
     });
+}
+
+// Separate the list by given notified column into notified and not notifed
+function separateNotified(data, notifiedColumn) {
+    const notNotified = [];
+    const alreadyNotified = [];
+
+    for (const row of data) {
+        if (row[notifiedColumn].value === 'No' || row[notifiedColumn].value === '') { // Add to not notified, if the value is not defined, or "No"
+            notNotified.push(row);
+        } else {
+            alreadyNotified.push(row);
+        }
+    }
+    return { notNotified, alreadyNotified };
+}
+
+function groupByCompanyName(data) {
+    const groupedData = {};
+
+    for (const row of data) {
+        const companyName = row['Company Name'].value;
+
+        if (!groupedData[companyName]) {
+            groupedData[companyName] = [];
+            groupedData[companyName].push(row);
+        } else {
+            groupedData[companyName].push(row);
+        }
+    }
+    return groupedData;
 }
 
 function generatePaymentLink(data, baseUrl) {
@@ -129,21 +148,6 @@ function generatePaymentLink(data, baseUrl) {
     return url;
 }
 
-async function updateCellValue(sheets, spreadsheet, field, recipient, value) {
-    const sheetName = sheetNames[recipient['Sheet Name']];
-    const range = `${sheetName}!${recipient[field].cell}`;
-    const resource = { values: [[value]] };
-
-    const result = await sheets.spreadsheets.values.update({
-        spreadsheetId: spreadsheet,
-        range: range,
-        valueInputOption: 'RAW',
-        resource: resource,
-    });
-
-    return result;
-}
-
 function uid(recipient) {
     if (recipient['Sheet Name'] === 'beep') {
         return recipient['UID'].value;
@@ -166,7 +170,7 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// The reminder: This ain't bullshit magic. It's just converting a number to base 26 with A-Z characters. Took me whole freaking day to figure it out.
+// The reminder: This ain't some bullshit magic. It's just converting a number to base 26 with A-Z characters. Took me whole freaking day to figure it out.
 // E.g., 0 -> A, 1 -> B, ..., 25 -> Z, 26 -> AA, 27 -> AB, ...
 function generateCellValue(colIndex) {
 
@@ -175,8 +179,8 @@ function generateCellValue(colIndex) {
     }
 
     const q = Math.floor(colIndex / 26); // Quotient
-    const r = colIndex % 26;              // Remainder
-    const value = alphabet[r]; //
+    const r = colIndex % 26; // Remainder
+    const value = alphabet[r]; 
 
     return generateCellValue(q - 1) + value;
 }
@@ -189,11 +193,12 @@ function generateVCode(string) {
 
 module.exports = {
     formatSheetData,
-    findDueDates,
+    filterByDate,
+    separateNotified,
     generatePaymentLink,
+    groupByCompanyName,
     uid,
     sleep,
     generateVCode,
-    updateCellValue,
     getDueDate
 };

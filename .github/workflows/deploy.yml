@@ -59,7 +59,12 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts
 
-          rsync -az --delete --exclude=node_modules --exclude=.git ./ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH
+          rsync -az --delete \
+          --exclude="node_modules" \
+          --exclude=".git" \
+          --exclude="credentials.json" \
+          --exclude=".env" \
+          ./ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH
 
           ssh $DEPLOY_USER@$DEPLOY_HOST << EOF
             cd $DEPLOY_PATH

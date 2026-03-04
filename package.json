@@ -25,7 +25,8 @@
     "express": "^5.2.1",
     "googleapis": "^105.0.0",
     "html-to-text": "^9.0.5",
-    "nodemailer": "^7.0.12"
+    "nodemailer": "^7.0.12",
+    "winston": "^3.19.0"
   },
   "devDependencies": {
     "eslint": "^8.57.1",

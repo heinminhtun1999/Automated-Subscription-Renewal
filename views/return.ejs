@@ -1,165 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <title>Payment Status</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <style>
-        * {
-            box-sizing: border-box;
-            font-family: "Segoe UI", Roboto, Arial, sans-serif;
-        }
-
-        body {
-            margin: 0;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #eef2f7, #d9e2ec);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .card {
-            background: #ffffff;
-            width: 100%;
-            max-width: 420px;
-            padding: 32px;
-            border-radius: 16px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-            text-align: center;
-        }
-
-        .icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 40px;
-            color: #fff;
-        }
-
-        .success {
-            background: #28a745;
-        }
-
-        .failed {
-            background: #dc3545;
-        }
-
-        h1 {
-            margin: 12px 0;
-            font-size: 24px;
-            color: #333;
-        }
-
-        p {
-            color: #666;
-            font-size: 15px;
-            line-height: 1.6;
-            margin-bottom: 24px;
-        }
-
-        .details {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 16px;
-            margin-bottom: 24px;
-            text-align: left;
-            font-size: 14px;
-        }
-
-        .details div {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            color: #444;
-        }
-
-        .details div:last-child {
-            margin-bottom: 0;
-        }
-
-        .actions {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            flex: 1;
-            padding: 12px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 600;
-            transition: 0.2s ease;
-        }
-
-        .btn-primary {
-            background: #007bff;
-            color: #fff;
-        }
-
-        .btn-primary:hover {
-            background: #0056b3;
-        }
-
-        .btn-secondary {
-            background: #e9ecef;
-            color: #333;
-        }
-
-        .btn-secondary:hover {
-            background: #ced4da;
-        }
-    </style>
+    <title>AR Vending | Payment Status</title>
+    <link rel="stylesheet" href="/css/return.css">
 </head>
-
 <body>
-
-    <!-- Change success → failed to show failure state -->
-    <div class="card">
-        <div class="icon success">✓</div>
-
-        <h1>Payment Successful</h1>
-        <p>Your payment has been processed successfully.
-            Thank you for your purchase.</p>
-
-        <div class="details">
-            <div>
-                <span>Order ID</span>
-                <strong>#ORD-10293</strong>
-            </div>
-            <div>
-                <span>Amount Paid</span>
-                <strong>RM 25.00</strong>
-            </div>
-            <div>
-                <span>Status</span>
-                <strong>Completed</strong>
+    <div class="wrapper">
+        <!-- Header Section -->
+        <div class="header">
+            <div class="header-content">
+                <img src="/images/ARV NEW LOGO.png" alt="AR Vending Logo" class="logo">
+                <div class="header-text">
+                    <h1 class="company-name">AR Vending</h1>
+                    <p class="subtitle">Subscription Renewal Management</p>
+                </div>
             </div>
         </div>
-        <h1>CI/CD Works</h1>
-        <!-- <div class="actions">
-            <button class="btn btn-primary" onclick="window.location.href='/'">
-                Continue
-            </button>
-            <button class="btn btn-secondary" onclick="window.location.href='/support'">
-                Contact Support
-            </button>
-        </div>
-        <div class="icon failed">✕</div>
-        <h1>Payment Failed</h1>
-        <p>Your payment could not be completed. Please try again.</p> -->
 
+        <div class="container">
+            <!-- Status Card -->
+            <div class="status-card success">
+                <!-- Change "success" class to "failed" to show failure state -->
+                <div class="icon">✓</div>
+
+                <h1>Payment Successful</h1>
+                <p class="status-message">Your payment has been processed successfully.
+                    Thank you for your purchase.</p>
+
+                <div class="details">
+                    <div class="detail-row">
+                        <span class="detail-label">Order ID</span>
+                        <strong class="detail-value">#ORD-10293</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Amount Paid</span>
+                        <strong class="detail-value">RM 25.00</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Status</span>
+                        <strong class="detail-value">Completed</strong>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-secondary" onclick="window.location.href='/support'">Contact Support</button>
+                </div>
+            </div>
+
+            <!-- Contact Section -->
+            <div class="contact-section">
+                <h4 class="contact-title">Need Help?</h4>
+                <p class="contact-text">If any error occurs or you need assistance, please contact us:</p>
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <span class="contact-icon">📧</span>
+                        <a href="mailto:support@arvending.com">support@arvending.com</a>
+                    </div>
+                    <div class="contact-item">
+                        <span class="contact-icon">📞</span>
+                        <a href="tel:+60123456789">+60 (123) 456-789</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>&copy; 2026 AR Vending Solutions. All rights reserved.</p>
+        </div>
     </div>
-
 </body>
-
 </html>

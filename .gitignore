@@ -5,3 +5,5 @@ node_modules/
 logs/
 *.log
 credentials.json
+combined.log
+error.log
