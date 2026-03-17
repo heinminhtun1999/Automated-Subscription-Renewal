@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Vending | Verify OTP</title>
+    <link rel="stylesheet" href="/css/otp.css">
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="header">
+            <div class="header-content">
+                <img src="/images/ARV NEW LOGO.png" alt="AR Vending Logo" class="logo">
+                <div class="header-text">
+                    <h1 class="company-name">AR Vending</h1>
+                    <p class="subtitle">Subscription Renewal Management</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="otp-card" id="otp-card" data-email="<%= maskedEmail || 'j***@mail.com' %>"
+                data-request-url="/request-otp" data-verify-url="/verify-otp">
+                <div class="otp-hero">
+                    <div class="otp-title">
+                        <span class="pill">Secure Step</span>
+                        <h2>Verify your email</h2>
+                        <p>To continue, confirm the one-time code sent to your email.</p>
+                    </div>
+                </div>
+
+                <div class="otp-body">
+                    <div class="notice">
+                        <p>You are required to verify the OTP before accessing the next page.</p>
+                        <p>The OTP will be sent to <strong id="masked-email-inline">
+                                <%= maskedEmail || 'j***@mail.com' %>
+                            </strong>.</p>
+                        <div class="summary-row">
+                            <span class="value status" id="otp-status"></span>
+                        </div>
+                    </div>
+
+                    <div class="otp-flow">
+                        <div class="request-panel" id="request-panel">
+                            <button class="btn btn-primary" id="request-otp-btn" type="button">Request OTP</button>
+                            <p class="helper">Click the button to receive your one-time code.</p>
+                        </div>
+
+                        <div class="otp-panel" id="otp-panel" aria-live="polite">
+                            <div class="otp-inputs" id="otp-inputs">
+                                <input class="otp-input" type="text" inputmode="numeric" maxlength="1"
+                                    aria-label="Digit 1">
+                                <input class="otp-input" type="text" inputmode="numeric" maxlength="1"
+                                    aria-label="Digit 2">
+                                <input class="otp-input" type="text" inputmode="numeric" maxlength="1"
+                                    aria-label="Digit 3">
+                                <input class="otp-input" type="text" inputmode="numeric" maxlength="1"
+                                    aria-label="Digit 4">
+                                <input class="otp-input" type="text" inputmode="numeric" maxlength="1"
+                                    aria-label="Digit 5">
+                                <input class="otp-input" type="text" inputmode="numeric" maxlength="1"
+                                    aria-label="Digit 6">
+                            </div>
+
+                            <div class="otp-actions">
+                                <button class="btn btn-primary" id="verify-otp-btn" type="button" disabled>Verify
+                                    OTP</button>
+                                <div class="resend">
+                                    <button class="link-btn" id="resend-otp-btn" type="button" disabled>Request OTP
+                                        again</button>
+                                    <span class="countdown" id="resend-countdown">Resend available in 01:00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Contact Section -->
+            <div class="contact-section">
+                <h4 class="contact-title">Need Help?</h4>
+                <p class="contact-text">If any error occurs or you need assistance, please contact us:</p>
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <span class="contact-icon">📧</span>
+                        <a href="mailto:info@visolux.com.my">info@visolux.com.my</a>
+                    </div>
+                    <div class="contact-item">
+                        <span class="contact-icon">📞</span>
+                        <a href="tel:+60123456789">+60 12-253 1334</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2026 AR Vending Solutions. All rights reserved.</p>
+        </div>
+    </div>
+
+    <script src="/js/otp.js"></script>
+</body>
+
+</html>

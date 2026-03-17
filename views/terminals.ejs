@@ -22,104 +22,112 @@
         </div>
 
         <div class="container">
-            <!-- Customer Info Section -->
-            <div class="customer-info">
-                <p class="customer-label">Customer:</p>
-                <h2 class="customer-name" id="customer-name"><!-- Company Name --></h2>
-            </div>
 
-            <!-- Terminals Selection Section -->
-            <div class="terminals-section">
-                <h3 class="section-title">Select Terminals for Renewal</h3>
+            <% if (!data || data.length===0) { %>
+                <div class="no-data">
+                    <p>No terminals available for renewal at this time.</p>
+                </div>
+                <% } else { %>
 
-                <div class="terminals-list" id="terminals-list">
-                    <!-- Terminal items will be inserted here -->
-                    <div class="terminal-item" onclick="toggleTerminal(this)" data-terminal-id="T001">
-                        <div class="item-checkbox">
-                            <span class="checkbox"></span>
-                        </div>
-                        <div class="item-content">
-                            <div class="terminal-header">
-                                <h4 class="terminal-id">Terminal ID: T001</h4>
-                            </div>
-                            <div class="terminal-details">
-                                <div class="detail-col">
-                                    <span class="label">Days Left to Expire:</span>
-                                    <span class="value">15 days</span>
+                    <!-- Customer Info Section -->
+                    <div class="customer-info">
+                        <p class="customer-label">Customer:</p>
+                        <h2 class="customer-name" id="customer-name"><!-- Company Name --></h2>
+                    </div>
+
+                    <!-- Terminals Selection Section -->
+                    <div class="terminals-section">
+                        <h3 class="section-title">Select Terminals for Renewal</h3>
+
+                        <div class="terminals-list" id="terminals-list">
+                            <!-- Terminal items will be inserted here -->
+                            <div class="terminal-item" onclick="toggleTerminal(this)" data-terminal-id="T001">
+                                <div class="item-checkbox">
+                                    <span class="checkbox"></span>
                                 </div>
-                                <div class="detail-col">
-                                    <span class="label">Renewal Fee:</span>
-                                    <span class="value amount">RM 50.00</span>
+                                <div class="item-content">
+                                    <div class="terminal-header">
+                                        <h4 class="terminal-id">Terminal ID: T001</h4>
+                                    </div>
+                                    <div class="terminal-details">
+                                        <div class="detail-col">
+                                            <span class="label">Days Left to Expire:</span>
+                                            <span class="value">15 days</span>
+                                        </div>
+                                        <div class="detail-col">
+                                            <span class="label">Renewal Fee:</span>
+                                            <span class="value amount">RM 50.00</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+
+                            <div class="terminal-item" onclick="toggleTerminal(this)" data-terminal-id="T001">
+                                <div class="item-checkbox">
+                                    <span class="checkbox"></span>
+                                </div>
+                                <div class="item-content">
+                                    <div class="terminal-header">
+                                        <h4 class="terminal-id">Terminal ID: T001</h4>
+                                    </div>
+                                    <div class="terminal-details">
+                                        <div class="detail-col">
+                                            <span class="label">Days Left to Expire:</span>
+                                            <span class="value">15 days</span>
+                                        </div>
+                                        <div class="detail-col">
+                                            <span class="label">Renewal Fee:</span>
+                                            <span class="value amount">RM 50.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
-                    <div class="terminal-item" onclick="toggleTerminal(this)" data-terminal-id="T001">
-                        <div class="item-checkbox">
-                            <span class="checkbox"></span>
+                    <!-- Summary Section -->
+                    <div class="summary-section">
+                        <div class="summary-item">
+                            <span class="summary-label">Terminals Selected:</span>
+                            <span class="summary-value" id="selected-count">0</span>
                         </div>
-                        <div class="item-content">
-                            <div class="terminal-header">
-                                <h4 class="terminal-id">Terminal ID: T001</h4>
-                            </div>
-                            <div class="terminal-details">
-                                <div class="detail-col">
-                                    <span class="label">Days Left to Expire:</span>
-                                    <span class="value">15 days</span>
-                                </div>
-                                <div class="detail-col">
-                                    <span class="label">Renewal Fee:</span>
-                                    <span class="value amount">RM 50.00</span>
-                                </div>
-                            </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Total Renewal Fee:</span>
+                            <span class="summary-value amount" id="total-fee">RM 0.00</span>
                         </div>
                     </div>
 
-                </div>
-            </div>
-
-            <!-- Summary Section -->
-            <div class="summary-section">
-                <div class="summary-item">
-                    <span class="summary-label">Terminals Selected:</span>
-                    <span class="summary-value" id="selected-count">0</span>
-                </div>
-                <div class="summary-item">
-                    <span class="summary-label">Total Renewal Fee:</span>
-                    <span class="summary-value amount" id="total-fee">RM 0.00</span>
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="action-buttons">
-                <button class="btn btn-secondary" onclick="clearSelected()">Clear Selected</button>
-                <button class="btn btn-primary" onclick="proceedToPayment()" id="proceed-btn">Proceed to
-                    Payment</button>
-            </div>
-
-            <!-- Notice Section -->
-            <div class="notice-box">
-                <span class="notice-icon">ℹ️</span>
-                <p class="notice-text">You will be redirected to the secure payment page after clicking "Proceed to
-                    Payment".</p>
-            </div>
-
-            <!-- Error Contact Section -->
-            <div class="contact-section">
-                <h4 class="contact-title">Need Help?</h4>
-                <p class="contact-text">If any error occurs or you need assistance, please contact us:</p>
-                <div class="contact-info">
-                    <div class="contact-item">
-                        <span class="contact-icon">📧</span>
-                        <a href="mailto:info@visolux.com.my">info@visolux.com.my</a>
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary" onclick="clearSelected()">Clear Selected</button>
+                        <button class="btn btn-primary" onclick="proceedToPayment()" id="proceed-btn">Proceed to
+                            Payment</button>
                     </div>
-                    <div class="contact-item">
-                        <span class="contact-icon">📞</span>
-                        <a href="tel:+60123456789">+60 12-253 1334</a>
+
+                    <!-- Notice Section -->
+                    <div class="notice-box">
+                        <span class="notice-icon">ℹ️</span>
+                        <p class="notice-text">You will be redirected to the secure payment page after clicking "Proceed
+                            to
+                            Payment".</p>
                     </div>
-                </div>
-            </div>
+                    <% } %>
+                        <!-- Error Contact Section -->
+                        <div class="contact-section">
+                            <h4 class="contact-title">Need Help?</h4>
+                            <p class="contact-text">If any error occurs or you need assistance, please contact us:</p>
+                            <div class="contact-info">
+                                <div class="contact-item">
+                                    <span class="contact-icon">📧</span>
+                                    <a href="mailto:info@visolux.com.my">info@visolux.com.my</a>
+                                </div>
+                                <div class="contact-item">
+                                    <span class="contact-icon">📞</span>
+                                    <a href="tel:+60123456789">+60 12-253 1334</a>
+                                </div>
+                            </div>
+                        </div>
         </div>
 
         <!-- Footer -->

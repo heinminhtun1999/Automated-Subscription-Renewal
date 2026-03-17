@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 const { convert } = require('html-to-text');
-const { separateNotified } = require('../utils');
+const { separateNotified } = require('../dataProcessors');
 const logger = require('./winston');
 const { dueDateTemplate, failListTemplate } = require('../htmlTemplates');
 const { updateCellValue } = require('./sheets');
@@ -27,24 +27,41 @@ const transporter = nodemailer.createTransport({
 
 async function prepareAndSendDueDateEmail(combinedData, baseUrl) {
     const failedEmails = [];
-    for (const companyName in combinedData) {
+    for (const cid in combinedData) {
 
-        const companyData = combinedData[companyName];
+        const companyData = combinedData[cid];
 
         // Get the email address from the first element of the array. It is certain that there is at least one element in the array.
-        const emailAddress = companyData[0]['Email Address'].value; 
+        const emailAddress = companyData[0]['Email Address'].value;
+        const companyName = companyData[0]['Company Name'].value;
 
         // Generate the URL for the terminals selection list for subscription renewal.
-        const URL = baseUrl + "/terminals?company=" + encodeURIComponent(companyName); 
-        
-        const emailBody = dueDateTemplate(URL);
+        const URL = baseUrl + "/terminals?cid=" + encodeURIComponent(cid);
+
+        const emailBody = dueDateTemplate(URL, numTerminals = companyData.length);
 
         // Send email
         const { ok, error } = await sendEmail(emailAddress, 'Terminal Renewal Reminder', emailBody);
 
         if (!ok) {
 
-            failedEmails.push({ companyName, emailAddress, error });
+            const terminals = companyData.map(data => data['Sheet Name']).reduce((acc, sheet) => {
+                if (!acc.includes(sheet)) {
+                    acc.push(sheet);
+                }
+                return acc;
+            }, []);
+
+            const companyDataWithError = {
+                "Date/Time": new Date().toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" }),
+                "Company Name": companyName,
+                "CID": cid,
+                "Email Address": emailAddress,
+                "Terminals": terminals.join(', '),
+                "Error Message": error.message || 'Unknown error'
+            }
+
+            failedEmails.push(companyDataWithError);
 
             if (error && (error.code === 'EAUTH' || error.responseCode === 535)) {
                 logger.error('Auth error detected; stopping further sends.');

@@ -3,25 +3,35 @@ const express = require('express');
 const path = require('path');
 const process = require('process');
 const dotenv = require('dotenv');
+const session = require('express-session');
 dotenv.config();
 
 // Import Controllers
 const homeController = require('./controllers/home');
 const terminalsController = require('./controllers/terminals');
+const { generateAndStoreOTP, verifyOTP } = require('./controllers/otp');
+
+// Import Middlewares
+const { verifySession } = require('./middlewares/verifyotp');
 
 // Server Setup
 const app = express();
 const port = process.env.PORT;
-
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(process.cwd(), 'public')));
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: process.env.NODE_ENV === 'production' ? true : false } 
+}))
 
 // Routes
 app.get('/send-email', homeController);
 
-app.get("/terminals", terminalsController);
+app.get("/terminals", verifySession, terminalsController);
 
 app.get('/return', (req, res) => {
     res.render('return', { query: req.query });
@@ -30,6 +40,10 @@ app.get('/return', (req, res) => {
 app.post('/payment', (req, res) => {
     res.send('Payment processing is not implemented yet. Received data: ' + JSON.stringify(req.body));
 });
+
+app.post('/request-otp', generateAndStoreOTP);
+
+app.post('/verify-otp', verifyOTP);
 
 // TODO:: Implement email sending functionality with payment link (Partially done, bank offline transfer not done)
 // TODO:: Check for the payment completion and mark  (done)
@@ -40,7 +54,7 @@ app.post('/payment', (req, res) => {
 
 // Start Server
 app.listen(port, () => {
-    console.log(`Development Server is running on ${port}`);
+    console.log(`Development Server is running on ${port}: ${process.env.NODE_ENV}`);
 });
 
 
