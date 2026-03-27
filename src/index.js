@@ -4,7 +4,7 @@ const path = require('path');
 const process = require('process');
 const dotenv = require('dotenv');
 const session = require('express-session');
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 // Import Controllers
 const reminderEmailController = require('./controllers/reminderEmail');
