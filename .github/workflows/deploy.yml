@@ -43,7 +43,7 @@ jobs:
             echo "PM2_ENV=development" >> $GITHUB_ENV
             echo "PM2_NAME=asr-dev" >> $GITHUB_ENV
           else
-            echo "DEPLOY_PATH=/home/subscription-renewal-prod" >> $GITHUB_ENV
+            echo "DEPLOY_PATH=/homWe/subscription-renewal-prod" >> $GITHUB_ENV
             echo "PM2_ENV=production" >> $GITHUB_ENV
             echo "PM2_NAME=asr" >> $GITHUB_ENV
           fi
