@@ -23,7 +23,7 @@ const terminalsController = async (req, res) => {
         'u20': 'U20',
         'arvdn': 'ARVDN Machine'
     }
-    console.log('Terminals Controller - Session Data:', data);
+    
     const formattedData = data.map(item => {
         const deviceType = sheetMap[item['Sheet Name']];
         const terminalId = uid(item);
