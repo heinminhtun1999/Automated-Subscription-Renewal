@@ -16,7 +16,7 @@ function updateOTPEntry(companyName, email, id, updates) {
         UPDATE otp SET ${fields} WHERE id = ? AND company_name = ? AND email = ?`);
 
     const info = stmt.run(...values, id, companyName, email);
-    return stmt;
+    return info;
 }
 
 function insertOTPEntry(companyName, email, codeHash, expiresAt) {
