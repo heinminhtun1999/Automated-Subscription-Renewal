@@ -41,9 +41,11 @@ jobs:
           if [[ "${GITHUB_REF}" == "refs/heads/development" ]]; then
             echo "DEPLOY_PATH=/home/subscription-renewal-dev" >> $GITHUB_ENV
             echo "PM2_ENV=development" >> $GITHUB_ENV
+            echo "PM2_NAME=asr-dev" >> $GITHUB_ENV
           else
             echo "DEPLOY_PATH=/home/subscription-renewal-prod" >> $GITHUB_ENV
             echo "PM2_ENV=production" >> $GITHUB_ENV
+            echo "PM2_NAME=asr" >> $GITHUB_ENV
           fi
 
       - name: Deploy to VPS
@@ -53,6 +55,7 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
           PM2_ENV: ${{ env.PM2_ENV }}
+          PM2_NAME: ${{ env.PM2_NAME }}
         run: |
           mkdir -p ~/.ssh
           echo "$DEPLOY_KEY" > ~/.ssh/id_rsa
@@ -69,5 +72,6 @@ jobs:
           ssh $DEPLOY_USER@$DEPLOY_HOST << EOF
             cd $DEPLOY_PATH
             npm ci --only=production
-            pm2 reload ecosystem.config.js --env $PM2_ENV || pm2 start ecosystem.config.js --env $PM2_ENV
+            pm2 reload "$PM2_NAME" --update-env > /dev/null 2>&1 || \
+              NODE_ENV=$PM2_ENV PORT=4000 pm2 start src/index.js --name "$PM2_NAME"
           EOF
