@@ -31,8 +31,9 @@
 
                     <!-- Customer Info Section -->
                     <div class="customer-info">
-                        <p class="customer-label">Customer:</p>
-                        <h2 class="customer-name" id="customer-name"><!-- Company Name --></h2>
+                        <h2 class="customer-name" id="customer-name">
+                            <%= data[0].companyName %>
+                        </h2>
                     </div>
 
                     <!-- Terminals Selection Section -->
@@ -41,47 +42,44 @@
 
                         <div class="terminals-list" id="terminals-list">
                             <!-- Terminal items will be inserted here -->
-                            <div class="terminal-item" onclick="toggleTerminal(this)" data-terminal-id="T001">
-                                <div class="item-checkbox">
-                                    <span class="checkbox"></span>
-                                </div>
-                                <div class="item-content">
-                                    <div class="terminal-header">
-                                        <h4 class="terminal-id">Terminal ID: T001</h4>
+                            <% data.forEach(terminal => { %>
+                                <div class="terminal-item <%= terminal.daysLeft === 'Expired' ? 'disabled' : '' %>" onclick="toggleTerminal(this)"
+                                    data-terminal-id="<%= terminal.terminalId %>" data-terminal-disabled="<%= terminal.daysLeft === 'Expired' %>">
+                                    <div class="item-checkbox">
+                                        <span class="checkbox"></span>
                                     </div>
-                                    <div class="terminal-details">
-                                        <div class="detail-col">
-                                            <span class="label">Days Left to Expire:</span>
-                                            <span class="value">15 days</span>
+                                    <div class="item-content">
+                                        <div class="terminal-header">
+                                            <h4 class="terminal-id">Device ID: <%= terminal.terminalId %>
+                                            </h4>
                                         </div>
-                                        <div class="detail-col">
-                                            <span class="label">Renewal Fee:</span>
-                                            <span class="value amount">RM 50.00</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="terminal-item" onclick="toggleTerminal(this)" data-terminal-id="T001">
-                                <div class="item-checkbox">
-                                    <span class="checkbox"></span>
-                                </div>
-                                <div class="item-content">
-                                    <div class="terminal-header">
-                                        <h4 class="terminal-id">Terminal ID: T001</h4>
-                                    </div>
-                                    <div class="terminal-details">
-                                        <div class="detail-col">
-                                            <span class="label">Days Left to Expire:</span>
-                                            <span class="value">15 days</span>
-                                        </div>
-                                        <div class="detail-col">
-                                            <span class="label">Renewal Fee:</span>
-                                            <span class="value amount">RM 50.00</span>
+                                        <div class="terminal-details">
+                                            <div class="detail-col">
+                                                <span class="label">Device Type:</span>
+                                                <span class="value">
+                                                    <%= terminal.deviceType %>
+                                                </span>
+                                            </div>
+                                            <div class="detail-col">
+                                                <span class="label">Days Left to Expire:</span>
+                                                <span class="value <%= terminal.daysLeft === 'Expired' ? 'expired' : terminal.daysLeft == 'Expires Today' ? 'expires-today' : '' %>">
+                                                    <%= terminal.daysLeft %>
+                                                </span>
+                                            </div>
+                                            <div class="detail-col">
+                                                <span class="label">Renewal Fee:</span>
+                                                <span class="value amount">RM <%= terminal.renewalFees %></span>
+                                            </div>
+                                            <% if (terminal.daysLeft === 'Expired') { %>
+                                            <div class="detail-col">
+                                                <span class="label">Remark:</span>
+                                                <span class="value">Subscription for this device has expired. Please contact support.</span>
+                                            </div>
+                                            <% } %>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                                <% }) %>
 
                         </div>
                     </div>

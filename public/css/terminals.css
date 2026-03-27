@@ -128,6 +128,12 @@ body {
     border-left: 4px solid #007bff;
 }
 
+.terminal-item.disabled {
+    background: #f0f0f0;
+    color: #999;
+    cursor: not-allowed;
+}
+
 .item-checkbox {
     display: flex;
     align-items: center;
@@ -211,6 +217,14 @@ body {
     color: #1a1a1a;
     font-size: 14px;
     font-weight: 600;
+}
+
+.detail-col .value.expired {
+    color: red;
+}
+
+.detail-col .value.expires-today{
+    color: orange;
 }
 
 .detail-col .amount {

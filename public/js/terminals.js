@@ -1,5 +1,7 @@
 // Toggle terminal selection
 function toggleTerminal(element) {
+    const isDisabled = element.getAttribute('data-terminal-disabled') === 'true';
+    if (isDisabled) return; // Do not allow selection if terminal is expired
     element.classList.toggle('selected');
     updateSummary();
 }

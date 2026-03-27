@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AR Vending | Verify OTP</title>
     <link rel="stylesheet" href="/css/otp.css">
+    <script>
+        window.c = '<%= companyName %>'
+    </script>
 </head>
 
 <body>
@@ -21,8 +24,8 @@
         </div>
 
         <div class="container">
-            <div class="otp-card" id="otp-card" data-email="<%= maskedEmail || 'j***@mail.com' %>"
-                data-request-url="/request-otp" data-verify-url="/verify-otp">
+            <div class="otp-card" id="otp-card"
+                data-request-url="/request-otp" data-verify-url="/verify-otp" data-token="<%= token %>">
                 <div class="otp-hero">
                     <div class="otp-title">
                         <span class="pill">Secure Step</span>
@@ -35,7 +38,7 @@
                     <div class="notice">
                         <p>You are required to verify the OTP before accessing the next page.</p>
                         <p>The OTP will be sent to <strong id="masked-email-inline">
-                                <%= maskedEmail || 'j***@mail.com' %>
+                                <%= maskedEmail %>
                             </strong>.</p>
                         <div class="summary-row">
                             <span class="value status" id="otp-status"></span>

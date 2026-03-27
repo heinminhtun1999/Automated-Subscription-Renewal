@@ -4,9 +4,10 @@ const { separateNotified } = require('../dataProcessors');
 const logger = require('./winston');
 const { dueDateTemplate, failListTemplate } = require('../htmlTemplates');
 const { updateCellValue } = require('./sheets');
+const { generateJWT } = require('../utils');
 
 // Nodemailer Setup
-const transporter = nodemailer.createTransport({
+const reminderTransporter = nodemailer.createTransport({
     host: process.env.smtpHost,
     port: process.env.smtpPort,
     secure: true, // Use true for port 465, false for port 587
@@ -16,32 +17,55 @@ const transporter = nodemailer.createTransport({
     },
     pool: true,
     maxConnections: 1,
-    maxMessages: 100,
+    maxMessages: 200,
     rateDelta: 1000,
     rateLimit: 1,
     tls: {
         // Accept self-signed or invalid certificates
-        rejectUnauthorized: false,
+        rejectUnauthorized: process.env.NODE_ENV === 'production' // Only reject unauthorized in production,
     },
 });
 
+const otherTransporter = nodemailer.createTransport({
+    host: process.env.smtpHost,
+    port: process.env.smtpPort,
+    secure: true, // Use true for port 465, false for port 587
+    auth: {
+        user: process.env.smtpUsername,
+        pass: process.env.smtpPassword,
+    },
+    pool: true,
+    maxConnections: 2,
+    maxMessages: 100,
+    tls: {
+        // Accept self-signed or invalid certificates
+        rejectUnauthorized: process.env.NODE_ENV === 'production' // Only reject unauthorized in production,
+    },
+});
+
+
+
 async function prepareAndSendDueDateEmail(combinedData, baseUrl) {
     const failedEmails = [];
-    for (const cid in combinedData) {
+    for (const companyName in combinedData) {
 
-        const companyData = combinedData[cid];
+        const companyData = combinedData[companyName];
 
         // Get the email address from the first element of the array. It is certain that there is at least one element in the array.
         const emailAddress = companyData[0]['Email Address'].value;
-        const companyName = companyData[0]['Company Name'].value;
 
         // Generate the URL for the terminals selection list for subscription renewal.
-        const URL = baseUrl + "/terminals?cid=" + encodeURIComponent(cid);
+        const body = {
+            companyName: companyName,
+            originalEmail: emailAddress,
+        }
+        const token = generateJWT(body);
+        const URL = baseUrl + "/terminals?token=" + token;
 
         const emailBody = dueDateTemplate(URL, numTerminals = companyData.length);
 
         // Send email
-        const { ok, error } = await sendEmail(emailAddress, 'Terminal Renewal Reminder', emailBody);
+        const { ok, error } = await sendEmail(emailAddress, 'Terminal Renewal Reminder', emailBody, 'Due Date Reminder');
 
         if (!ok) {
 
@@ -55,7 +79,6 @@ async function prepareAndSendDueDateEmail(combinedData, baseUrl) {
             const companyDataWithError = {
                 "Date/Time": new Date().toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" }),
                 "Company Name": companyName,
-                "CID": cid,
                 "Email Address": emailAddress,
                 "Terminals": terminals.join(', '),
                 "Error Message": error.message || 'Unknown error'
@@ -67,7 +90,7 @@ async function prepareAndSendDueDateEmail(combinedData, baseUrl) {
                 logger.error('Auth error detected; stopping further sends.');
                 break;
             } else {
-                logger.error(`Failed to send email to ${emailAddress}:`, error);
+                logger.error(`Failed to send due date reminder email to ${emailAddress}:`, error);
             }
 
         } else {
@@ -101,10 +124,10 @@ async function prepareAndSendDueDateEmail(combinedData, baseUrl) {
 
         logger.warn('Some emails failed to send:', failedEmails);
         const failBody = failListTemplate(failedEmails);
-        const result = await sendEmail("customerservice@arvending.com.my", '|AR VENDING| Failed Email List', failBody);
+        const result = await sendEmail("customerservice@arvending.com.my", '|AR VENDING| Failed Email List', failBody, 'Failed Email List');
 
         if (!result.ok) {
-            logger.error('Failed to send email list to customer service.');
+            logger.error('Failed to send failed email list to customer service.');
         } else {
             logger.info('Failed email list sent to customer service.');
         }
@@ -114,29 +137,49 @@ async function prepareAndSendDueDateEmail(combinedData, baseUrl) {
     return;
 }
 
-async function sendEmail(to, subject, body) {
+async function sendEmail(to, subject, body, topic = 'General') {
     try {
 
         const textBody = convert(body, { wordwrap: 130 });
 
-        const info = await transporter.sendMail({
-            from: '"AR Vending" <acct.notify@arvending.com.my>',
-            to: to,
-            subject: subject,
-            text: textBody,
-            html: body,
-            priority: 'high',
-            headers: {
-                'X-Priority': '1',
-                'Importance': 'high'
-            }
-        });
+        let info;
 
-        logger.info(`Message sent to ${to}: ${info.messageId}`);
+        if (topic === 'Due Date Reminder') {
+
+            info = await reminderTransporter.sendMail({
+                from: '"AR Vending" <acct.notify@arvending.com.my>',
+                to: to,
+                subject: subject,
+                text: textBody,
+                html: body,
+                priority: 'high',
+                headers: {
+                    'X-Priority': '1',
+                    'Importance': 'high'
+                }
+            });
+
+        } else {
+            info = await otherTransporter.sendMail({
+                from: '"AR Vending" <acct.notify@arvending.com.my>',
+                to: to,
+                subject: subject,
+                text: textBody,
+                html: body,
+                priority: 'high',
+                headers: {
+                    'X-Priority': '1',
+                    'Importance': 'high'
+                }
+            });
+        }
+
+
+        logger.info(`${topic} email sent to ${to}: ${info.messageId}`);
 
         return { ok: true, messageId: info.messageId };
     } catch (error) {
-        logger.error(`Error sending to ${to}:`, error);
+        logger.error(`Error sending ${topic} email to ${to}:`, error);
         return { ok: false, error: error };
     }
 }

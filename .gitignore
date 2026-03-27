@@ -6,3 +6,5 @@ logs/
 *.log
 credentials.json
 logs
+
+src/db/database.db*

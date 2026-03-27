@@ -4,22 +4,18 @@ const verifyBtn = document.getElementById('verify-otp-btn');
 const resendBtn = document.getElementById('resend-otp-btn');
 const resendCountdown = document.getElementById('resend-countdown');
 const statusEl = document.getElementById('otp-status');
-const maskedEmailEl = document.getElementById('masked-email');
 const maskedEmailInlineEl = document.getElementById('masked-email-inline');
 const otpInputs = Array.from(document.querySelectorAll('.otp-input'));
 
-const EMAIL_FALLBACK = 'j***@mail.com';
 const REQUEST_COOLDOWN_SECONDS = 60;
 
 let cooldownTimer = null;
 let cooldownRemaining = REQUEST_COOLDOWN_SECONDS;
+const maskedEmail = maskedEmailInlineEl ? maskedEmailInlineEl.textContent : 'j***@mail.com';
 
-const maskedEmail = otpCard?.dataset.email || EMAIL_FALLBACK;
 const requestUrl = otpCard?.dataset.requestUrl || '/request-otp';
 const verifyUrl = otpCard?.dataset.verifyUrl || '/verify-otp';
-
-if (maskedEmailEl) maskedEmailEl.textContent = maskedEmail;
-if (maskedEmailInlineEl) maskedEmailInlineEl.textContent = maskedEmail;
+const token = otpCard?.dataset.token || '';
 
 function formatCountdown(seconds) {
     const mins = Math.floor(seconds / 60);
@@ -105,9 +101,18 @@ async function requestOtp() {
     setStatus('Sending OTP to your email...', 'info');
 
     try {
-        const response = await fetch(requestUrl, { method: 'POST' });
+        const response = await fetch(requestUrl, 
+            { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    "companyName": window.c || ""
+                })
+              });
+        const result = await response.json();
+
         if (!response.ok) {
-            throw new Error('Request failed');
+            throw new Error(result.message || 'Failed to request OTP. Please try again.');
         }
 
         showOtpPanel();
@@ -117,7 +122,7 @@ async function requestOtp() {
     } catch (error) {
         requestBtn.disabled = false;
         resendBtn.disabled = false;
-        setStatus('Unable to send OTP. Please try again.', 'error');
+        setStatus(error.message, 'error');
     }
 }
 
@@ -132,7 +137,7 @@ async function verifyOtp() {
         const response = await fetch(verifyUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ otp: otpValue })
+            body: JSON.stringify({ otp: otpValue, companyName: window.c || "" })
         });
         const result = await response.json();
 
@@ -142,6 +147,10 @@ async function verifyOtp() {
 
         setStatus('OTP verified. You may continue.', 'info');
         resendBtn.disabled = true;
+        resendCountdown.textContent = '';
+        clearInterval(cooldownTimer);
+
+        window.location.href = '/terminals?token=' + token;
     } catch (error) {
         verifyBtn.disabled = false;
         setStatus(error.message, 'error');

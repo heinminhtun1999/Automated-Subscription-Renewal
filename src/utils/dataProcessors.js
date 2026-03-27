@@ -33,7 +33,7 @@ function formatSheetData(rows, sheet) {
     return formattedData;
 }
 
-function filterByDate(data, endDateColumn, renewalEndDateColumn, daysBefore) {
+function filterByDate(data, endDateColumn, renewalEndDateColumn, daysBefore, includeExpired = false) {
     return data.filter(row => {
 
         if (!row[endDateColumn] || !row[renewalEndDateColumn]) return false;
@@ -56,7 +56,7 @@ function filterByDate(data, endDateColumn, renewalEndDateColumn, daysBefore) {
 
         const isEndValid =
             !isNaN(endDate) &&
-            remainingEndDate >= 0 &&
+            (remainingEndDate >= 0 || includeExpired) &&
             remainingEndDate <= daysBefore;
 
         if (isEndValid) return true;
@@ -65,7 +65,7 @@ function filterByDate(data, endDateColumn, renewalEndDateColumn, daysBefore) {
         // If already notified, notify again only on every 7th day. 
         const isRenewalValid =
             !isNaN(renewalEndDate) &&
-            remainingRenewalEndDate >= 0 &&
+            (remainingRenewalEndDate >= 0 || includeExpired) &&
             remainingRenewalEndDate <= daysBefore;
 
         if (isRenewalValid) return true;
@@ -90,17 +90,17 @@ function separateNotified(data, notifiedColumn) {
     return { notNotified, alreadyNotified };
 }
 
-function groupByCID(data) {
+function groupByCompany(data) {
     const groupedData = {};
 
     for (const row of data) {
-        const cid = row['CID'].value;
+        const company = row['Company Name'].value;
 
-        if (!groupedData[cid]) {
-            groupedData[cid] = [];
-            groupedData[cid].push(row);
+        if (!groupedData[company]) {
+            groupedData[company] = [];
+            groupedData[company].push(row);
         } else {
-            groupedData[cid].push(row);
+            groupedData[company].push(row);
         }
     }
     return groupedData;
@@ -130,33 +130,45 @@ function isValidEmail(email) {
 
 
 // Build the renewal reminder buckets for a sheet based on 45-day and 7-day windows.
-function runDatePipeline(rows, endDateColumn, renewalEndDateColumn) {
-    const within45Days = filterByDate(rows, endDateColumn, renewalEndDateColumn, FIRST_EMAIL_DUE_DAYS);
+function runDatePipeline(rows, endDateColumn, renewalEndDateColumn, includeExpired = false) {
+    const within45Days = filterByDate(rows, endDateColumn, renewalEndDateColumn, FIRST_EMAIL_DUE_DAYS, includeExpired);
     const { notNotified: firstEmailNotNotified, alreadyNotified: firstEmailNotified } =
         separateNotified(within45Days, 'First Email Sent');
 
-    const within7Days = filterByDate(firstEmailNotified, endDateColumn, renewalEndDateColumn, SECOND_EMAIL_DUE_DAYS);
+    const within7Days = filterByDate(firstEmailNotified, endDateColumn, renewalEndDateColumn, SECOND_EMAIL_DUE_DAYS, includeExpired);
     const { notNotified: secondEmailNotNotified } = separateNotified(within7Days, 'Second Email Sent');
 
-    return { firstEmailNotNotified, secondEmailNotNotified };
+    return { firstEmailNotNotified, firstEmailNotified, secondEmailNotNotified };
 }
 
-function getCombinedPipelineByDueDate(data) {
+function getCombinedPipelineByDueDate(data, includeExpired = false, fieldsToInclude = []) {
     const sheetPipelines = SHEET_CONFIGS.map((config, index) => {
         // Create a per-sheet pipeline so each sheet uses its own date columns.
         const formatted = formatSheetData(data[index].values, config.sheetKey);
-        return runDatePipeline(formatted, config.endDateColumn, config.renewalEndDateColumn);
+        return runDatePipeline(formatted, config.endDateColumn, config.renewalEndDateColumn, includeExpired);
     });
+    // console.log('sheetPipelines', sheetPipelines);
     return sheetPipelines.flatMap((pipeline) => [
-        ...pipeline.firstEmailNotNotified,
-        ...pipeline.secondEmailNotNotified
+        ...fieldsToInclude.flatMap((field) => pipeline[field]),
     ]);
 }
 
+function uid(recipient) {
+    if (recipient['Sheet Name'] === 'beep') {
+        return recipient['UID'].value;
+    } else if (recipient['Sheet Name'] === 'mi20') {
+        return recipient['TERMINAL-ID'].value;
+    } else if (recipient['Sheet Name'] === 'arvdn') {
+        return recipient['Machine ID'].value;
+    } else {
+        return recipient['TID'].value;
+    }
+}
 
 module.exports = {
     runDatePipeline,
     getCombinedPipelineByDueDate,
-    groupByCID,
-    separateNotified
+    groupByCompany,
+    separateNotified,
+    uid
 };

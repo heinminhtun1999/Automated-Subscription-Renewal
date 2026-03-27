@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Vending | <%= title %></title>
+    <link rel="stylesheet" href="/css/error.css">
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="header">
+            <div class="header-content">
+                <img src="/images/ARV NEW LOGO.png" alt="AR Vending Logo" class="logo">
+                <div class="header-text">
+                    <h1 class="company-name">AR Vending</h1>
+                    <p class="subtitle">Subscription Renewal Management</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <main class="error-card">
+                <div class="status-block">
+                    <span class="status-code"><%= statusCode %></span>
+                    <span class="status-title"><%= title %></span>
+                </div>
+
+                <p class="message"><%= message %></p>
+
+                <% if (details) { %>
+                    <pre class="details"><%= details %></pre>
+                <% } %>
+            </main>
+
+            <div class="contact-section">
+                <h4 class="contact-title">Need Help?</h4>
+                <p class="contact-text">If any error occurs or you need assistance, please contact us:</p>
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <span class="contact-icon">📧</span>
+                        <a href="mailto:info@visolux.com.my">info@visolux.com.my</a>
+                    </div>
+                    <div class="contact-item">
+                        <span class="contact-icon">📞</span>
+                        <a href="tel:+60123456789">+60 12-253 1334</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2026 AR Vending Solutions. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+
+</html>
