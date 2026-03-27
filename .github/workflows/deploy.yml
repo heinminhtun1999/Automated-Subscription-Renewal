@@ -72,9 +72,6 @@ jobs:
           ssh $DEPLOY_USER@$DEPLOY_HOST << EOF
             cd $DEPLOY_PATH
             npm ci --only=production
-            if pm2 id "$PM2_NAME" > /dev/null 2>&1; then
-              pm2 reload "$PM2_NAME" --update-env || pm2 restart "$PM2_NAME" --update-env
-            else
+            pm2 reload "$PM2_NAME" --update-env > /dev/null 2>&1 || \
               NODE_ENV=$PM2_ENV PORT=4000 pm2 start src/index.js --name "$PM2_NAME"
-            fi
           EOF
