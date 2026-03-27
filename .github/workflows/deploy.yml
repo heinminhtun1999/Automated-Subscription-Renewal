@@ -72,9 +72,9 @@ jobs:
           ssh $DEPLOY_USER@$DEPLOY_HOST << EOF
             cd $DEPLOY_PATH
             npm ci --only=production
-            if pm2 describe "$PM2_NAME" > /dev/null 2>&1; then
+            if pm2 list --no-color | grep -q "\b$PM2_NAME\b"; then
               pm2 reload "$PM2_NAME"
-            elif pm2 describe "Automated Subscription Renewal" > /dev/null 2>&1; then
+            elif pm2 list --no-color | grep -q "Automated Subscription Renewal"; then
               pm2 rename "Automated Subscription Renewal" "$PM2_NAME"
               pm2 reload "$PM2_NAME"
             else
