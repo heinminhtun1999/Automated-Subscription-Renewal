@@ -307,7 +307,7 @@ async function paymentCallback(req, res) {
                     process_status: 'pending',
                     failed_remark: null
                 };
-                updateOrder(existingOrder.order_id, existingOrder.company_name, existingOrder.email, { ...existingOrder });
+                updateOrder(existingOrder.order_id, existingOrder.company_name, existingOrder.email, rollbackData);
             } catch (dbUpdateRollBackError) {
                 logger.error('Critical Error: Failed to roll back order after callback processing failure:', dbUpdateRollBackError);
             }
@@ -326,6 +326,7 @@ async function paymentCallback(req, res) {
                 }
             }
         }
+        logger.error('Rollback completed. Investigate the root cause of the failure and manually verify the order status and sheet data integrity.');
         return;
     }
 
