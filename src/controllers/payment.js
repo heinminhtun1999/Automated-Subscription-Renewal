@@ -277,7 +277,7 @@ async function paymentCallback(req, res) {
                     day: '2-digit',
                     month: 'short',
                     year: 'numeric'
-                });;
+                }).replace("'", "");
 
                 result = updateCellValue(dateNames.renewalEndDateColumn, terminal, dateString);
             } else if (endDate && new Date(endDate)) {
@@ -290,7 +290,7 @@ async function paymentCallback(req, res) {
                     day: '2-digit',
                     month: 'short',
                     year: 'numeric'
-                });;
+                }).replace("'", "");
 
                 result = updateCellValue(dateNames.endDateColumn, terminal, dateString);
             } else {
