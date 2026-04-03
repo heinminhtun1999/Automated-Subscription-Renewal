@@ -53,8 +53,8 @@ function updateOrder(orderId, companyName, email, updateFields, additionalCondit
     const filedCaluse = Object.keys(updateFields).
         map(key => `${key} = ?`).join(", ");
 
-    const conditionalClause = Object.keys(additionalConditions).
-        map(key => `${key} ?`).join(" AND ");
+    const conditionalClause = Object.keys(additionalConditions)
+        .map(key => `${key} = ?`).join(" AND ");
 
     const stmt = db.prepare(`
         UPDATE orders

@@ -244,7 +244,7 @@ async function paymentCallback(req, res) {
             failed_remark: body.error_code || body.error_desc ? `Error Code: ${body.error_code}, Error Description: ${body.error_desc}` : null
         }
 
-        updateOrder(existingOrder.order_id, existingOrder.company_name, existingOrder.email, updateData, { process_status: '= pending' });
+        updateOrder(existingOrder.order_id, existingOrder.company_name, existingOrder.email, updateData, { process_status: 'pending' });
 
         const groupedData = await getGroupedData(true, ["firstEmailNotNotified", "firstEmailNotified"]);
         const companyData = groupedData[existingOrder.company_name];
@@ -291,7 +291,7 @@ async function paymentCallback(req, res) {
             }
         }
 
-        updateOrder(existingOrder.order_id, existingOrder.company_name, existingOrder.email, { process_status: 'completed' }, { process_status: '= processing' });
+        updateOrder(existingOrder.order_id, existingOrder.company_name, existingOrder.email, { process_status: 'completed' }, { process_status: 'processing' });
 
     } catch (e) {
 
