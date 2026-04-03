@@ -321,11 +321,12 @@ async function paymentCallback(req, res) {
                     failed_remark: null
                 };
                 updateOrder(existingOrder.order_id, existingOrder.company_name, existingOrder.email, rollbackData);
+                logger.warn(`Order ${existingOrder.order_id} rolled back to pending status due to processing error.`);  
             } catch (dbUpdateRollBackError) {
                 logger.error('Critical Error: Failed to roll back order after callback processing failure:', dbUpdateRollBackError);
             }
         }
-
+        logger.info(updatedRows.length + ' sheet rows to roll back to original values. ', updatedRows);
         if (updatedRows.length > 0) {
             for (const row of updatedRows) {
                 try {
