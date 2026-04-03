@@ -1,5 +1,5 @@
 // Module Imports
-const { getCombinedPipelineByDueDate, groupByCompany } = require('../utils/dataProcessors');
+const { getGroupedData } = require('../utils/dataProcessors');
 const { prepareAndSendDueDateEmail } = require('../utils/services/nodemailer');
 const { getSheetData, getGroupedData } = require('../utils/services/sheets');
 const logger = require('../utils/services/winston');
