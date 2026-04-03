@@ -4,7 +4,7 @@ const statusConfig = {
         accentColor: '#28a745',
         icon: '✔',
         title: 'Payment Successful',
-        message: message || 'Your payment has been processed successfully. Thank you.',
+        message: 'Your payment has been processed successfully. Thank you.',
         amountLabel: 'Amount Paid',
         statusLabel: 'Completed'
     },
@@ -13,7 +13,7 @@ const statusConfig = {
         accentColor: '#dc3545',
         icon: 'X',
         title: 'Payment Failed',
-        message: message || 'We could not process your payment. Please try again or contact support.',
+        message: 'We could not process your payment. Please try again or contact support.',
         amountLabel: 'Amount',
         statusLabel: 'Failed'
     },
@@ -22,7 +22,7 @@ const statusConfig = {
         accentColor: '#f0ad4e',
         icon: '...',
         title: 'Payment Pending',
-        message: message || 'Your payment is still being processed. The status will be updated shortly. Please check again in a few minutes.',
+        message: 'Your payment is still being processed. The status will be updated shortly. Please check again in a few minutes.',
         amountLabel: 'Amount',
         statusLabel: 'Pending'
     },
@@ -31,7 +31,7 @@ const statusConfig = {
         accentColor: '#17a2b8',
         icon: '⏳',
         title: 'Order Processing',
-        message: message || 'Payment completed. We are processing your order. Please check back shortly for the final status.',
+        message: 'Payment completed. We are processing your order. Please check back shortly for the final status.',
         amountLabel: 'Amount',
         statusLabel: 'Processing'
     },
@@ -40,7 +40,7 @@ const statusConfig = {
         accentColor: '#17a2b8',
         icon: 'R',
         title: 'Payment Refunded',
-        message: message || 'Your payment has been refunded. The funds will return to your original payment method in a few business days.',
+        message: 'Your payment has been refunded. The funds will return to your original payment method in a few business days.',
         amountLabel: 'Amount',
         statusLabel: 'Refunded'
     },
@@ -49,7 +49,7 @@ const statusConfig = {
         accentColor: '#dc3545',
         icon: '!',
         title: 'Processing Error',
-        message: message || 'An error occurred while processing your order. Please contact support with your order information for assistance.',
+        message: 'An error occurred while processing your order. Please contact support with your order information for assistance.',
         amountLabel: 'Amount',
         statusLabel: 'Error'
     }
