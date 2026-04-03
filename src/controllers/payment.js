@@ -8,6 +8,7 @@ const { validateSkey, checkRequiredFields } = require("../utils/utils");
 const { updateCellValue } = require("../utils/services/sheets");
 const logger = require("../utils/services/winston");
 const db = require("../db/db");
+const { log } = require("winston");
 
 // Build payment request, persist order + items, and redirect to gateway.
 async function requestPayment(req, res, next) {
@@ -203,7 +204,7 @@ async function paymentCallback(req, res) {
 
     let existingOrder;
     const updatedRows = [];
-    console.log('Processing payment callback for Order ID:', body.orderid, 'Transaction ID:', body.tranID); 
+    console.log('Processing payment callback for Order ID:', body.orderid, 'Transaction ID:', body.tranID);
     try {
         existingOrder = getOrderWithItems(body.orderid, body.tranID);
 
@@ -272,14 +273,26 @@ async function paymentCallback(req, res) {
 
                 const newDate = new Date(renewalEndDate.value);
                 newDate.setFullYear(newDate.getFullYear() + 1);
-                result = updateCellValue(dateNames.renewalEndDateColumn, terminal, newDate.toISOString().split('T')[0]);
+                const dateString = newDate.toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                });;
+
+                result = updateCellValue(dateNames.renewalEndDateColumn, terminal, dateString);
             } else if (endDate && new Date(endDate)) {
                 affectedRow.oldValue = endDate.value;
                 affectedRow.dateType = dateNames.endDate;
 
                 const newDate = new Date(endDate.value);
                 newDate.setFullYear(newDate.getFullYear() + 1);
-                result = updateCellValue(dateNames.endDateColumn, terminal, newDate.toISOString().split('T')[0]);
+                const dateString = newDate.toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                });;
+
+                result = updateCellValue(dateNames.endDateColumn, terminal, dateString);
             } else {
                 throw new Error(`Sheet Error: No valid date found for terminal ${terminal['Company Name'].value} - ${terminal['Sheet Name']} - ${uid(terminal)}. Manual intervention required to update the renewal date.`);
             }
@@ -287,7 +300,7 @@ async function paymentCallback(req, res) {
             if (result.ok) {
                 updatedRows.push(affectedRow);
             } else {
-                throw new Error(`Sheet Error: renewal date update failed,\n${result.error}`);
+                throw new Error(`Sheet Error: date update failed,\n${result.error}`);
             }
         }
 
@@ -317,8 +330,9 @@ async function paymentCallback(req, res) {
             for (const row of updatedRows) {
                 try {
                     const rollbackResult = updateCellValue(row.dateType, row.recipient, row.oldValue);
+                    logger.warn(`Rolled back sheet update for ${row.recipient['Company Name'].value} - ${row.recipient['Sheet Name']} - ${uid(row.recipient)} to old value: ${row.oldValue}`);
                     if (!rollbackResult.ok) {
-                        logger.error(`Critical Error: Failed to roll back sheet update for ${row.recipient['Company Name'].value} - ${row.recipient['Sheet Name']} - ${uid(row.recipient)}:`, rollbackResult.error);
+                        throw new Error(`Critical Error: Failed to roll back sheet update for ${row.recipient['Company Name'].value} - ${row.recipient['Sheet Name']} - ${uid(row.recipient)}:\n${rollbackResult.error}`);
                     }
                 } catch (rollbackError) {
                     logger.error(`Critical Error: Failed to roll back sheet update for ${row.recipient['Company Name'].value} - ${row.recipient['Sheet Name']} - ${uid(row.recipient)}:`, rollbackError);
