@@ -203,7 +203,7 @@ async function paymentCallback(req, res) {
 
     let existingOrder;
     const updatedRows = [];
-
+    console.log('Processing payment callback for Order ID:', body.orderid, 'Transaction ID:', body.tranID); 
     try {
         existingOrder = getOrderWithItems(body.orderid, body.tranID);
 
