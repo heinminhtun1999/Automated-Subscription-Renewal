@@ -67,6 +67,7 @@ jobs:
           --exclude=".git" \
           --exclude="credentials.json" \
           --exclude=".env" \
+          --exclude="src/db/database.db*" \
           ./ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH
 
           ssh $DEPLOY_USER@$DEPLOY_HOST << EOF

@@ -63,7 +63,7 @@ function updateOrder(orderId, companyName, email, updateFields, additionalCondit
         ${conditionalClause ? " AND " + conditionalClause : ""}
     `);
 
-    const info = stmt.run(...Object.values(updateFields), orderId, companyName, email);
+    const info = stmt.run(...Object.values(updateFields), orderId, companyName, email, ...Object.values(additionalConditions));
     return info;
 }
 
