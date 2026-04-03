@@ -70,7 +70,7 @@ async function requestPayment(req, res, next) {
             total: total
         }
 
-        const baseURL = req.protocol + '://' + req.get('host');
+        const baseURL = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`;
 
         const paymentBody = preparePaymentBody(bodyData, baseURL);
 

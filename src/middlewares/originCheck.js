@@ -1,6 +1,6 @@
 // Reject requests that do not match allowed origin or referer.
 function verifyOrigin(req, res, next) {
-    const allowedOrigins = process.env.ALLOWED_ORIGINS;
+    const allowedOrigins = process.env.PUBLIC_BASE_URL;
     
     const origin = req.headers.origin;
     const referer = req.headers.referer;
