@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= pageTitle %></title>
+    <link rel="icon" href="/images/ARV NEW LOGO.png">
+    <% if (cssFile) { %>
+        <link rel="stylesheet" href="<%= cssFile %>">
+    <% } %>
+    <% if (headContent) { %>
+        <%- headContent %>
+    <% } %>
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="header">
+            <div class="header-content">
+                <img src="/images/ARV NEW LOGO.png" alt="AR Vending Logo" class="logo">
+                <div class="header-text">
+                    <h1 class="company-name">AR Vending</h1>
+                    <p class="subtitle">Subscription Renewal Management</p>
+                </div>
+            </div>
+        </div>

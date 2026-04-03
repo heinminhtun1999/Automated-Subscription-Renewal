@@ -1,24 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Vending | Payment Cancelled</title>
-    <link rel="stylesheet" href="/css/cancel.css">
-</head>
-
-<body>
-    <div class="wrapper">
-        <div class="header">
-            <div class="header-content">
-                <img src="/images/ARV NEW LOGO.png" alt="AR Vending Logo" class="logo">
-                <div class="header-text">
-                    <h1 class="company-name">AR Vending</h1>
-                    <p class="subtitle">Subscription Renewal Management</p>
-                </div>
-            </div>
-        </div>
+<%- include('partials/header', { pageTitle: 'AR Vending | Payment Cancelled', cssFile: '/css/cancel.css' }) %>
 
         <div class="container">
             <div class="status-card cancelled">
@@ -52,10 +32,4 @@
             </div>
         </div>
 
-        <div class="footer">
-            <p>(c) 2026 AR Vending Solutions. All rights reserved.</p>
-        </div>
-    </div>
-</body>
-
-</html>
+<%- include('partials/footer') %>

@@ -1,28 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Vending | Payment Status</title>
-    <link rel="stylesheet" href="/css/return.css">
-    <script>
-        const data = '<%- JSON.stringify(data || {}) %>';
-    </script>
-</head>
-
-<body>
-    <div class="wrapper">
-        <!-- Header Section -->
-        <div class="header">
-            <div class="header-content">
-                <img src="/images/ARV NEW LOGO.png" alt="AR Vending Logo" class="logo">
-                <div class="header-text">
-                    <h1 class="company-name">AR Vending</h1>
-                    <p class="subtitle">Subscription Renewal Management</p>
-                </div>
-            </div>
-        </div>
+<%- include('partials/header', {
+    pageTitle: 'AR Vending | Payment Status',
+    cssFile: '/css/return.css',
+    headContent: '<script>\n    const data = ' + JSON.stringify(JSON.stringify(data || {})) + ';\n</script>'
+}) %>
 
         <div class="container">
             <%
@@ -162,11 +142,4 @@
             </div>
         </div>
 
-        <!-- Footer -->
-        <div class="footer">
-            <p>&copy; 2026 AR Vending Solutions. All rights reserved.</p>
-        </div>
-    </div>
-</body>
-<script src = "/js/return.js"></script>
-</html>
+<%- include('partials/footer', { scripts: ['/js/return.js'] }) %>

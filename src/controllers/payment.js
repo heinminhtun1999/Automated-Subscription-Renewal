@@ -295,6 +295,8 @@ async function paymentCallback(req, res) {
 
     } catch (e) {
 
+        logger.error('Initiating rollback due to error in payment callback processing:', e);
+
         if (existingOrder) {
             try {
                 const rollbackData = {

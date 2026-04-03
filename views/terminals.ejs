@@ -1,25 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Vending | Select Terminals for Renewal</title>
-    <link rel="stylesheet" href="/css/terminals.css">
-</head>
-
-<body>
-    <div class="wrapper">
-        <!-- Header Section -->
-        <div class="header">
-            <div class="header-content">
-                <img src="/images/ARV NEW LOGO.png" alt="AR Vending Logo" class="logo">
-                <div class="header-text">
-                    <h1 class="company-name">AR Vending</h1>
-                    <p class="subtitle">Subscription Renewal Management</p>
-                </div>
-            </div>
-        </div>
+<%- include('partials/header', { pageTitle: 'AR Vending | Select Terminals for Renewal', cssFile: '/css/terminals.css' }) %>
 
         <div class="container">
 
@@ -128,13 +107,4 @@
                         </div>
         </div>
 
-        <!-- Footer -->
-        <div class="footer">
-            <p>&copy; 2026 AR Vending Solutions. All rights reserved.</p>
-        </div>
-    </div>
-
-    <script src="/js/terminals.js"></script>
-</body>
-
-</html>
+<%- include('partials/footer', { scripts: ['/js/terminals.js'] }) %>

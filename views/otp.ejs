@@ -1,27 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Vending | Verify OTP</title>
-    <link rel="stylesheet" href="/css/otp.css">
-    <script>
-        window.c = '<%= companyName %>'
-    </script>
-</head>
-
-<body>
-    <div class="wrapper">
-        <div class="header">
-            <div class="header-content">
-                <img src="/images/ARV NEW LOGO.png" alt="AR Vending Logo" class="logo">
-                <div class="header-text">
-                    <h1 class="company-name">AR Vending</h1>
-                    <p class="subtitle">Subscription Renewal Management</p>
-                </div>
-            </div>
-        </div>
+<%- include('partials/header', {
+    pageTitle: 'AR Vending | Verify OTP',
+    cssFile: '/css/otp.css',
+    headContent: '<script>\n    window.c = ' + JSON.stringify(companyName) + '\n</script>'
+}) %>
 
         <div class="container">
             <div class="otp-card" id="otp-card"
@@ -98,12 +79,4 @@
             </div>
         </div>
 
-        <div class="footer">
-            <p>&copy; 2026 AR Vending Solutions. All rights reserved.</p>
-        </div>
-    </div>
-
-    <script src="/js/otp.js"></script>
-</body>
-
-</html>
+<%- include('partials/footer', { scripts: ['/js/otp.js'] }) %>
