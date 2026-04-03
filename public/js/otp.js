@@ -1,3 +1,4 @@
+// Cache DOM references for OTP workflow.
 const otpCard = document.getElementById('otp-card');
 const requestBtn = document.getElementById('request-otp-btn');
 const verifyBtn = document.getElementById('verify-otp-btn');
@@ -17,24 +18,28 @@ const requestUrl = otpCard?.dataset.requestUrl || '/request-otp';
 const verifyUrl = otpCard?.dataset.verifyUrl || '/verify-otp';
 const token = otpCard?.dataset.token || '';
 
+// Format seconds as mm:ss.
 function formatCountdown(seconds) {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
+// Update status text with a tone-specific color.
 function setStatus(message, tone) {
     if (!statusEl) return;
     statusEl.textContent = message;
     statusEl.style.color = tone === 'error' ? '#b34a2a' : '#7f3b24';
 }
 
+// Reveal the OTP entry panel and focus the first input.
 function showOtpPanel() {
     if (!otpCard) return;
     otpCard.classList.add('show-otp');
     if (otpInputs[0]) otpInputs[0].focus();
 }
 
+// Start resend cooldown timer and update UI.
 function startCooldown() {
     cooldownRemaining = REQUEST_COOLDOWN_SECONDS;
     resendBtn.disabled = true;
@@ -53,6 +58,7 @@ function startCooldown() {
     }, 1000);
 }
 
+// Clear OTP inputs and disable verify until filled.
 function resetOtpInputs() {
     otpInputs.forEach(input => {
         input.value = '';
@@ -60,10 +66,12 @@ function resetOtpInputs() {
     verifyBtn.disabled = true;
 }
 
+// Combine all OTP input values into a single string.
 function getOtpValue() {
     return otpInputs.map(input => input.value).join('');
 }
 
+// Allow only digits and auto-advance between fields.
 function handleInput(event, index) {
     const value = event.target.value.replace(/\D/g, '');
     event.target.value = value;
@@ -75,12 +83,14 @@ function handleInput(event, index) {
     verifyBtn.disabled = getOtpValue().length !== otpInputs.length;
 }
 
+// Move focus back on backspace when field is empty.
 function handleKeyDown(event, index) {
     if (event.key === 'Backspace' && !event.target.value && otpInputs[index - 1]) {
         otpInputs[index - 1].focus();
     }
 }
 
+// Paste a full OTP across inputs.
 function handlePaste(event) {
     const pasted = (event.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, otpInputs.length);
     if (!pasted) return;
@@ -95,21 +105,28 @@ function handlePaste(event) {
     event.preventDefault();
 }
 
+// Request a new OTP from the server and start cooldown.
 async function requestOtp() {
     requestBtn.disabled = true;
     resendBtn.disabled = true;
     setStatus('Sending OTP to your email...', 'info');
 
     try {
-        const response = await fetch(requestUrl, 
-            { 
+        const response = await fetch(requestUrl,
+            {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     "companyName": window.c || ""
                 })
-              });
-        const result = await response.json();
+            });
+
+        let result;
+        try {
+            result = await response.json();
+        } catch (e) {
+            throw new Error('Unexpected response from server. Please try again.');
+        }
 
         if (!response.ok) {
             throw new Error(result.message || 'Failed to request OTP. Please try again.');
@@ -126,6 +143,7 @@ async function requestOtp() {
     }
 }
 
+// Verify OTP with server and redirect on success.
 async function verifyOtp() {
     const otpValue = getOtpValue();
     if (otpValue.length !== otpInputs.length) return;

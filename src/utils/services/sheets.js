@@ -10,6 +10,7 @@ const auth = new google.auth.GoogleAuth({
     scopes: SCOPES,
 });
 
+// Build an authenticated Sheets client.
 async function getSheetsClient() {
     return google.sheets({
         version: 'v4',
@@ -17,6 +18,7 @@ async function getSheetsClient() {
     });
 }
 
+// Fetch batch ranges for all configured sheets.
 async function getSheetData() {
     const sheets = await getSheetsClient();
     return await sheets.spreadsheets.values.batchGet({
@@ -25,6 +27,7 @@ async function getSheetData() {
     });
 }
 
+// Update a single sheet cell for a recipient row.
 async function updateCellValue(field, recipient, value) {
     const sheets = await getSheetsClient();
     const sheetName = SHEET_NAMES[recipient['Sheet Name']];
@@ -38,9 +41,9 @@ async function updateCellValue(field, recipient, value) {
             valueInputOption: 'RAW',
             resource: resource,
         });
-        return {ok: true, result};
+        return { ok: true, result };
     } catch (error) {
-        logger.error('Error updating cell value:', error );
+        logger.error('Error updating cell value:', error);
         return { ok: false, error };
     }
 

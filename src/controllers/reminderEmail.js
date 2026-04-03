@@ -1,20 +1,15 @@
 // Module Imports
 const { getCombinedPipelineByDueDate, groupByCompany } = require('../utils/dataProcessors');
 const { prepareAndSendDueDateEmail } = require('../utils/services/nodemailer');
-const { getSheetData } = require('../utils/services/sheets');
+const { getSheetData, getGroupedData } = require('../utils/services/sheets');
 const logger = require('../utils/services/winston');
 
+// Trigger reminder emails for upcoming renewals and return grouped data.
 const reminderEmailController = async (req, res) => {
 
     try {
-        const response = await getSheetData();
-        const data = response.data.valueRanges;
-
+        const groupedData = await getGroupedData(false, ["firstEmailNotNotified", "secondEmailNotNotified"]);
         
-        // Combine all the list of terminals which satisfy the criteria for sending email into one list, and group by company name to prepare for email sending.
-        const combinedData = getCombinedPipelineByDueDate(data, false, fieldsToInclude=["firstEmailNotNotified", "secondEmailNotNotified"]);
-
-        const groupedData = groupByCompany(combinedData);
         // Send email to the customers with the list of terminals that are due for renewal, 
         // and update the notified column in the sheet accordingly. 
         // If there is any failure in sending email, log the error and send a summary email to customer service.

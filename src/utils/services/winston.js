@@ -1,6 +1,7 @@
 const winston = require('winston');
 const DailyRotateFile = require('winston-daily-rotate-file');
 
+// Define custom log levels and colors.
 const customLevels = {
     levels: {
         error: 0,
@@ -18,6 +19,7 @@ const customLevels = {
     }
 }
 
+// Configure rotating file logs and console output.
 const logger = winston.createLogger({
     levels: customLevels.levels,
     format: winston.format.combine(
@@ -52,6 +54,7 @@ const logger = winston.createLogger({
     ]
 });
 
+// Register colors for console output.
 winston.addColors(customLevels.colors);
 
 module.exports = logger;

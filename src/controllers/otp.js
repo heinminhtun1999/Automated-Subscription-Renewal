@@ -1,10 +1,11 @@
-const { generateOTP, generateVCode } = require('../utils/utils');
+const { generateOTP, generateMd5 } = require('../utils/utils');
 const logger = require('../utils/services/winston');
 const { sendEmail } = require('../utils/services/nodemailer');
 const { otpTemplate } = require('../utils/htmlTemplates');
 const { getOTPEntry, insertOTPEntry, updateOTPEntry, deleteOTPEntry } = require('../repositories/otpRepository');
 
 
+// Generate OTP, rate-limit requests, send email, and persist OTP hash.
 async function generateAndStoreOTP(req, res) {
 
     const companyName = req.body.companyName;
@@ -17,10 +18,11 @@ async function generateAndStoreOTP(req, res) {
             message: 'Failed to request OTP. Please try refreshing the page.'
         });
     }
-    
+
     try {
 
-        const otpEntry = getOTPEntry({ companyName, email }) || {};
+        // Read existing OTP state for rate-limit and expiry checks.
+        let otpEntry = getOTPEntry({ companyName, email }) || {};
 
 
         const now = Date.now();
@@ -31,14 +33,17 @@ async function generateAndStoreOTP(req, res) {
             });
         }
 
+        // Clear stale block if time has passed.
         if (otpEntry.generate_blocked_until) {
             updateOTPEntry(companyName, email, otpEntry.id, { generate_blocked_until: null });
         }
 
+        // Reset attempts if previous OTP expired.
         if (otpEntry.expires_at && now > new Date(otpEntry.expires_at).getTime()) {
             updateOTPEntry(companyName, email, otpEntry.id, { generate_attempts: 0 });
         }
 
+        // Apply per-user request throttling.
         if (otpEntry.generate_attempts && otpEntry.generate_attempts >= 5) {
             updateOTPEntry(companyName, email, otpEntry.id,
                 {
@@ -54,36 +59,48 @@ async function generateAndStoreOTP(req, res) {
             });
         }
 
+        // Mask email address for UI display.
         const maskedEmail = email.replace(/(.{2}).+(@.+)/, '$1****$2');
         const otp = generateOTP();
-        const otpHash = generateVCode(otp);
+        const otpHash = generateMd5(otp);
 
         const emailBody = otpTemplate(maskedEmail, otp);
+        
+        const expires = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // OTP valid for 5 minutes
+
+        let otpId;
+
+        // Upsert OTP record (update if exists, insert if new).
+        if (Object.keys(otpEntry).length > 0) {
+            
+            const info = updateOTPEntry(companyName, email, otpEntry.id, {
+                code_hash: otpHash,
+                expires_at: expires, // OTP valid for 5 minutes
+                generate_attempts: otpEntry.generate_attempts + 1
+            });
+            otpId = info.lastInsertRowid;
+        } else {
+            const info = insertOTPEntry(companyName, email, otpHash, expires);
+            otpId = info.lastInsertRowid;
+        }
+        
         const response = await sendEmail(email, 'Your OTP Code', emailBody, 'OTP');
 
+        // Roll back OTP record if email delivery fails.
         if (!response.ok) {
-
-            throw new Error('Failed to send OTP email.' + (response.error ? `Error: ${response.error.message}` : 'No additional error information.'));
-
-        } else {
-
-            const expires = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // OTP valid for 5 minutes
-
-            if (Object.keys(otpEntry).length > 0) {
-                console.log("otpEntry:", otpEntry);
-                updateOTPEntry(companyName, email, otpEntry.id, {
-                    code_hash: otpHash,
-                    expires_at: expires, // OTP valid for 5 minutes
-                    generate_attempts: otpEntry.generate_attempts + 1
-                });
-
+            if (otpId > 0) {
+                deleteOTPEntry(companyName, email, otpId);
             } else {
-                insertOTPEntry(companyName, email, otpHash, expires);
+                updateOTPEntry(companyName, email, otpEntry.id, {
+                    ...otpEntry,
+                });
             }
-
-
-            return res.status(200).json({ success: true });
+            const err = new Error('Failed to send OTP email. Please try again later.\nIf the issue persists, contact support.');
+            throw err;
         }
+
+        return res.status(200).json({ success: true });
+
 
     } catch (e) {
         logger.error('Error occurred while preparing OTP: ', e);
@@ -94,6 +111,7 @@ async function generateAndStoreOTP(req, res) {
     }
 }
 
+// Validate OTP against stored hash with verification throttling.
 function verifyOTP(req, res) {
     const { otp, companyName } = req.body;
     const user = req.session?.users[companyName];
@@ -126,10 +144,12 @@ function verifyOTP(req, res) {
             });
         }
 
+        // Clear stale verification block if time has passed.
         if (otpEntry.verify_blocked_until) {
             updateOTPEntry(companyName, email, otpEntry.id, { verify_blocked_until: null });
         }
 
+        // Apply verification throttling after repeated failures.
         if (otpEntry.verify_attempts && otpEntry.verify_attempts >= 5) {
             updateOTPEntry(companyName, email, otpEntry.id,
                 {
@@ -144,6 +164,7 @@ function verifyOTP(req, res) {
             });
         }
 
+        // Reject expired OTPs and count as a failed attempt.
         if (now > new Date(otpEntry.expires_at).getTime()) {
             updateOTPEntry(companyName, email, otpEntry.id, { verify_attempts: otpEntry.verify_attempts + 1 });
 
@@ -153,7 +174,8 @@ function verifyOTP(req, res) {
             });
         }
 
-        if (generateVCode(otp) !== otpEntry.code_hash) {
+        // Compare hashed OTP values to avoid storing plaintext.
+        if (generateMd5(otp) !== otpEntry.code_hash) {
             updateOTPEntry(companyName, email, otpEntry.id, { verify_attempts: otpEntry.verify_attempts + 1 });
             return res.status(400).json({
                 success: false,
@@ -161,6 +183,7 @@ function verifyOTP(req, res) {
             });
         }
 
+        // Mark the session as verified and remove OTP record.
         user.isVerified = true;
 
         deleteOTPEntry(companyName, email, otpEntry.id);

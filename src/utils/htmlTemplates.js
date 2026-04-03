@@ -1,3 +1,4 @@
+// Email template for renewal reminder with CTA link.
 const dueDateTemplate = (selectionLink, numTerminals) => `<!DOCTYPE html>
 <html>
 <body style="margin:0; padding:0; background-color:#f4f6f8; font-family: Arial, sans-serif; color:#333333;">
@@ -87,6 +88,7 @@ const dueDateTemplate = (selectionLink, numTerminals) => `<!DOCTYPE html>
 </body>
 </html>`;
 
+// Email template listing failed reminder deliveries.
 const failListTemplate = (failedRecipients) => `<!DOCTYPE html>
 <html>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333333; margin: 0; padding: 0;">
@@ -123,6 +125,7 @@ const failListTemplate = (failedRecipients) => `<!DOCTYPE html>
 
 
 
+// Email template for OTP delivery.
 const otpTemplate = (maskedEmail, otpCode) => `<!DOCTYPE html>
 <html>
 <body style="margin:0; padding:0; background-color:#f4f6f8; font-family: Arial, sans-serif; color:#333333;">
@@ -178,4 +181,133 @@ const otpTemplate = (maskedEmail, otpCode) => `<!DOCTYPE html>
 </body>
 </html>`;
 
-module.exports = { dueDateTemplate, failListTemplate, otpTemplate };
+
+// HTML page that auto-submits payment form to the gateway.
+const redirectTemplate = (hiddenInputs) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redirecting to Payment</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            background-color: #f4f6f8;
+            font-family: Arial, sans-serif;
+            color: #333333;
+        }
+
+        .card {
+            width: min(520px, 92vw);
+            background: #ffffff;
+            border: 1px solid #e5e5e5;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+            text-align: center;
+        }
+
+        .card-header {
+            background-color: #0d6efd;
+            padding: 18px 24px;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .card-body {
+            padding: 28px 32px 30px;
+        }
+
+        .spinner {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 4px solid #d6e4ff;
+            border-top-color: #0d6efd;
+            margin: 4px auto 16px;
+            animation: spin 0.9s linear infinite;
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            font-size: 20px;
+        }
+
+        p {
+            margin: 0 0 18px;
+            color: #666666;
+            line-height: 1.5;
+        }
+
+        .progress {
+            position: relative;
+            height: 8px;
+            border-radius: 999px;
+            background: #eef3fb;
+            overflow: hidden;
+            margin: 0 8px;
+        }
+
+        .progress::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, #0d6efd, #6ea8fe);
+            transform: translateX(-100%);
+            animation: slide 1.6s ease-in-out infinite;
+        }
+
+        .note {
+            margin-top: 14px;
+            font-size: 13px;
+            color: #888888;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes slide {
+            0% {
+                transform: translateX(-100%);
+            }
+            50% {
+                transform: translateX(0%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-header">Subscription Renewal</div>
+        <div class="card-body">
+            <div class="spinner"></div>
+            <h1>Redirecting to Payment</h1>
+            <p>Please wait while we securely connect you to the payment gateway.</p>
+            <div class="progress"></div>
+            <div class="note">This should only take a moment.</div>
+            <form id="paymentForm" action="${process.env.PAYMENT_URL}" method="POST">
+                ${hiddenInputs.join('\n')}
+            </form>
+        </div>
+    </div>
+</body>
+<script>
+    document.getElementById('paymentForm').submit();
+</script>
+</html>`;
+
+module.exports = { dueDateTemplate, failListTemplate, otpTemplate, redirectTemplate };

@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Vending | <%= title %></title>
-    <link rel="stylesheet" href="/css/error.css">
+    <title>AR Vending | Payment Cancelled</title>
+    <link rel="stylesheet" href="/css/cancel.css">
 </head>
 
 <body>
@@ -21,18 +21,20 @@
         </div>
 
         <div class="container">
-            <main class="error-card">
-                <div class="status-block">
-                    <span class="status-code"><%= statusCode %></span>
-                    <span class="status-title"><%= title %></span>
+            <div class="status-card cancelled">
+                <div class="icon">!</div>
+
+                <h1>Payment Cancelled</h1>
+                <p class="status-message">Your payment was cancelled and no charges were made.</p>
+
+                <div class="details">
+                    <div class="detail-row">
+                        <span class="detail-label">Status</span>
+                        <strong class="detail-value">Cancelled</strong>
+                    </div>
                 </div>
 
-                <p class="message"><%= message %></p>
-
-                <% if (details) { %>
-                    <pre class="details"><%= details %></pre>
-                <% } %>
-            </main>
+            </div>
 
             <div class="contact-section">
                 <h4 class="contact-title">Need Help?</h4>
@@ -51,7 +53,7 @@
         </div>
 
         <div class="footer">
-            <p>&copy; 2026 AR Vending Solutions. All rights reserved.</p>
+            <p>(c) 2026 AR Vending Solutions. All rights reserved.</p>
         </div>
     </div>
 </body>

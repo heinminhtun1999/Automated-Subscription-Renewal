@@ -26,6 +26,7 @@ const reminderTransporter = nodemailer.createTransport({
     },
 });
 
+// Secondary transporter for non-reminder emails.
 const otherTransporter = nodemailer.createTransport({
     host: process.env.smtpHost,
     port: process.env.smtpPort,
@@ -45,6 +46,7 @@ const otherTransporter = nodemailer.createTransport({
 
 
 
+// Send due-date reminders and update sheet notification flags.
 async function prepareAndSendDueDateEmail(combinedData, baseUrl) {
     const failedEmails = [];
     for (const companyName in combinedData) {
@@ -137,6 +139,7 @@ async function prepareAndSendDueDateEmail(combinedData, baseUrl) {
     return;
 }
 
+// Send an email via appropriate transporter and return status.
 async function sendEmail(to, subject, body, topic = 'General') {
     try {
 

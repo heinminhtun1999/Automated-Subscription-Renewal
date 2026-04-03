@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Vending | Check Payment Status</title>
+    <link rel="stylesheet" href="/css/status-check.css">
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="header">
+            <div class="header-content">
+                <img src="/images/ARV NEW LOGO.png" alt="AR Vending Logo" class="logo">
+                <div class="header-text">
+                    <h1 class="company-name">AR Vending</h1>
+                    <p class="subtitle">Subscription Renewal Management</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="status-card pending">
+                <div class="icon">?</div>
+                <h1>Check Payment Status</h1>
+                <p class="status-message">Enter your order ID to check the latest payment status.</p>
+
+                <form class="status-form" method="post" action="/check-status">
+                    <label class="input-label" for="order-id">Order ID</label>
+                    <div class="input-row">
+                        <input class="text-input" id="order-id" name="orderId" type="text"
+                            placeholder="e.g. 10293" required>
+                        <button class="btn btn-primary" type="submit">Check Status</button>
+                    </div>
+                </form>
+
+                <div class="status-result">
+                    <% if (status) { %>
+                        <div class="result-row">
+                            <span class="result-label">Order ID</span>
+                            <strong class="result-value"><%= status.orderId %></strong>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Status</span>
+                            <strong class="result-value"><%= status.state %></strong>
+                        </div>
+                        <% if (status.message) { %>
+                            <div class="result-note"><%= status.message %></div>
+                        <% } %>
+                    <% } else { %>
+                        <p class="result-placeholder">Status details will appear here.</p>
+                    <% } %>
+                </div>
+            </div>
+
+            <div class="contact-section">
+                <h4 class="contact-title">Need Help?</h4>
+                <p class="contact-text">If any error occurs or you need assistance, please contact us:</p>
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <span class="contact-icon">📧</span>
+                        <a href="mailto:customerservice@arvending.com.my">customerservice@arvending.com.my</a>
+                    </div>
+                    <div class="contact-item">
+                        <span class="contact-icon">📞</span>
+                        <a href="tel:+60123456789">+60 12-253 1334</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2026 AR Vending Solutions. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,5 +1,6 @@
 const path = require('path');
 
+// Map internal sheet keys to human-readable sheet names.
 const SHEET_NAMES = {
     'beep': 'UID Customer List',
     'mi20': 'MI20 UID Customer List',
@@ -8,13 +9,19 @@ const SHEET_NAMES = {
     'arvdn': 'ARVDN'
 };
 
+// Reverse lookup from sheet name to internal key.
+const REVERSED_SHEET_NAMES = Object.fromEntries(Object.entries(SHEET_NAMES).map(([key, value]) => [value, key]));
+
+// Sheet-specific date column configuration.
 const SHEET_CONFIGS = [
     { sheetKey: 'beep', endDateColumn: 'End Date', renewalEndDateColumn: 'Renewal End Date' },
-    { sheetKey: 'mi20', endDateColumn: 'Paysys End Date', renewalEndDateColumn: 'Arv Renewal End Date' },
+    { sheetKey: 'mi20', endDateColumn: 'Arv Renewal End Date', renewalEndDateColumn: 'Arv Renewal End Date' },
     { sheetKey: 'arv2.5', endDateColumn: 'End Date', renewalEndDateColumn: 'Renewal End Date' },
     { sheetKey: 'u20', endDateColumn: 'End Date', renewalEndDateColumn: 'Renewal End Date' },
     { sheetKey: 'arvdn', endDateColumn: 'End Date', renewalEndDateColumn: 'Renewal End Date' }
 ];
+
+
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -27,4 +34,23 @@ const RANGE = ['UID Customer List!A1:Z', 'MI20 UID Customer List!A1:Z', 'TID ARV
 const FIRST_EMAIL_DUE_DAYS = 45;
 const SECOND_EMAIL_DUE_DAYS = 7;
 
-module.exports = { SCOPES, CREDENTIALS_PATH, RANGE, ALPHABET, SHEET_NAMES, SHEET_CONFIGS, FIRST_EMAIL_DUE_DAYS, SECOND_EMAIL_DUE_DAYS };
+// Payment payload validation and status mapping.
+const PAYMENT_REQUIRED_FIELDS = ['tranID', 'orderid', 'status', 'amount', 'currency', 'paydate', 'skey'];
+const PAYMENT_STATUS = {
+    "00": "paid",
+    "11": "failed",
+    "22": "pending"
+};
+
+module.exports = {
+    SCOPES,
+    CREDENTIALS_PATH,
+    RANGE, ALPHABET,
+    SHEET_NAMES,
+    REVERSED_SHEET_NAMES,
+    SHEET_CONFIGS,
+    FIRST_EMAIL_DUE_DAYS,
+    SECOND_EMAIL_DUE_DAYS,
+    PAYMENT_STATUS,
+    PAYMENT_REQUIRED_FIELDS
+};

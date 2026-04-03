@@ -9,12 +9,13 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 // Import Controllers
 const reminderEmailController = require('./controllers/reminderEmail');
 const terminalsController = require('./controllers/terminals');
-const paymentController = require('./controllers/payment');
+const { requestPayment, paymentReturn, paymentCancel, renderPamentCheckerPage, paymentCallback } = require('./controllers/payment');
 const { generateAndStoreOTP, verifyOTP } = require('./controllers/otp');
+const { getOrderInfo } = require('./controllers/orders');
 
 // Import Middlewares
 const { verifySession } = require('./middlewares/verifySession');
-const e = require('express');
+const verifyOrigin = require('./middlewares/originCheck');
 
 // Import Utilities
 const logger = require('./utils/services/winston');
@@ -29,25 +30,38 @@ app.use(express.json());
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     rolling: true, // Reset maxAge on every response
-    cookie: { secure: process.env.NODE_ENV === 'production' ? true : false, maxAge: 60000 * 60 } // 1 hour
+    cookie: {
+        secure: process.env.NODE_ENV === 'production' ? true : false,
+        maxAge: 60000 * 60, // 1 hour
+        secure: process.env.NODE_ENV === 'production' ? true : false,
+        sameSite: 'strict' // 
+    }
 }));
 
 // Routes
 app.get('/send-email', reminderEmailController);
 
-app.get("/terminals", verifySession, terminalsController);
+// Require verified session to access terminal list.
+app.get('/terminals', verifySession, terminalsController);
 
-app.get('/return', (req, res) => {
-    res.render('return', { query: req.query });
-});
+// OTP requests and payment initiation require origin checks.
+app.post('/payment', verifyOrigin, requestPayment);
 
-app.post('/payment', paymentController);
+app.post('/return', paymentReturn);
 
-app.post('/request-otp', generateAndStoreOTP);
+app.post('/callback', paymentCallback);
 
-app.post('/verify-otp', verifyOTP);
+app.get('/cancel', paymentCancel);
+
+app.get('/payment-status', renderPamentCheckerPage);
+
+app.get('/get-order-info', getOrderInfo);
+
+app.post('/request-otp', verifyOrigin, generateAndStoreOTP);
+
+app.post('/verify-otp', verifyOrigin, verifyOTP);
 
 // 404 handler
 app.use((req, res) => {
@@ -61,7 +75,6 @@ app.use((req, res) => {
 
 // Error handler
 app.use((err, req, res, next) => {
-    logger.error('An error occurred:', err);
     const statusCode = err.status || 500;
     const message = err.message || 'We ran into an unexpected issue while processing your request.';
     const title = err.title || 'Server Error';
@@ -78,9 +91,8 @@ app.use((err, req, res, next) => {
 // TODO:: Implement email sending functionality with payment link (Partially done, bank offline transfer not done)
 // TODO:: Check for the payment completion and mark  (done)
 // TODO:: Setup cron job
-// TODO:: Create frontend for manual create payment link
 // TODO:: Implement offline banking transfer and verification
-// TODO:: Implement SQLite database to store the payment initiation status, payment completion status, and other relevant information
+// TODO:: Implement CSRF protection for POST routes
 
 // Start Server
 app.listen(port, () => {

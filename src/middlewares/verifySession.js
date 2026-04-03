@@ -1,8 +1,8 @@
-const { getSheetData } = require('../utils/services/sheets');
-const { getCombinedPipelineByDueDate, groupByCompany } = require('../utils/dataProcessors');
+const { getGroupedData } = require('../utils/dataProcessors');
 const { verifyJWT } = require('../utils/utils');
 const logger = require('../utils/services/winston');
 
+// Validate token, hydrate session user data, and gate OTP verification.
 async function verifySession(req, res, next) {
 
     const { token } = req.query;
@@ -28,14 +28,28 @@ async function verifySession(req, res, next) {
 
     const user = req.session.users ? req.session.users[companyName] : null;
 
-    
+    // For Development Only. Remove this block in production
+    // =======================================================
+    if (process.env.NODE_ENV === 'development') {
+        const groupedData = await getGroupedData(true, ["firstEmailNotNotified", "firstEmailNotified"]);
+        const companyData = groupedData[companyName];
+
+        const email = companyData?.length > 0 ? companyData[0]['Email Address'].value : originalEmail;
+        const maskedEmail = email.replace(/(.{2}).+(@.+)/, '$1****$2');
+
+        req.session.users = req.session.users || {};
+        req.session.users[companyName] = { isVerified: false, data: companyData, email };
+        return next();
+    }
+    // =======================================================
+
+
+
+    // If already verified, just ensure sheet data is present.
     if (user && user.isVerified) {
         try {
             if (!user.data) {
-                const sheetData = await getSheetData();
-                const combinedData = getCombinedPipelineByDueDate(sheetData.data.valueRanges, true, ["firstEmailNotNotified", "firstEmailNotified"]);
-                const groupedData = groupByCompany(combinedData);
-
+                const groupedData = await getGroupedData(true, ["firstEmailNotNotified", "firstEmailNotified"]);
                 const companyData = groupedData[companyName];
                 user.data = companyData;
             }
@@ -52,21 +66,14 @@ async function verifySession(req, res, next) {
     } else {
 
         try {
-            const sheetData = await getSheetData();
-            const combinedData = getCombinedPipelineByDueDate(sheetData.data.valueRanges, true, ["firstEmailNotNotified", "firstEmailNotified"]);
-            const groupedData = groupByCompany(combinedData);
+            const groupedData = await getGroupedData(true, ["firstEmailNotNotified", "firstEmailNotified"]);
             const companyData = groupedData[companyName];
-            
-            if (!companyData) {
-                const err = new Error("Company data not found for the provided token.");
-                err.status = 404;
-                return next(err);
-            }
 
-            const email = companyData.length > 0 ? companyData[0]['Email Address'].value : originalEmail;
+            const email = companyData?.length > 0 ? companyData[0]['Email Address'].value : originalEmail;
             const maskedEmail = email.replace(/(.{2}).+(@.+)/, '$1****$2');
 
             req.session.users = req.session.users || {};
+            // Store user data and render OTP page.
             req.session.users[companyName] = { isVerified: false, data: companyData, email };
             return res.render('otp', { companyName, token, maskedEmail });
         } catch (e) {

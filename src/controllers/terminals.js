@@ -1,9 +1,10 @@
-const {  verifyJWT } = require("../utils/utils");
+const { verifyJWT } = require("../utils/utils");
 const { uid } = require("../utils/dataProcessors");
 const { SHEET_CONFIGS } = require("../utils/constants");
 
+// Render terminal selection list for a verified company token.
 const terminalsController = async (req, res) => {
-    
+
     const { token } = req.query;
 
     if (!token) {
@@ -12,10 +13,11 @@ const terminalsController = async (req, res) => {
         return next(err);
     }
 
-    const { valid, decoded, error } = verifyJWT(token);
+    const { decoded } = verifyJWT(token);
 
     const data = req.session?.users[decoded.companyName]?.data || [];
 
+    // Friendly device names for UI display.
     const sheetMap = {
         'beep': 'Beep QR & E-Wallet Device',
         'mi20': 'MI20',
@@ -23,7 +25,8 @@ const terminalsController = async (req, res) => {
         'u20': 'U20',
         'arvdn': 'ARVDN Machine'
     }
-    
+
+    // Normalize sheet rows into UI-ready objects.
     const formattedData = data.map(item => {
         const deviceType = sheetMap[item['Sheet Name']];
         const terminalId = uid(item);
@@ -33,7 +36,10 @@ const terminalsController = async (req, res) => {
         const endDate = item[dateNames.endDateColumn].value || "N/A";
         const renewalEndDate = item[dateNames.renewalEndDateColumn].value || "N/A";
 
-        const timeLeft = endDate ? new Date(endDate).getTime() - Date.now() : new Date(renewalEndDate).getTime() - Date.now();
+        // Compute days remaining, favoring renewal end date when available.
+        const timeLeft = renewalEndDate && new Date(renewalEndDate) != 'Invalid Date' ?
+            new Date(renewalEndDate).getTime() - Date.now() :
+            endDate ? new Date(endDate).getTime() - Date.now() : 0; // Use renewal end date if available, otherwise use end date, if neither is available, set to 0
         const daysLeft = Math.ceil(timeLeft / (1000 * 60 * 60 * 24));
         const daysLeftText = daysLeft == 0 ? "Expires Today" : daysLeft < 0 ? "Expired" : `${daysLeft} day(s)`;
 

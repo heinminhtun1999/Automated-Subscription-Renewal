@@ -37,7 +37,7 @@ function updateSummary() {
 // Proceed to payment
 function proceedToPayment() {
     const selectedCards = document.querySelectorAll('.terminal-item.selected');
-    const customerName = document.getElementById('customer-name').textContent;
+    const companyName = document.getElementById('company-name').textContent.trim();
 
     if (selectedCards.length === 0) {
         alert('Please select at least one terminal before proceeding to payment.');
@@ -48,31 +48,31 @@ function proceedToPayment() {
     const selectedTerminals = Array.from(selectedCards).map(card => {
         return {
             terminalId: card.getAttribute('data-terminal-id'),
-            daysLeft: card.querySelector('.detail-col:nth-child(1) .value').textContent,
             renewalFee: card.querySelector('.amount').textContent
         }
     });
 
-    const totalFee = selectedTerminals.reduce((sum, terminal) => {
-        const fee = parseFloat(terminal.renewalFee.replace(/[^0-9.]/g, ''));
-        return sum + fee;
-    }, 0);
 
-
-
+    const terminalIds = selectedTerminals.map(t => t.terminalId);
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = '/payment';
     form.style.display = 'none';
 
-    // form.appendChild(createHiddenInput('selectedTerminals', JSON.stringify(selectedTerminals)));
+    form.appendChild(createHiddenInput('terminalIds', JSON.stringify(terminalIds)));
+    form.appendChild(createHiddenInput('companyName', companyName));
 
     document.body.appendChild(form);
     form.submit();
 }
 
-function createHiddenInput(value) {
-
+// Create a hidden input for the POST form.
+function createHiddenInput(name, value) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = name;
+    input.value = value;
+    return input;
 }
 
 // Initialize on page load
