@@ -296,7 +296,7 @@ async function paymentCallback(req, res) {
             } else {
                 throw new Error(`Sheet Error: No valid date found for terminal ${terminal['Company Name'].value} - ${terminal['Sheet Name']} - ${uid(terminal)}. Manual intervention required to update the renewal date.`);
             }
-
+            console.log(result, 'Sheet update result for terminal:', terminal['Company Name'].value, terminal['Sheet Name'], uid(terminal));
             if (result.ok) {
                 updatedRows.push(affectedRow);
             } else {
@@ -321,17 +321,17 @@ async function paymentCallback(req, res) {
                     failed_remark: null
                 };
                 updateOrder(existingOrder.order_id, existingOrder.company_name, existingOrder.email, rollbackData);
-                logger.warn(`Order ${existingOrder.order_id} rolled back to pending status due to processing error.`);  
+                logger.info(`Order status rolled back to pending for Order ID: ${existingOrder.order_id} after callback processing failure.`);
             } catch (dbUpdateRollBackError) {
                 logger.error('Critical Error: Failed to roll back order after callback processing failure:', dbUpdateRollBackError);
             }
         }
-        logger.info(updatedRows.length + ' sheet rows to roll back to original values. ', updatedRows);
+
         if (updatedRows.length > 0) {
             for (const row of updatedRows) {
                 try {
                     const rollbackResult = updateCellValue(row.dateType, row.recipient, row.oldValue);
-                    logger.warn(`Rolled back sheet update for ${row.recipient['Company Name'].value} - ${row.recipient['Sheet Name']} - ${uid(row.recipient)} to old value: ${row.oldValue}`);
+                    logger.info(`Rolled back sheet update for ${row.recipient['Company Name'].value} - ${row.recipient['Sheet Name']} - ${uid(row.recipient)} to old value: ${row.oldValue}`);
                     if (!rollbackResult.ok) {
                         throw new Error(`Critical Error: Failed to roll back sheet update for ${row.recipient['Company Name'].value} - ${row.recipient['Sheet Name']} - ${uid(row.recipient)}:\n${rollbackResult.error}`);
                     }
