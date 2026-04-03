@@ -277,9 +277,9 @@ async function paymentCallback(req, res) {
                     day: '2-digit',
                     month: 'short',
                     year: 'numeric'
-                }).replace("'", "");
+                }).replaceAll("'", "");
 
-                result = updateCellValue(dateNames.renewalEndDateColumn, terminal, dateString);
+                result = await updateCellValue(dateNames.renewalEndDateColumn, terminal, dateString);
             } else if (endDate && new Date(endDate)) {
                 affectedRow.oldValue = endDate.value;
                 affectedRow.dateType = dateNames.endDate;
@@ -290,9 +290,9 @@ async function paymentCallback(req, res) {
                     day: '2-digit',
                     month: 'short',
                     year: 'numeric'
-                }).replace("'", "");
+                }).replaceAll("'", "");
 
-                result = updateCellValue(dateNames.endDateColumn, terminal, dateString);
+                result = await updateCellValue(dateNames.endDateColumn, terminal, dateString);
             } else {
                 throw new Error(`Sheet Error: No valid date found for terminal ${terminal['Company Name'].value} - ${terminal['Sheet Name']} - ${uid(terminal)}. Manual intervention required to update the renewal date.`);
             }
