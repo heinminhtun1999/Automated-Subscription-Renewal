@@ -185,7 +185,7 @@ function paymentReturn(req, res, next) {
 // Handle server-to-server payment callback and update sheets.
 async function paymentCallback(req, res) {
     const body = req.body;
-
+    console.log('Received payment callback:', body);
     if (!body || Object.keys(body).length === 0) {
         return res.status(400).send('No data received');
     }

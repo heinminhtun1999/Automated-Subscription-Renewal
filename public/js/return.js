@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 result = await response.json();
-
+                console.log('Fetched order information:', result);
                 if (!result.success) {
                     throw new Error(result.message || 'Failed to retrieve order information.');
                 }
