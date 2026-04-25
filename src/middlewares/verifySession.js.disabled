@@ -29,18 +29,18 @@ async function verifySession(req, res, next) {
     const user = req.session.users ? req.session.users[companyName] : null;
 
     // For Development Only. Remove this block in production
-    // =======================================================
-    if (process.env.NODE_ENV === 'development') {
-        const groupedData = await getGroupedData(true, ["firstEmailNotNotified", "firstEmailNotified"]);
-        const companyData = groupedData[companyName];
+    // // =======================================================
+    // if (process.env.NODE_ENV === 'development') {
+    //     const groupedData = await getGroupedData(true, ["firstEmailNotNotified", "firstEmailNotified"]);
+    //     const companyData = groupedData[companyName];
 
-        const email = companyData?.length > 0 ? companyData[0]['Email Address'].value : originalEmail;
-        const maskedEmail = email.replace(/(.{2}).+(@.+)/, '$1****$2');
+    //     const email = companyData?.length > 0 ? companyData[0]['Email Address'].value : originalEmail;
+    //     const maskedEmail = email.replace(/(.{2}).+(@.+)/, '$1****$2');
 
-        req.session.users = req.session.users || {};
-        req.session.users[companyName] = { isVerified: false, data: companyData, email };
-        return next();
-    }
+    //     req.session.users = req.session.users || {};
+    //     req.session.users[companyName] = { isVerified: false, data: companyData, email };
+    //     return next();
+    // }
     // =======================================================
 
 

@@ -1,5 +1,5 @@
 const { verifyJWT } = require("../utils/utils");
-const { uid } = require("../utils/dataProcessors");
+const { uid, getGroupedData } = require("../utils/dataProcessors");
 const { SHEET_CONFIGS } = require("../utils/constants");
 
 // Render terminal selection list for a verified company token.
@@ -13,9 +13,22 @@ const terminalsController = async (req, res) => {
         return next(err);
     }
 
-    const { decoded } = verifyJWT(token);
+    const { valid, decoded, error } = verifyJWT(token);
 
-    const data = req.session?.users[decoded.companyName]?.data || [];
+    if (!valid) {
+        const err = new Error()
+        err.status = 401;
+        err.title = "Unauthorized"
+        err.details = error
+        err.message = "Unauthorized access. Invalid token provided."
+        return next(err);
+    }
+
+    const { companyName, originalEmail } = decoded;
+
+    const groupedData = await getGroupedData(true, ["firstEmailNotNotified", "firstEmailNotified"]);
+    const data = groupedData[companyName];
+    req.session.data = data; // Store company-specific data in session for later use during payment processing  
 
     // Friendly device names for UI display.
     const sheetMap = {

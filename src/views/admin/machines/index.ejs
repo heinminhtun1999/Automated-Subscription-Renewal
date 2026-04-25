@@ -1,0 +1,25 @@
+<%- include('../../partials/adminMainSection', { pageTitle: 'AR Vending | Admin Panel', activePage: 'machines', error: typeof error !== 'undefined' ? error : null, subTitle: 'Machines' }) %>
+
+<% if (typeof selectedMachineType !== 'undefined' && typeof selectedMachineType !== 'undefined') { %>
+    <script>
+        window.selectedMachineType = "<%= selectedMachineType %>";
+    </script>
+<% } %>
+<div class="py-4 px-14">
+    <div class="w-full h-full p-5 bg-white rounded-lg shadow-lg">
+        <div class="flex justify-start mb-6 gap-4">
+            <a href="/admin/machine-types/manage" class="px-3 py-1 text-white bg-emerald-400 rounded hover:bg-emerald-500 transition-colors duration-200 text-sm font-semibold">
+                <i class="fa-solid fa-plus fa-sm"></i> Manage Machine Types
+            </a>
+            <a href="/admin/machines/add" class="px-3 py-1 text-white bg-emerald-400 rounded hover:bg-emerald-500 transition-colors duration-200 text-sm font-semibold">
+                <i class="fa-solid fa-plus fa-sm"></i> Add New Machine
+            </a>
+        </div>
+        <div class="overflow-x-auto">
+            <table id="machinesTable" class="display nowrap !-z-1">
+                
+            </table>
+        </div>
+    </div>
+</div>
+<%- include('../../partials/adminFooter', {scripts: ['/js/adminMachines.js']}) %>

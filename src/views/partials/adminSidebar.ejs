@@ -1,0 +1,55 @@
+<div class="md:shadow-none w-[50%] md:w-max shadow-lg md:sticky fixed top-0 -left-full h-screen overflow-hidden group transition-all duration-300 ease-in-out z-30" id="admin-sidebar">
+    <div class="md:flex md:flex-column p-6 gap-4 items-center h-24 hidden">
+        <i class="fa-solid fa-bars fa-lg cursor-pointer hover:text-emerald-400" id="hamburger"></i>
+        <img src="/images/ARV NEW LOGO.png" alt="AR Vending Logo" class="w-24 group-[.collapsed]:max-w-0 group-[.collapsed]:opacity-0">
+    </div>
+    <div>
+        <ul class="flex flex-col gap-1 py-3 select-none">
+            <a href="/admin">
+                <li
+                    class="py-3 pl-6 rounded-r-3xl w-[90%] group-[.collapsed]:rounded-none h-12 text-sm hover:bg-gradient-to-r hover:from-emerald-400/50 hover:to-emerald-600/60 hover:text-white hover:shadow-sm hover:font-bold cursor-pointer <%=(activePage === 'home') ? 'bg-gradient-to-r from-emerald-400/50 to-emerald-600/60 shadow-sm font-bold text-white' : ''%> text-gray-600">
+                    <div class="flex flex-column gap-3 items-center">
+                        <i class="fa-solid fa-house"></i>
+                        <span class="inline-block transition-all duration-200 whitespace-nowrap overflow-hidden max-w-[140px] group-[.collapsed]:max-w-0 group-[.collapsed]:opacity-0">Home</span>
+                    </div>
+                </li>
+            </a>
+            <a href="/admin/customers">
+                <li
+                    class="py-3 pl-6 rounded-r-3xl w-[90%] group-[.collapsed]:rounded-none h-12 text-sm hover:bg-gradient-to-r hover:from-emerald-400/50 hover:to-emerald-600/60 hover:text-white hover:shadow-sm hover:font-bold cursor-pointer <%=(activePage === 'customers') ? 'bg-gradient-to-r from-emerald-400/50 to-emerald-600/60 shadow-sm font-bold text-white' : ''%> text-gray-600">
+                    <div class="flex flex-column gap-3 items-center">
+                        <i class="fa-solid fa-users"></i>
+                        <span class="inline-block transition-all duration-200 whitespace-nowrap overflow-hidden max-w-[140px] group-[.collapsed]:max-w-0 group-[.collapsed]:opacity-0">Customers</span>
+                    </div>
+                </li>
+            </a>
+            <a href="/admin/machines">
+                <li
+                    class="py-3 pl-6 rounded-r-3xl w-[90%] group-[.collapsed]:rounded-none h-12 text-sm hover:bg-gradient-to-r hover:from-emerald-400/50 hover:to-emerald-600/60 hover:text-white hover:shadow-sm hover:font-bold cursor-pointer <%=(activePage === 'machines') ? 'bg-gradient-to-r from-emerald-400/50 to-emerald-600/60 shadow-sm font-bold text-white' : ''%> text-gray-600">
+                    <div class="flex flex-column gap-3 items-center">
+                        <i class="fa-solid fa-desktop"></i>
+                        <span class="inline-block transition-all duration-200 whitespace-nowrap overflow-hidden max-w-[140px] group-[.collapsed]:max-w-0 group-[.collapsed]:opacity-0">Machines</span>
+                    </div>
+                </li>
+            </a>
+            <a href="/admin/emails-history">
+                <li
+                    class="py-3 pl-6 rounded-r-3xl w-[90%] group-[.collapsed]:rounded-none h-12 text-sm hover:bg-gradient-to-r hover:from-emerald-400/50 hover:to-emerald-600/60 hover:text-white hover:shadow-sm hover:font-bold cursor-pointer <%=(activePage === 'emails-history') ? 'bg-gradient-to-r from-emerald-400/50 to-emerald-600/60 shadow-sm font-bold text-white' : ''%> text-gray-600">
+                    <div class="flex flex-column gap-3 items-center">
+                        <i class="fa-solid fa-envelope"></i>
+                        <span class="inline-block transition-all duration-200 whitespace-nowrap overflow-hidden max-w-[140px] group-[.collapsed]:max-w-0 group-[.collapsed]:opacity-0">Emails History</span>
+                    </div>
+                </li>
+            </a>
+            <a href="/admin/orders">
+                <li
+                    class="py-3 pl-6 rounded-r-3xl w-[90%] group-[.collapsed]:rounded-none h-12 text-sm hover:bg-gradient-to-r hover:from-emerald-400/50 hover:to-emerald-600/60 hover:text-white hover:shadow-sm hover:font-bold cursor-pointer <%=(activePage === 'orders') ? 'bg-gradient-to-r from-emerald-400/50 to-emerald-600/60 shadow-sm font-bold text-white' : ''%> text-gray-600">
+                    <div class="flex flex-column gap-3 items-center">
+                        <i class="fa-solid fa-shopping-cart"></i>
+                        <span class="inline-block transition-all duration-200 whitespace-nowrap overflow-hidden max-w-[140px] group-[.collapsed]:max-w-0 group-[.collapsed]:opacity-0">Orders</span>
+                    </div>
+                </li>
+            </a>
+        </ul>
+    </div>
+</div>

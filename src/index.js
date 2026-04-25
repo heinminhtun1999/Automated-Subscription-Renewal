@@ -10,21 +10,48 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 const reminderEmailController = require('./controllers/reminderEmail');
 const terminalsController = require('./controllers/terminals');
 const { requestPayment, paymentReturn, paymentCancel, renderPamentCheckerPage, paymentCallback } = require('./controllers/payment');
-const { generateAndStoreOTP, verifyOTP } = require('./controllers/otp');
 const { getOrderInfo } = require('./controllers/orders');
+const { renderHomePage } = require('./controllers/admin');
+const { renderEmailHistoryPage } = require('./controllers/emailsHistory');
+const { renderAdminOrdersPage } = require('./controllers/adminOrders');
+const {
+    renderMachinesPage,
+    renderAddMachinePage,
+    renderEditMachinePage,
+    getAllMachineTypes,
+    getMachinesByType,
+    renderMachineTypesPage,
+    handleViewMachine,
+    handleAddMachine,
+    handleEditMachine,
+    handleDeleteMachine,
+    handleAddMachineType,
+    handleAddMachineTypeField,
+    handleUpdateMachineTypeFields,
+    handleDeleteMachineTypeField,
+    handleDeleteMachineType,
+    handleGetAllMachineTypesWithFields
+} = require('./controllers/machines');
+const {
+    renderCustomersPage,
+    renderAddCustomerPage,
+    renderEditCustomerPage,
+    handleEditCustomer,
+    handleAddCustomer,
+    handleViewCustomer,
+    handleDeleteCustomer
+} = require('./controllers/customers');
 
 // Import Middlewares
-const { verifySession } = require('./middlewares/verifySession');
 const verifyOrigin = require('./middlewares/originCheck');
-
-// Import Utilities
-const logger = require('./utils/services/winston');
+const { render } = require('ejs');
 
 // Server Setup
 const app = express();
 const port = process.env.PORT;
 app.use(express.static(path.join(process.cwd(), 'public')));
 app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(session({
@@ -34,17 +61,81 @@ app.use(session({
     rolling: true, // Reset maxAge on every response
     cookie: {
         secure: process.env.NODE_ENV === 'production' ? true : false,
-        maxAge: 60000 * 60, // 1 hour
-        secure: process.env.NODE_ENV === 'production' ? true : false,
         sameSite: 'strict' // 
     }
 }));
+app.use((req, res, next) => {
+    //  Initialize history array if it doesn't exist
+    if (!req.session.history) {
+        req.session.history = [];
+    }
+
+    // Push current URL to history, exclude certain routes like static files, API calls, and the back route itself to prevent cluttering the history
+    const currentUrl = req.originalUrl;
+    if (!currentUrl.startsWith('/api') && 
+    !currentUrl.startsWith('/admin/back') && 
+    !currentUrl.startsWith('/static') && 
+    !currentUrl.includes(".") &&
+    (!req.session.history[req.session.history.length - 1] !== currentUrl)) {
+        req.session.history.push(currentUrl);
+    }
+
+    if (req.session.history.length > 10) {
+        req.session.history.shift(); // Keep only the last 10 entries
+    }
+    next();
+})
+
+// ==== Admin Panel Routes ====
+
+// === Rendering Routes ===
+
+app.get('/admin', renderHomePage);
+
+// Customer Routes
+app.get('/admin/customers', renderCustomersPage);
+app.get('/admin/customers/add', renderAddCustomerPage);
+app.get('/admin/customers/:id', handleViewCustomer);
+app.get('/admin/customers/:id/edit', renderEditCustomerPage);
+
+// Machine Routes
+app.get('/admin/machines', renderMachinesPage);
+app.get('/admin/machines/add', renderAddMachinePage);
+app.get('/admin/machines/:id', handleViewMachine);
+app.get('/admin/machines/:id/edit', renderEditMachinePage);
+
+// Machine Type Routes
+app.get('/admin/machine-types/manage', renderMachineTypesPage);
+
+// Other Admin Routes
+app.get('/admin/emails-history', renderEmailHistoryPage);
+app.get('/admin/orders', renderAdminOrdersPage);
+
+// === API Routes ===
+app.get('/api/admin/machines/type/:id', getMachinesByType);
+app.get('/api/admin/machines/type/:id/fields', handleGetAllMachineTypesWithFields);
+app.get('/api/admin/get-machine-types', getAllMachineTypes);
+
+app.post('/api/admin/customers/add', verifyOrigin, handleAddCustomer);
+app.post('/api/admin/machines/add', verifyOrigin, handleAddMachine);
+app.post('/api/admin/machines/type/add', verifyOrigin, handleAddMachineType);
+app.post('/api/admin/machines/type/:id/fields/add', verifyOrigin, handleAddMachineTypeField);
+
+app.patch('/api/admin/customers/:id/edit', verifyOrigin, handleEditCustomer);
+app.patch('/api/admin/machines/:id/edit', verifyOrigin, handleEditMachine);
+app.patch('/api/admin/machines/type/:typeId/fields', verifyOrigin, handleUpdateMachineTypeFields);
+
+app.delete('/api/admin/customers/:id', verifyOrigin, handleDeleteCustomer);
+app.delete('/api/admin/machines/:id', verifyOrigin, handleDeleteMachine);
+app.delete('/api/admin/machines/type/:id', verifyOrigin, handleDeleteMachineType);
+app.delete('/api/admin/machines/type/:typeId/fields/:fieldId', verifyOrigin, handleDeleteMachineTypeField);
+// ============================
 
 // Routes
 app.get('/send-email', reminderEmailController);
 
 // Require verified session to access terminal list.
-app.get('/terminals', verifySession, terminalsController);
+app.get('/terminals', terminalsController);
 
 // OTP requests and payment initiation require origin checks.
 app.post('/payment', verifyOrigin, requestPayment);
@@ -55,13 +146,29 @@ app.post('/callback', paymentCallback);
 
 app.get('/cancel', paymentCancel);
 
-app.get('/payment-status', renderPamentCheckerPage);
+app.get('/status-check', renderPamentCheckerPage);
 
 app.get('/get-order-info', getOrderInfo);
 
-app.post('/request-otp', verifyOrigin, generateAndStoreOTP);
+app.get('/admin/back', (req, res) => {
+    const history = req.session.history || [];
+    if (history.length > 1) {
+        // Current is at length-1, Previous is at length-2
+        const previousRoute = history[history.length - 2];
+        // Remove the current route before redirecting so history stays clean
+        history.pop();
+        history.pop();
 
-app.post('/verify-otp', verifyOrigin, verifyOTP);
+        res.redirect(previousRoute);
+    } else {
+        return res.redirect('/admin');
+    }
+})
+
+// Disabled OTP implementation for now. Will likely reintroduce in the future.
+// app.post('/request-otp', verifyOrigin, generateAndStoreOTP);
+
+// app.post('/verify-otp', verifyOrigin, verifyOTP);
 
 // 404 handler
 app.use((req, res) => {
@@ -88,11 +195,7 @@ app.use((err, req, res, next) => {
     });
 });
 
-// TODO:: Implement email sending functionality with payment link (Partially done, bank offline transfer not done)
-// TODO:: Check for the payment completion and mark  (done)
-// TODO:: Setup cron job
-// TODO:: Implement offline banking transfer and verification
-// TODO:: Implement CSRF protection for POST routes
+// TODO:: Implement data validation and santization such as allowing only certain fields, type validation for all api endpoints
 
 // Start Server
 app.listen(port, () => {

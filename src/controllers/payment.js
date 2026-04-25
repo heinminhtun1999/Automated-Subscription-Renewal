@@ -15,28 +15,7 @@ async function requestPayment(req, res, next) {
 
     const { terminalIds, companyName } = req.body;
 
-    if (!req.session) {
-        const err = new Error('Session not found. Please refresh the page and try again.');
-        err.status = 400;
-        return next(err);
-    }
-
-    const user = req.session.users ? req.session.users[companyName] : null;
-    if (!user) {
-        const err = new Error('User session not found. Please refresh the page and try again.');
-        err.status = 400;
-        return next(err);
-    }
-
-    // Allow bypass in development, enforce OTP in production.
-    const isVerified = process.env.NODE_ENV === 'development' ? true : user.isVerified;
-    if (!isVerified) {
-        const err = new Error('Unauthorized. Please refresh the page and complete OTP verification to proceed with payment.');
-        err.status = 401;
-        return next(err);
-    }
-
-    const data = user.data;
+    const data = req.session.data;
     if (!data) {
         const err = new Error('Requested data not found. Please refresh the page and try again.\nIf the issue persists, contact support.');
         err.status = 400;
@@ -204,7 +183,7 @@ async function paymentCallback(req, res) {
 
     let existingOrder;
     const updatedRows = [];
-    console.log('Processing payment callback for Order ID:', body.orderid, 'Transaction ID:', body.tranID);
+
     try {
         existingOrder = getOrderWithItems(body.orderid, body.tranID);
 
@@ -235,80 +214,83 @@ async function paymentCallback(req, res) {
             return;
         }
 
+        if (body.status === "22") return;
+
         const status = PAYMENT_STATUS[body.status];
         const updateData = {
             status,
             transaction_id: body.tranID,
             paid_on: body.paydate,
             channel: body.channel,
-            process_status: 'processing',
+            process_status: status === "paid" ? "processing" : "completed",
             failed_remark: body.error_code || body.error_desc ? `Error Code: ${body.error_code}, Error Description: ${body.error_desc}` : null
         }
 
         updateOrder(existingOrder.order_id, existingOrder.company_name, existingOrder.email, updateData, { process_status: 'pending' });
+        if (status === "paid") {
 
-        const groupedData = await getGroupedData(true, ["firstEmailNotNotified", "firstEmailNotified"]);
-        const companyData = groupedData[existingOrder.company_name];
+            const groupedData = await getGroupedData(true, ["firstEmailNotNotified", "firstEmailNotified"]);
+            const companyData = groupedData[existingOrder.company_name];
 
-        const filteredTerminals = [];
-        for (const device of existingOrder.devices) {
-            const matchedTerminal = companyData.find(item => uid(item) === device.deviceId && item['Sheet Name'] === device.deviceType);
-            filteredTerminals.push(matchedTerminal);
-        }
-
-        for (const terminal of filteredTerminals) {
-            const dateNames = SHEET_CONFIGS.filter(config => config.sheetKey == terminal['Sheet Name'])[0];
-            const endDate = terminal[dateNames.endDateColumn];
-            const renewalEndDate = terminal[dateNames.renewalEndDateColumn];
-
-            const affectedRow = {
-                recipient: terminal
-            };
-
-            let result;
-            // Prefer renewal end date; fallback to end date if missing.
-            if (renewalEndDate && new Date(renewalEndDate)) {
-                affectedRow.oldValue = renewalEndDate.value;
-                affectedRow.dateType = dateNames.renewalEndDate;
-
-                const newDate = new Date(renewalEndDate.value);
-                newDate.setFullYear(newDate.getFullYear() + 1);
-                const dateString = newDate.toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric'
-                }).replaceAll("'", "");
-
-                result = await updateCellValue(dateNames.renewalEndDateColumn, terminal, dateString);
-            } else if (endDate && new Date(endDate)) {
-                affectedRow.oldValue = endDate.value;
-                affectedRow.dateType = dateNames.endDate;
-
-                const newDate = new Date(endDate.value);
-                newDate.setFullYear(newDate.getFullYear() + 1);
-                const dateString = newDate.toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric'
-                }).replaceAll("'", "");
-
-                result = await updateCellValue(dateNames.endDateColumn, terminal, dateString);
-            } else {
-                throw new Error(`Sheet Error: No valid date found for terminal ${terminal['Company Name'].value} - ${terminal['Sheet Name']} - ${uid(terminal)}. Manual intervention required to update the renewal date.`);
+            const filteredTerminals = [];
+            for (const device of existingOrder.devices) {
+                const matchedTerminal = companyData.find(item => uid(item) === device.deviceId && item['Sheet Name'] === device.deviceType);
+                filteredTerminals.push(matchedTerminal);
             }
-            console.log(result, 'Sheet update result for terminal:', terminal['Company Name'].value, terminal['Sheet Name'], uid(terminal));
-            if (result.ok) {
-                updatedRows.push(affectedRow);
-            } else {
-                throw new Error(`Sheet Error: date update failed,\n${result.error}`);
-            }
-        }
 
-        updateOrder(existingOrder.order_id, existingOrder.company_name, existingOrder.email, { process_status: 'completed' }, { process_status: 'processing' });
+            for (const terminal of filteredTerminals) {
+                const dateNames = SHEET_CONFIGS.filter(config => config.sheetKey == terminal['Sheet Name'])[0];
+                const endDate = terminal[dateNames.endDateColumn];
+                const renewalEndDate = terminal[dateNames.renewalEndDateColumn];
+
+                const affectedRow = {
+                    recipient: terminal
+                };
+
+                let result;
+                // Prefer renewal end date; fallback to end date if missing.
+                if (renewalEndDate && new Date(renewalEndDate)) {
+                    affectedRow.oldValue = renewalEndDate.value;
+                    affectedRow.dateType = dateNames.renewalEndDate;
+
+                    const newDate = new Date(renewalEndDate.value);
+                    newDate.setFullYear(newDate.getFullYear() + 1);
+                    const dateString = newDate.toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                    }).replaceAll("'", "");
+
+                    result = await updateCellValue(dateNames.renewalEndDateColumn, terminal, dateString);
+                } else if (endDate && new Date(endDate)) {
+                    affectedRow.oldValue = endDate.value;
+                    affectedRow.dateType = dateNames.endDate;
+
+                    const newDate = new Date(endDate.value);
+                    newDate.setFullYear(newDate.getFullYear() + 1);
+                    const dateString = newDate.toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                    }).replaceAll("'", "");
+
+                    result = await updateCellValue(dateNames.endDateColumn, terminal, dateString);
+                } else {
+                    throw new Error(`Sheet Error: No valid date found for terminal ${terminal['Company Name'].value} - ${terminal['Sheet Name']} - ${uid(terminal)}. Manual intervention required to update the renewal date.`);
+                }
+
+                if (result.ok) {
+                    updatedRows.push(affectedRow);
+                } else {
+                    throw new Error(`Sheet Error: date update failed,\n${result.error}`);
+                }
+            }
+            updateOrder(existingOrder.order_id, existingOrder.company_name, existingOrder.email, { process_status: 'completed' }, { process_status: 'processing' });
+        }
 
     } catch (e) {
 
-        logger.error('Initiating rollback due to error in payment callback processing:', e);
+        logger.error('Initiating rollback due to error in payment callback processing:', e.stack || e);
 
         if (existingOrder) {
             try {
@@ -323,7 +305,7 @@ async function paymentCallback(req, res) {
                 updateOrder(existingOrder.order_id, existingOrder.company_name, existingOrder.email, rollbackData);
                 logger.info(`Order status rolled back to pending for Order ID: ${existingOrder.order_id} after callback processing failure.`);
             } catch (dbUpdateRollBackError) {
-                logger.error('Critical Error: Failed to roll back order after callback processing failure:', dbUpdateRollBackError);
+                logger.error('Critical Error: Failed to roll back order after callback processing failure:', dbUpdateRollBackError.stack || dbUpdateRollBackError);
             }
         }
 
@@ -336,16 +318,14 @@ async function paymentCallback(req, res) {
                         throw new Error(`Critical Error: Failed to roll back sheet update for ${row.recipient['Company Name'].value} - ${row.recipient['Sheet Name']} - ${uid(row.recipient)}:\n${rollbackResult.error}`);
                     }
                 } catch (rollbackError) {
-                    logger.error(`Critical Error: Failed to roll back sheet update for ${row.recipient['Company Name'].value} - ${row.recipient['Sheet Name']} - ${uid(row.recipient)}:`, rollbackError);
+                    logger.error(`Critical Error: Failed to roll back sheet update for ${row.recipient['Company Name'].value} - ${row.recipient['Sheet Name']} - ${uid(row.recipient)}:`, rollbackError.stack || rollbackError);
 
                 }
             }
         }
         logger.error('Rollback completed. Investigate the root cause of the failure and manually verify the order status and sheet data integrity.');
-        return;
     }
-
-
+    return;
 }
 
 // Render the payment cancel screen.

@@ -1,0 +1,49 @@
+<%- include('partials/header', { pageTitle: 'AR Vending | Check Payment Status' , cssFile: '/css/status-check.css' ,
+    headContent: '' }) %>
+
+    <div class="container">
+        <div class="status-card pending">
+            <div class="icon">?</div>
+            <h1>Check Payment Status</h1>
+            <p class="status-message">Enter your order ID to check the latest payment status.</p>
+
+            <div class="status-form">
+                <label class="input-label" for="order-id">Order ID/Transaction ID</label>
+                <div class="input-row">
+                    <input class="text-input" id="order-id" name="orderId" type="text" placeholder="e.g. 10293"
+                        required>
+                    <button class="btn btn-primary" type="button" onClick="getPaymentStatus()">Check Status</button>
+                </div>
+            </div>
+
+            <div class="status-result hidden">
+                <div class="result-row">
+                    <span class="result-label">Order ID</span>
+                    <strong class="result-value" id="result-order-id"></strong>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Status</span>
+                    <strong class="result-value" id="result-status"></strong>
+                </div>
+                <div class="result-note" id="result-note"></div>
+            </div>
+            <p class="result-placeholder">Status details will appear here.</p>
+        </div>
+
+        <div class="contact-section">
+            <h4 class="contact-title">Need Help?</h4>
+            <p class="contact-text">If any error occurs or you need assistance, please contact us:</p>
+            <div class="contact-info">
+                <div class="contact-item">
+                    <span class="contact-icon">📧</span>
+                    <a href="mailto:customerservice@arvending.com.my">customerservice@arvending.com.my</a>
+                </div>
+                <div class="contact-item">
+                    <span class="contact-icon">📞</span>
+                    <a href="tel:+60123456789">+60 12-253 1334</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('partials/footer', { scripts: ['/js/status-check.js'] }) %>

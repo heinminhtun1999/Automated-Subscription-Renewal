@@ -8,8 +8,7 @@ function insertOrderItem(orderId, deviceId, deviceType) {
             VALUES (?, ?, ?)
         `)
 
-    const info = stmt.run(orderId, deviceId, deviceType);
-    return info;
+    return stmt.run(orderId, deviceId, deviceType);
 }
 
 

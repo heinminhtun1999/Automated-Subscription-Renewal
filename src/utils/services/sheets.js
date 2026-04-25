@@ -38,7 +38,7 @@ async function updateCellValue(field, recipient, value) {
         const result = await sheets.spreadsheets.values.update({
             spreadsheetId: process.env.SHEET_ID,
             range: range,
-            valueInputOption: 'RAW',
+            valueInputOption: 'USER_ENTERED',
             resource: resource,
         });
         return { ok: true, result };

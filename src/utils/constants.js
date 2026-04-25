@@ -21,10 +21,6 @@ const SHEET_CONFIGS = [
     { sheetKey: 'arvdn', endDateColumn: 'End Date', renewalEndDateColumn: 'Renewal End Date' }
 ];
 
-
-
-const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
 // Google API Scopes and Credentials Path
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 const CREDENTIALS_PATH = path.join(process.cwd(), 'credentials.json');
@@ -42,6 +38,63 @@ const PAYMENT_STATUS = {
     "22": "pending"
 };
 
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+const DEFAULT_MACHINE_TYPE_MAPPING = [
+    {
+        'name': 'Beep',
+        'fields': [
+            'Machine S/N',
+            'VM Model',
+            'Protocol Type',
+            'Location',
+            'Remark' 
+        ]
+    },
+    {
+        'name': 'MI20',
+        'fields': [
+            'ALIAS NAME',
+            'VM Model',
+            'Protocol Type',
+            'Location',
+            'Paysys End Date',
+            'Remark'
+        ]
+    },
+    {
+        'name': 'ARV2.5',
+        'fields': [
+            'Machine S/N',
+            'VM Model',
+            'Protocol Type',
+            'Location',
+            'Remark'
+        ]
+    },
+    {
+        'name': 'U20',
+        'fields': [
+            'Machine S/N',
+            'VM Model',
+            'Protocol Type',
+            'Location',
+            'Remark'
+        ]
+    },
+    {
+        'name': 'ARVDN',
+        'fields': [
+            'Machine S/N',
+            'VM Model',
+            'Protocol Type',
+            'Location',
+            'Remark'
+        ]
+
+    }
+]
+
 module.exports = {
     SCOPES,
     CREDENTIALS_PATH,
@@ -52,5 +105,6 @@ module.exports = {
     FIRST_EMAIL_DUE_DAYS,
     SECOND_EMAIL_DUE_DAYS,
     PAYMENT_STATUS,
-    PAYMENT_REQUIRED_FIELDS
+    PAYMENT_REQUIRED_FIELDS,
+    DEFAULT_MACHINE_TYPE_MAPPING
 };

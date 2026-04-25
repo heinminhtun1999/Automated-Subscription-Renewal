@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= pageTitle %>
+    </title>
+    <link rel="icon" href="/images/ARV NEW LOGO.png">
+    <script src="https://kit.fontawesome.com/f2eac0dbd1.js" crossorigin="anonymous"></script>
+    <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/datatables.min.css" rel="stylesheet">
+</head>
+
+<body class="selection:text-white selection:bg-emerald-500">
+    <div id="error-container"
+        class="h-[100px] flex flex-row flex-nowrap items-center bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded fixed top-2.5 right-10 z-50 <%= typeof error !== 'undefined' && error ? '' : 'hidden' %>"
+        role="alert" aria-live="polite">
+        <div class="flex flex-wrap max-w-[400px] items-center gap-2">
+            <strong class="font-bold">Error!</strong>
+            <span class="block sm:inline" data-error-message>
+                <%= typeof error !=='undefined' && error ? error : '' %>
+            </span>
+        </div>
+        <div class="h-full relative">
+            <p id="close-error" class="absolute top-0 cursor-pointer hover:text-red-500">x</span>
+        </div>
+    </div>
+    <div id="success-container"
+        class="flex flex-row flex-nowrap items-center bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded fixed top-2.5 right-10 z-50 <%= typeof success !== 'undefined' && success ? '' : 'hidden' %>"
+        role="alert" aria-live="polite">
+        <div class="flex flex-wrap max-w-[400px] items-center gap-2">
+            <strong class="font-bold">Success!</strong>
+            <span class="block sm:inline" data-success-message>
+                <%= typeof success !=='undefined' && success ? message ?? success : '' %>
+            </span>
+        </div>
+        <p id="close-success" class="cursor-pointer hover:text-green-500">x</span>
+    </div>
+    <div class="min-h-screen md:grid md:grid-cols-[auto_1fr] bg-gradient-to-br from-emerald-50 via-slate-50 to-cyan-50">
+        <%- include('./adminSidebar', { activePage: activePage }) %>

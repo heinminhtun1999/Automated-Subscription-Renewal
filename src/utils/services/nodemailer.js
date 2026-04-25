@@ -166,7 +166,7 @@ async function sendEmail(to, subject, body, topic = 'General') {
             info = await otherTransporter.sendMail({
                 from: '"AR Vending" <acct.notify@arvending.com.my>',
                 to: to,
-                subject: subject,
+                subject: "[AR Vending] " + subject,
                 text: textBody,
                 html: body,
                 priority: 'high',

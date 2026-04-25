@@ -44,8 +44,7 @@ function insertOrder(order) {
         (order_id, amount, company_name, email, status)
         VALUES (?, ?, ?, ?, ?)
         `);
-    const info = stmt.run(order.orderId, order.amount, order.companyName, order.email, order.status || 'pending');
-    return info;
+    return stmt.run(order.orderId, order.amount, order.companyName, order.email, order.status || 'pending');
 }
 
 // Update order fields with optional additional WHERE conditions.
@@ -63,8 +62,7 @@ function updateOrder(orderId, companyName, email, updateFields, additionalCondit
         ${conditionalClause ? " AND " + conditionalClause : ""}
     `);
 
-    const info = stmt.run(...Object.values(updateFields), orderId, companyName, email, ...Object.values(additionalConditions));
-    return info;
+    return stmt.run(...Object.values(updateFields), orderId, companyName, email, ...Object.values(additionalConditions));
 }
 
 module.exports = { insertOrder, updateOrder, getOrder, getOrderWithItems };

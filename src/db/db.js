@@ -9,27 +9,31 @@ const db = new Database("src/db/database.db", {
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
-// OTP table stores per-company OTP metadata and rate limits.
-const createOTPTable = `
-CREATE TABLE IF NOT EXISTS otp (
-    id INTEGER PRIMARY KEY,
-    code_hash TEXT,
-    expires_at DATETIME NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    company_name TEXT NOT NULL,
-    email TEXT NOT NULL,
-    generate_blocked_until DATETIME,
-    generate_attempts INTEGER DEFAULT 1,
-    verify_blocked_until DATETIME,
-    verify_attempts INTEGER DEFAULT 0
-)`
-db.exec(createOTPTable);
+// ================== Disabled ====================
 
-// Ensure one OTP record per company + email pair.
-const otpUniqueIndex = `
-CREATE UNIQUE INDEX IF NOT EXISTS idx_company_email ON otp (company_name, email);
-`
-db.exec(otpUniqueIndex);
+// OTP table stores per-company OTP metadata and rate limits.
+// const createOTPTable = `
+// CREATE TABLE IF NOT EXISTS otp (
+//     id INTEGER PRIMARY KEY,
+//     code_hash TEXT,
+//     expires_at DATETIME NOT NULL,
+//     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+//     company_name TEXT NOT NULL,
+//     email TEXT NOT NULL,
+//     generate_blocked_until DATETIME,
+//     generate_attempts INTEGER DEFAULT 1,
+//     verify_blocked_until DATETIME,
+//     verify_attempts INTEGER DEFAULT 0
+// )`
+// db.exec(createOTPTable);
+
+// // Ensure one OTP record per company + email pair.
+// const otpUniqueIndex = `
+// CREATE UNIQUE INDEX IF NOT EXISTS idx_company_email ON otp (company_name, email);
+// `
+// db.exec(otpUniqueIndex);
+
+// ==================================================
 
 // Orders table tracks payment lifecycle and processing status.
 const createOrderTable = `
@@ -62,5 +66,61 @@ const orderItemsTable = `
     )
 `
 db.exec(orderItemsTable);
+
+const customerTable = `
+CREATE TABLE IF NOT EXISTS customers (
+    id INTEGER PRIMARY KEY,
+    company_name TEXT NOT NULL,
+    company_short_name TEXT,
+    email TEXT NOT NULL UNIQUE,
+    contact_number TEXT NOT NULL,
+    pic_name TEXT NOT NULL,
+    bank_name TEXT,
+    bank_account_number TEXT,
+    beneficiary_name TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+`
+db.exec(customerTable);
+
+const machineTypeTable = `
+    CREATE TABLE IF NOT EXISTS machine_types (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+`
+db.exec(machineTypeTable);
+
+const machineTypeFieldsTable = `
+    CREATE TABLE IF NOT EXISTS machine_type_fields (
+    id INTEGER PRIMARY KEY,
+    machine_type_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (machine_type_id) REFERENCES machine_types(id) ON DELETE CASCADE 
+    )
+`
+db.exec(machineTypeFieldsTable);
+
+const machinesTable = `
+    CREATE TABLE IF NOT EXISTS machines (
+    id integer PRIMARY KEY,
+    machine_type_id INTEGER NOT NULL,
+    company_id INTEGER NOT NULL,
+    machine_id TEXT NOT NULL UNIQUE,
+    subscription_fees REAL NOT NULL,
+    registered_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    end_date DATETIME,
+    status TEXT CHECK (status IN ('active', 'inactive')) NOT NULL DEFAULT 'active',
+    renewal_count INTEGER DEFAULT 0,
+    last_renewal_date DATETIME,
+    data JSON,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (machine_type_id) REFERENCES machine_types(id) ON DELETE CASCADE,
+    FOREIGN KEY (company_id) REFERENCES customers(id) ON DELETE CASCADE
+    )
+`
+db.exec(machinesTable);
 
 module.exports = db;

@@ -1,0 +1,13 @@
+<%- include('./adminHeader', { pageTitle: pageTitle, activePage: activePage, error: error }) %>
+    <div class="min-w-0 overflow-x-hidden">
+        <div class="flex items-center justify-between px-14 pt-8">
+            <div>
+                <h1 class="font-bold text-gray-600/80 text-2xl">Customer Management</h1>
+                <% if (typeof subTitle !== 'undefined') { %>
+                    <p class="font-semibold text-lg text-gray-600/80"> <%= subTitle %></p>
+                <% } %>
+            </div>
+            <div class="flex flex-column p-6 gap-4 items-center h-24 md:hidden">
+                <i class="fa-solid fa-bars fa-lg cursor-pointer" id="hamburger2"></i>
+            </div>
+        </div>

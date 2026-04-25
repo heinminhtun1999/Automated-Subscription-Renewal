@@ -111,7 +111,7 @@ function getCombinedPipelineByDueDate(data, includeExpired = false, fieldsToIncl
         const formatted = formatSheetData(data[index].values, config.sheetKey);
         return runDatePipeline(formatted, config.endDateColumn, config.renewalEndDateColumn, includeExpired);
     });
-    // console.log('sheetPipelines', sheetPipelines);
+    
     return sheetPipelines.flatMap((pipeline) => [
         ...fieldsToInclude.flatMap((field) => pipeline[field]),
     ]);
@@ -125,8 +125,7 @@ function groupByCompany(data) {
         const company = row['Company Name'].value;
 
         if (!groupedData[company]) {
-            groupedData[company] = [];
-            groupedData[company].push(row);
+            groupedData[company] = [row];
         } else {
             groupedData[company].push(row);
         }

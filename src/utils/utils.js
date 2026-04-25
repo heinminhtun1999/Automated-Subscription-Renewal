@@ -47,6 +47,13 @@ function verifyJWT(token) {
         return { valid: false, error: err };
     }
 }
+function formatDate(date) {
+    return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit'
+    });
+}
 
 module.exports = {
     generateMd5,
@@ -54,5 +61,6 @@ module.exports = {
     generateJWT,
     verifyJWT,
     validateSkey,
-    checkRequiredFields
+    checkRequiredFields,
+    formatDate
 };

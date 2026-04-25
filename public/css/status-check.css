@@ -134,6 +134,10 @@ h1 {
     text-align: left;
 }
 
+.status-result.hidden {
+    display: none;
+}
+
 .result-row {
     display: flex;
     justify-content: space-between;

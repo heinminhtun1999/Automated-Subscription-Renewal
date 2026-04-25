@@ -6,11 +6,13 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
+    "seed:data": "node scripts/seed-data.js",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
     "lint": "eslint . --ext .js",
     "lint:fix": "eslint . --ext .js --fix",
-    "audit": "npm audit"
+    "audit": "npm audit",
+    "initialize-machine-types": "node scripts/initialize-machine-types.js"
   },
   "keywords": [],
   "author": "",
@@ -29,17 +31,29 @@
     "googleapis": "^105.0.0",
     "html-to-text": "^9.0.5",
     "jsonwebtoken": "^9.0.3",
-    "nodemailer": "^7.0.12",
+    "nodemailer": "^8.0.4",
     "winston": "^3.19.0",
     "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
+    "@faker-js/faker": "^9.9.0",
+    "@tailwindcss/postcss": "^4.2.2",
+    "autoprefixer": "^10.4.27",
     "eslint": "^8.57.1",
     "jest": "^29.7.0",
-    "nodemon": "^3.0.2"
+    "nodemon": "^3.0.2",
+    "tailwindcss": "^3.4.19"
   },
   "engines": {
     "node": ">=16.0.0",
     "npm": ">=8.0.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/heinminhtun1999/Automated-Subscription-Renewal.git"
+  },
+  "bugs": {
+    "url": "https://github.com/heinminhtun1999/Automated-Subscription-Renewal/issues"
+  },
+  "homepage": "https://github.com/heinminhtun1999/Automated-Subscription-Renewal#readme"
 }
