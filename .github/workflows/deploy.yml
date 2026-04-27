@@ -70,36 +70,27 @@ jobs:
             --exclude="src/db/database.db*" \
             ./ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH
 
-          ssh $DEPLOY_USER@$DEPLOY_HOST << 'EOF'
-            set -e
-
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+          ssh $DEPLOY_USER@$DEPLOY_HOST << EOF
+            export NVM_DIR="\$HOME/.nvm"
+            [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
 
             nvm install 20
             nvm use 20
 
             cd $DEPLOY_PATH || exit 1
 
-            echo "📦 Checking lockfile..."
-            test -f package-lock.json || (echo "❌ package-lock.json missing" && exit 1)
+            if [ ! -f package-lock.json ]; then
+              echo "❌ package-lock.json missing"
+              exit 1
+            fi
 
-            echo "🧹 Cleaning old modules..."
             rm -rf node_modules
-
-            echo "📥 Installing dependencies (STRICT)..."
             npm ci --omit=dev
 
-            echo "🧪 Verifying install..."
-            node -e "console.log('node ok')"
-
-            echo "🔄 Restarting PM2 app..."
             pm2 delete "$PM2_NAME" 2>/dev/null || true
 
             NODE_ENV=$PM2_ENV PORT=4000 \
             pm2 start src/index.js \
               --name "$PM2_NAME" \
-              --interpreter $(which node)
-
-            pm2 save
+              --interpreter \$(which node)
           EOF

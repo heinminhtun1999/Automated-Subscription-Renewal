@@ -33,6 +33,7 @@
     "jsonwebtoken": "^9.0.3",
     "nodemailer": "^8.0.4",
     "winston": "^3.19.0",
+    "@faker-js/faker": "^9.9.0",
     "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
