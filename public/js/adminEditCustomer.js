@@ -83,7 +83,7 @@ saveBtn.addEventListener('click', async () => {
         const result = window.parseResponseData(response);
         
         window.renderSuccess(result.message || 'Customer updated successfully.');
-        // window.location.href = `/admin/customers/${customerId}`;
+        window.location.href = `/admin/customers/${customerId}`;
     } catch (e) {
         window.renderError(e.message || 'Failed to update customer. Please try again later.');
     } finally {
