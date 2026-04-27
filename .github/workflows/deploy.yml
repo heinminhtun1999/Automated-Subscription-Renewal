@@ -30,7 +30,7 @@ jobs:
       - name: Set Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -43,7 +43,7 @@ jobs:
             echo "PM2_ENV=development" >> $GITHUB_ENV
             echo "PM2_NAME=asr-dev" >> $GITHUB_ENV
           else
-            echo "DEPLOY_PATH=/homWe/subscription-renewal-prod" >> $GITHUB_ENV
+            echo "DEPLOY_PATH=/home/subscription-renewal-prod" >> $GITHUB_ENV
             echo "PM2_ENV=production" >> $GITHUB_ENV
             echo "PM2_NAME=asr" >> $GITHUB_ENV
           fi
@@ -70,9 +70,20 @@ jobs:
           --exclude="src/db/database.db*" \
           ./ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH
 
-          ssh $DEPLOY_USER@$DEPLOY_HOST << EOF
-            cd $DEPLOY_PATH
-            npm ci --only=production
-            pm2 reload "$PM2_NAME" --update-env > /dev/null 2>&1 || \
-              NODE_ENV=$PM2_ENV PORT=4000 pm2 start src/index.js --name "$PM2_NAME"
+          ssh $DEPLOY_USER@$DEPLOY_HOST << 'EOF'
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+          nvm use 20
+
+          cd $DEPLOY_PATH
+          rm -rf node_modules
+          npm ci --only=production
+
+          pm2 delete "$PM2_NAME" 2>/dev/null || true
+
+          NODE_ENV=$PM2_ENV PORT=4000 \
+          pm2 start src/index.js \
+            --name "$PM2_NAME" \
+            --interpreter $(which node)
           EOF
