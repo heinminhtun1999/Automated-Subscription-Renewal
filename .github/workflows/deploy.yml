@@ -30,11 +30,11 @@ jobs:
       - name: Set Node
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 20
           cache: npm
 
       - name: Install dependencies
-        run: npm ci --only=production
+        run: npm ci --omit=dev
 
       - name: Determine deployment target
         run: |
@@ -63,27 +63,34 @@ jobs:
           ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts
 
           rsync -az --delete \
-          --exclude="node_modules" \
-          --exclude=".git" \
-          --exclude="credentials.json" \
-          --exclude=".env" \
-          --exclude="src/db/database.db*" \
-          ./ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH
+            --exclude="node_modules" \
+            --exclude=".git" \
+            --exclude="credentials.json" \
+            --exclude=".env" \
+            --exclude="src/db/database.db*" \
+            ./ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH
 
-          ssh $DEPLOY_USER@$DEPLOY_HOST << 'EOF'
-          export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          ssh $DEPLOY_USER@$DEPLOY_HOST << EOF
+            export NVM_DIR="\$HOME/.nvm"
+            [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
 
-          nvm use 20
+            nvm install 20
+            nvm use 20
 
-          cd $DEPLOY_PATH
-          rm -rf node_modules
-          npm ci --only=production
+            cd $DEPLOY_PATH || exit 1
 
-          pm2 delete "$PM2_NAME" 2>/dev/null || true
+            if [ ! -f package-lock.json ]; then
+              echo "❌ package-lock.json missing"
+              exit 1
+            fi
 
-          NODE_ENV=$PM2_ENV PORT=4000 \
-          pm2 start src/index.js \
-            --name "$PM2_NAME" \
-            --interpreter $(which node)
+            rm -rf node_modules
+            npm ci --omit=dev
+
+            pm2 delete "$PM2_NAME" 2>/dev/null || true
+
+            NODE_ENV=$PM2_ENV PORT=4000 \
+            pm2 start src/index.js \
+              --name "$PM2_NAME" \
+              --interpreter \$(which node)
           EOF
