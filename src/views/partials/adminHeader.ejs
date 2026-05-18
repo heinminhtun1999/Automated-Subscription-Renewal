@@ -11,6 +11,8 @@
     <script src="https://kit.fontawesome.com/f2eac0dbd1.js" crossorigin="anonymous"></script>
     <link href="/css/style.css" rel="stylesheet">
     <link href="/css/datatables.min.css" rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/datatables.net-colresize-unofficial@latest/jquery.dataTables.colResize.css">
 </head>
 
 <body class="selection:text-white selection:bg-emerald-500">
@@ -39,4 +41,4 @@
         <p id="close-success" class="cursor-pointer hover:text-green-500">x</span>
     </div>
     <div class="min-h-screen md:grid md:grid-cols-[auto_1fr] bg-gradient-to-br from-emerald-50 via-slate-50 to-cyan-50">
-        <%- include('./adminSidebar', { activePage: activePage }) %>
+<%- include('./adminSidebar', { activePage: activePage }) %>

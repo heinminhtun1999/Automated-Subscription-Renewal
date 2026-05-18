@@ -2,7 +2,7 @@ const customerTable = document.getElementById('customerTable');
 
 const options = {
     responsive: false,
-    stateSave: true,
+    stateSave: false,
     columnControl: ['order', 'spacer', ['orderAsc', 'orderDesc', 'spacer', 'search', 'orderClear', 'searchClear']],
     columnDefs: [
         { targets: '_all', className: 'dt-head-left' }

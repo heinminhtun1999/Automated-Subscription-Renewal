@@ -5,7 +5,7 @@ function getMachinesByTypeDB(typeId) {
         SELECT m.*, c.company_name, c.pic_name, mt.name AS machine_type_name
         FROM machines AS m
         JOIN machine_types AS mt ON m.machine_type_id = mt.id
-        JOIN customers AS c ON m.company_id = c.id
+        JOIN customers AS c ON m.customer_id = c.id
         WHERE m.machine_type_id = ?
         ORDER BY m.created_at, m.registered_date DESC
     `
@@ -17,7 +17,7 @@ function getMachineByMachineIdOrId(id, machineId) {
         SELECT m.*, c.company_name, c.pic_name, mt.name AS machine_type_name
         FROM machines AS m
         JOIN machine_types AS mt ON m.machine_type_id = mt.id
-        JOIN customers AS c ON m.company_id = c.id
+        JOIN customers AS c ON m.customer_id = c.id
         WHERE m.machine_id = ? OR m.id = ?
         ORDER BY m.created_at, m.registered_date DESC
     `
@@ -29,11 +29,46 @@ function getMachineById(id) {
         SELECT m.*, c.company_name, c.pic_name, mt.name AS machine_type_name
         FROM machines AS m
         JOIN machine_types AS mt ON m.machine_type_id = mt.id
-        JOIN customers AS c ON m.company_id = c.id
-        WHERE m.machine_id = ?
+        JOIN customers AS c ON m.customer_id = c.id
+        WHERE m.id = ?
         ORDER BY m.created_at, m.registered_date DESC
     `
     return db.prepare(stmt).get(id);
+}
+
+function getMachinesByIds(ids) {
+    const stmt = `
+        SELECT m.*, c.company_name, c.pic_name, mt.name AS machine_type_name
+        FROM machines AS m
+        JOIN machine_types AS mt ON m.machine_type_id = mt.id
+        JOIN customers AS c ON m.customer_id = c.id
+        WHERE m.id IN (${ids.map(() => "?").join(", ")})
+    `;
+    return db.prepare(stmt).all(...ids);
+}
+
+function getMachineByDaysLeft(daysLeft, includeExpired = false) {
+    const stmt = `
+        SELECT m.*, c.id AS customer_id, c.company_name, c.pic_name, c.email, mt.name AS machine_type_name, 
+        julianday(m.end_date) - julianday('now') AS days_left
+        FROM machines AS m
+        JOIN machine_types AS mt ON m.machine_type_id = mt.id
+        JOIN customers AS c ON m.customer_id = c.id
+        WHERE ${includeExpired ? "" : "days_left > 0 AND"} days_left <= ?
+    `
+    return db.prepare(stmt).all(daysLeft);
+}
+
+function getMachineByDaysLeftAndCustomerId(daysLeft, customerId, includeExpired = false) {
+    const stmt = `
+        SELECT m.*, c.id AS customer_id, c.company_name, c.pic_name, c.email, mt.name AS machine_type_name,
+        julianday(m.end_date) - julianday('now') AS days_left
+        FROM machines AS m
+        JOIN machine_types AS mt ON m.machine_type_id = mt.id
+        JOIN customers AS c ON m.customer_id = c.id
+        WHERE c.id = ? AND ${includeExpired ? "" : "days_left > 0 AND"} julianday(m.end_date) - julianday('now') <= ?
+    `
+    return db.prepare(stmt).all(customerId, daysLeft);
 }
 
 function addMachine(machineData) {
@@ -48,7 +83,7 @@ function addMachine(machineData) {
     return db.prepare(stmt).run(...values);
 }
 
-function updateMachine(machineId, machineData) {
+function updateMachine(id, machineData) {
 
     const fields = Object.keys(machineData).map(key => `${key} = ?`).join(", ");
     const values = Object.values(machineData);
@@ -58,12 +93,24 @@ function updateMachine(machineId, machineData) {
         SET ${fields}
         WHERE id = ?
     `;
-    return db.prepare(stmt).run(...values, machineId);
+    return db.prepare(stmt).run(...values, id);
 }
 
-function deleteMachine(machineId) {
+function updateMultipleMachines(ids, machineData) {
+    const fields = Object.keys(machineData).map(key => `${key} = ?`).join(", ");
+    const values = Object.values(machineData);
+
+    const stmt = `
+        UPDATE machines
+        SET ${fields}
+        WHERE id IN (${ids.map(() => "?").join(", ")})
+    `
+    return db.prepare(stmt).run(...values, ...ids);
+}
+
+function deleteMachine(id) {
     const stmt = db.prepare(`DELETE FROM machines WHERE id = ?`);
-    return stmt.run(machineId);
+    return stmt.run(id);
 }
 
 module.exports = {
@@ -71,5 +118,9 @@ module.exports = {
     getMachineByMachineIdOrId,
     updateMachine,
     addMachine,
-    deleteMachine
+    deleteMachine,
+    getMachineByDaysLeft,
+    getMachineByDaysLeftAndCustomerId,
+    getMachinesByIds,
+    updateMultipleMachines
 }

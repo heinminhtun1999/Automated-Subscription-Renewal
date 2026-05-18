@@ -21,7 +21,7 @@ function getCustomerByIdWithMachines(customerId) {
     const stmt = `
         SELECT c.*, m.id AS m_id, m.machine_id, m.status, m.end_date, mt.name AS machine_type
         FROM customers c
-        LEFT JOIN machines m ON c.id = m.company_id
+        LEFT JOIN machines m ON c.id = m.customer_id
         LEFT JOIN machine_types mt ON m.machine_type_id = mt.id
         WHERE c.id = ?
     `;

@@ -21,10 +21,17 @@ const {
     deleteMachine,
     updateMachine
 } = require('../repositories/machineRepository');
-const { getAllCustomers, getCustomerById } = require('../repositories/customerRepository');
+const {
+    getAllCustomers,
+    getCustomerById
+} = require('../repositories/customerRepository');
+const {
+    updateEmailMachine,
+    getEmailMachineByMachineId
+} = require('../repositories/emailMachinesRepository');
 const db = require('../db/db');
 const logger = require('../utils/services/winston');
-const { formatDate } = require('../utils/utils');
+const { formatDate, normalizeDate } = require('../utils/utils');
 const { fi } = require('@faker-js/faker');
 const { add } = require('winston');
 const { render } = require('ejs');
@@ -53,7 +60,7 @@ function prepareMachineData(machine) {
         "Last Renewal Date": machine.last_renewal_date ? formatDate(machine.last_renewal_date) : 'N/A',
         "Renewal Count": machine.renewal_count,
         "type_id": machine.machine_type_id,
-        "company_id": machine.company_id,
+        "customer_id": machine.customer_id,
         ...additionalData
     }
     return data;
@@ -70,6 +77,14 @@ function filterAdditionalFields(machineTypeId, additional_fields) {
     });
 
     return additionalDataObject
+}
+
+function forceCheckActiveStatusBasedOnEndDate(status, endDate) {
+    const isExpired = new Date(endDate).getTime() < Date.now();
+
+    if (isExpired) return 'inactive';
+
+    return status === 'inactive' ? 'inactive' : 'active';
 }
 
 // Controller functions
@@ -233,7 +248,7 @@ function handleAddMachine(req, res) {
 
     const {
         machine_type_id,
-        company_id,
+        customer_id,
         machine_id,
         registered_date,
         end_date,
@@ -253,7 +268,7 @@ function handleAddMachine(req, res) {
             return res.status(400).json({ success: false, message: 'Selected machine type does not exist.' });
         }
 
-        const existingCustomer = getAllCustomers().find(customer => customer.id === parseInt(company_id));
+        const existingCustomer = getAllCustomers().find(customer => customer.id === parseInt(customer_id));
         if (!existingCustomer) {
             return res.status(400).json({ success: false, message: 'Selected company does not exist.' });
         }
@@ -265,14 +280,16 @@ function handleAddMachine(req, res) {
         const registeredDate = isRegisteredDateValid ? new Date() : new Date(registered_date);
         const calculatedEndDate = end_date ? end_date : new Date(registeredDate.getTime() + (1000 * 60 * 60 * 24 * 365));
 
+        const finalStatus = forceCheckActiveStatusBasedOnEndDate(status, calculatedEndDate);
+
         const dataToInsert = {
             machine_type_id,
-            company_id,
+            customer_id,
             machine_id,
             registered_date: new Date(registeredDate).toISOString(),
             end_date: new Date(calculatedEndDate).toISOString(),
             subscription_fees,
-            status: status || 'active',
+            status: finalStatus,
             data: JSON.stringify(additionalDataObject)
         }
         addMachine(dataToInsert);
@@ -287,18 +304,18 @@ function handleAddMachine(req, res) {
 function handleEditMachine(req, res) {
     const { id } = req.params;
     const body = req.body;
-    
+
     if (!id) {
         return res.status(400).json({ success: false, message: 'Machine ID is required.' });
     }
-    
-    const requiredFields = ['machine_type_id', 'company_id', 'machine_id', 'subscription_fees'];
+
+    const requiredFields = ['machine_type_id', 'customer_id', 'machine_id', 'subscription_fees'];
     requiredFields.forEach(field => {
         if (!body[field]) {
-            return res.status(400).json({ success: false, message: `Field ${field} is required.` });
+            throw new Error(`Field ${field} is required.`);
         }
     });
-    
+
     try {
 
         const existingMachine = getMachineByMachineIdOrId(id);
@@ -306,9 +323,9 @@ function handleEditMachine(req, res) {
             return res.status(404).json({ success: false, message: 'Machine not found.' });
         }
 
-        const existingCustomer = getCustomerById(body.company_id);
+        const existingCustomer = getCustomerById(body.customer_id);
         if (!existingCustomer) {
-            return res.status(400).json({ success: false, message: 'Selected company does not exist.' });
+            return res.status(400).json({ success: false, message: 'Selected customer\'s company does not exist.' });
         }
 
         const existingMachineType = getMachineTypeById(body.machine_type_id);
@@ -318,22 +335,27 @@ function handleEditMachine(req, res) {
 
         const additionalDataObject = filterAdditionalFields(body.machine_type_id, body.additional_fields);
 
-        const isRegisteredDateValid = !body.registered_date || isNaN(new Date(body.registered_date).getTime());
+        const isEditingRegisteredDateValid = body.registered_date && !isNaN(new Date(body.registered_date).getTime());
+        const registeredDate = isEditingRegisteredDateValid ? new Date(body.registered_date) : existingMachine.registered_date;
 
-        const registeredDate = isRegisteredDateValid ? existingMachine.registered_date : new Date(body.registered_date);
-        const calculatedEndDate = body.end_date ? body.end_date : new Date(registeredDate.getTime() + (1000 * 60 * 60 * 24 * 365));
+        const isEditingEndDateValid = body.end_date && !isNaN(new Date(body.end_date).getTime());
+        const calculatedEndDate = isEditingEndDateValid ? new Date(body.end_date) : existingMachine.end_date;
+
+        const finalStatus = forceCheckActiveStatusBasedOnEndDate(body.status || existingMachine.status, calculatedEndDate);
+
+        const shouldRemoveRenewalProcessId = existingMachine.customer_id !== existingCustomer.id;
 
         const machineDataToUpdate = {
             machine_type_id: body.machine_type_id,
-            company_id: body.company_id,
+            customer_id: body.customer_id,
             machine_id: body.machine_id,
             registered_date: new Date(registeredDate).toISOString(),
             end_date: new Date(calculatedEndDate).toISOString(),
             subscription_fees: body.subscription_fees,
-            status: body.status || existingMachine.status,
-            data: JSON.stringify(additionalDataObject)
+            status: finalStatus,
+            data: JSON.stringify(additionalDataObject),
+            renewal_process_id: shouldRemoveRenewalProcessId ? null : finalStatus == 'inactive' ? null : existingMachine.renewal_process_id
         }
-
         updateMachine(id, machineDataToUpdate);
         return res.status(200).json({ success: true, message: 'Machine updated successfully.' });
     } catch (error) {

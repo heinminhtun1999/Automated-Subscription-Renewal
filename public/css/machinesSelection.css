@@ -84,18 +84,24 @@ body {
 }
 
 /* Terminals Section */
-.terminals-section {
+.machines-section {
     margin-bottom: 32px;
 }
 
 .section-title {
-    margin: 0 0 20px 0;
+    margin: 0;
     font-size: 18px;
     color: #1a1a1a;
     font-weight: 600;
 }
 
-.terminals-list {
+.section-subtitle {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.machines-list {
     display: flex;
     flex-direction: column;
     gap: 0;
@@ -106,7 +112,7 @@ body {
 }
 
 /* Terminal Item */
-.terminal-item {
+.machine-item {
     display: flex;
     align-items: stretch;
     border-bottom: 1px solid #e0e0e0;
@@ -115,20 +121,20 @@ body {
     background: #fff;
 }
 
-.terminal-item:last-child {
+.machine-item:last-child {
     border-bottom: none;
 }
 
-.terminal-item:hover {
+.machine-item:hover {
     background: #f8f9fa;
 }
 
-.terminal-item.selected {
+.machine-item.selected {
     background: linear-gradient(to right, #f0f8ff, #fff);
     border-left: 4px solid #007bff;
 }
 
-.terminal-item.disabled {
+.machine-item.disabled {
     background: #f0f0f0;
     color: #999;
     cursor: not-allowed;
@@ -145,7 +151,7 @@ body {
     width: 70px;
 }
 
-.terminal-item.selected .item-checkbox {
+.machine-item.selected .item-checkbox {
     background: #e6f2ff;
 }
 
@@ -161,13 +167,13 @@ body {
     background: #fff;
 }
 
-.terminal-item.selected .checkbox {
+.machine-item.selected .checkbox {
     background: #007bff;
     border-color: #007bff;
     color: #fff;
 }
 
-.terminal-item.selected .checkbox::after {
+.machine-item.selected .checkbox::after {
     content: "✓";
     font-size: 14px;
     font-weight: bold;
@@ -182,18 +188,18 @@ body {
     justify-content: center;
 }
 
-.terminal-header {
+.machine-header {
     margin-bottom: 12px;
 }
 
-.terminal-id {
+.machine-id {
     margin: 0;
     font-size: 15px;
     font-weight: 600;
     color: #1a1a1a;
 }
 
-.terminal-details {
+.machine-details {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 24px;
@@ -416,7 +422,7 @@ body {
         padding: 20px;
     }
 
-    .terminals-grid {
+    .machines-grid {
         grid-template-columns: 1fr;
     }
 

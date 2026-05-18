@@ -2,13 +2,13 @@
     headContent: '' }) %>
 
     <div class="container">
-        <div class="status-card pending">
-            <div class="icon">?</div>
-            <h1>Check Payment Status</h1>
+        <div class="status-card pending" id="status-card">
+            <div class="icon" id="status-icon">?</div>
+            <h1 id="status-title">Check Payment Status</h1>
             <p class="status-message">Enter your order ID to check the latest payment status.</p>
 
             <div class="status-form">
-                <label class="input-label" for="order-id">Order ID/Transaction ID</label>
+                <label class="input-label" for="order-id">Order ID</label>
                 <div class="input-row">
                     <input class="text-input" id="order-id" name="orderId" type="text" placeholder="e.g. 10293"
                         required>
@@ -16,18 +16,58 @@
                 </div>
             </div>
 
-            <div class="status-result hidden">
+            <div class="status-result hidden" id="status-result">
+                <div class="result-row">
+                    <span class="result-label">Customer</span>
+                    <strong class="result-value" id="result-customer"></strong>
+                </div>
                 <div class="result-row">
                     <span class="result-label">Order ID</span>
                     <strong class="result-value" id="result-order-id"></strong>
                 </div>
                 <div class="result-row">
-                    <span class="result-label">Status</span>
-                    <strong class="result-value" id="result-status"></strong>
+                    <span class="result-label">Transaction ID</span>
+                    <strong class="result-value" id="result-transaction-id"></strong>
                 </div>
-                <div class="result-note" id="result-note"></div>
+                <div class="result-row">
+                    <span class="result-label">Amount</span>
+                    <strong class="result-value" id="result-amount"></strong>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Payment Status</span>
+                    <strong class="result-value" id="result-payment-status"></strong>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Process Status</span>
+                    <strong class="result-value" id="result-process-status"></strong>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Failure Reason</span>
+                    <strong class="result-value" id="result-failure-reason"></strong>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Transaction Date</span>
+                    <strong class="result-value" id="result-transaction-date"></strong>
+                </div>
             </div>
-            <p class="result-placeholder">Status details will appear here.</p>
+
+            <div class="machines-table-container hidden" id="machines-table-container">
+                <h3 class="machine-table-title">Machines</h3>
+                <table class="machine-table">
+                    <thead>
+                        <tr>
+                            <th>Machine ID</th>
+                            <th>Machine Type</th>
+                            <th>Renewal Fees</th>
+                            <th>Renewed Until</th>
+                        </tr>
+                    </thead>
+                    <tbody id="machines-tbody">
+                    </tbody>
+                </table>
+            </div>
+            <p class="error-message hidden" id="error-message"></p>
+            <p class="result-placeholder" id="result-placeholder">Status details will appear here.</p>
         </div>
 
         <div class="contact-section">

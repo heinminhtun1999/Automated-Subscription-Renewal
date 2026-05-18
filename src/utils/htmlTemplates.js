@@ -1,5 +1,5 @@
 // Email template for renewal reminder with CTA link.
-const dueDateTemplate = (selectionLink, numTerminals) => `<!DOCTYPE html>
+const dueDateTemplate = (selectionLink) => `<!DOCTYPE html>
 <html>
 <body style="margin:0; padding:0; background-color:#f4f6f8; font-family: Arial, sans-serif; color:#333333;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="padding:20px 0;">
@@ -26,7 +26,7 @@ const dueDateTemplate = (selectionLink, numTerminals) => `<!DOCTYPE html>
                             </p>
 
                             <p>
-                                Our records indicate that ${numTerminals} or more of your subscriptions 
+                                Our records indicate that one or more of your subscriptions 
                                 will expire within the next 45 days or 7 days.
                             </p>
 
@@ -100,19 +100,17 @@ const failListTemplate = (failedRecipients) => `<!DOCTYPE html>
                     <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
                         <tr>
                             <th style="border: 1px solid #dddddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Date/Time</th>
-                            <th style="border: 1px solid #dddddd; padding: 8px; text-align: left; background-color: #f2f2f2;">CID</th>
                             <th style="border: 1px solid #dddddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Company Name</th>
                             <th style="border: 1px solid #dddddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Email Address</th>
-                            <th style="border: 1px solid #dddddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Terminals</th>
+                            <th style="border: 1px solid #dddddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Machine Types</th>
                             <th style="border: 1px solid #dddddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Error Message</th>
                         </tr>
                         ${failedRecipients.map(recipient => {
     return `<tr>
                                 <td style="border: 1px solid #dddddd; padding: 8px; text-align: left;">${recipient['Date/Time']}</td>
-                                <td style="border: 1px solid #dddddd; padding: 8px; text-align: left;">${recipient['CID']}</td>
                                 <td style="border: 1px solid #dddddd; padding: 8px; text-align: left;">${recipient['Company Name']}</td>
                                 <td style="border: 1px solid #dddddd; padding: 8px; text-align: left;">${recipient['Email Address']}</td>
-                                <td style="border: 1px solid #dddddd; padding: 8px; text-align: left;">${recipient['Terminals']}</td>
+                                <td style="border: 1px solid #dddddd; padding: 8px; text-align: left;">${recipient['Machine Types']}</td>
                                 <td style="border: 1px solid #dddddd; padding: 8px; text-align: left;">${recipient['Error Message']}</td>
                             </tr>`;
 }).join('')}
@@ -122,7 +120,6 @@ const failListTemplate = (failedRecipients) => `<!DOCTYPE html>
     </table>
 </body>
 </html>`;
-
 
 
 // Email template for OTP delivery.
@@ -310,4 +307,210 @@ const redirectTemplate = (hiddenInputs) => `<!DOCTYPE html>
 </script>
 </html>`;
 
-module.exports = { dueDateTemplate, failListTemplate, otpTemplate, redirectTemplate };
+const failedOrdersNotificationTemplate = (orders) => {
+    const rows = orders.map(order => `
+        <tr>
+            <td>${order.order_id}</td>
+            <td>${order.transaction_id || 'N/A'}</td>
+            <td>${new Date(order.processed_at).toLocaleString()}</td>
+            <td>${order.amount}</td>
+            <td>${order.payment_status}</td>
+            <td>${order.error_message}</td>
+        </tr>
+    `).join('');
+
+    return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Automated Subscription Renewal - Failed Orders Report</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    line-height: 1.6;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f4f4f4;
+                }
+                .container {
+                    max-width: 100%;
+                    width: 800px;
+                    margin: 20px auto;
+                    padding: 20px;
+                    border: 1px solid #ddd;
+                    border-radius: 5px;
+                    background-color: #fff;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
+                    table-layout: fixed;
+                }
+                th, td {
+                    padding: 12px;
+                    border: 1px solid #ddd;
+                    text-align: left;
+                    word-wrap: break-word;
+                }
+                th {
+                    background-color: #f2f2f2;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h2>Automated Subscription Renewal - Failed Orders Report</h2>
+                <p>The following orders have been marked as failed. Please review them. If any of these orders have been paid, a manual refund is required.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Transaction ID</th>
+                            <th>Processed Date</th>
+                            <th>Amount</th>
+                            <th>Payment Status</th>
+                            <th>Failed Remark</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows}
+                    </tbody>
+                </table>
+            </div>
+        </body>
+        </html>
+    `;
+};
+
+
+const developerNotificationTemplate = (failedOrders, updateFailedOrders) => {
+    const failedOrdersRows = failedOrders.map(order => `
+        <tr>
+            <td>${order.order_id}</td>
+            <td>${order.transaction_id || 'N/A'}</td>
+            <td>${new Date(order.processed_at).toLocaleString()}</td>
+            <td>${order.amount}</td>
+            <td>${order.payment_status}</td>
+            <td>${order.error_message}</td>
+        </tr>
+    `).join('');
+
+    const updateFailedOrdersRows = updateFailedOrders.map(order => `
+        <tr>
+            <td>${order.order_id}</td>
+            <td>${order.transaction_id || 'N/A'}</td>
+            <td>${new Date(order.processed_at).toLocaleString()}</td>
+            <td>${order.amount}</td>
+            <td>${order.payment_status}</td>
+            <td>${order.error_message}</td>
+        </tr>
+    `).join('');
+
+    return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Automated Subscription Renewal - Developer Alert</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    line-height: 1.6;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f4f4f4;
+                }
+                .container {
+                    max-width: 100%;
+                    width: 800px;
+                    margin: 20px auto;
+                    padding: 20px;
+                    border: 1px solid #ddd;
+                    border-radius: 5px;
+                    background-color: #fff;
+                }
+                h2, h3 {
+                    color: #333;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
+                    table-layout: fixed;
+                }
+                th, td {
+                    padding: 12px;
+                    border: 1px solid #ddd;
+                    text-align: left;
+                    word-wrap: break-word;
+                }
+                th {
+                    background-color: #f2f2f2;
+                }
+                .section {
+                    margin-bottom: 30px;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h2>Automated Subscription Renewal - Developer Alert</h2>
+                
+                <div class="section">
+                    <h3>Orders That Failed to Process</h3>
+                    <p>The following orders failed during processing. They have been successfully marked as 'failed' in the database.</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Transaction ID</th>
+                                <th>Processed Date</th>
+                                <th>Amount</th>
+                                <th>Payment Status</th>
+                                <th>Failed Remark</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${failedOrdersRows}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="section">
+                    <h3>Critical: Orders That Failed to Update</h3>
+                    <p>The following orders failed during processing AND failed to be marked as 'failed' in the database. Manual intervention is required to update their status.</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Transaction ID</th>
+                                <th>Processed Date</th>
+                                <th>Amount</th>
+                                <th>Payment Status</th>
+                                <th>Failed Remark</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${updateFailedOrdersRows}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
+};
+
+
+module.exports = {
+    dueDateTemplate,
+    failListTemplate,
+    otpTemplate,
+    redirectTemplate,
+    failedOrdersNotificationTemplate,
+    developerNotificationTemplate
+};

@@ -1,68 +1,82 @@
 const db = require("../db/db");
 
-// Fetch order by order ID (and optionally transaction ID).
-function getOrder(orderId, transactionId) {
-    const stmt = db.prepare(`
-        SELECT * FROM orders
-        WHERE order_id = ? ${transactionId ? "OR transaction_id = ?" : ""}
-    `);
-
-    let order;
-    if (transactionId) {
-        order = stmt.get(orderId, transactionId);
-    } else {
-        order = stmt.get(orderId);
-    }
-
-    return order;
+function getAllOrders() {
+    const stmt = db.prepare(
+        `
+        SELECT o.*, c.company_name, c.id AS customer_id FROM orders AS o
+        JOIN customers AS c ON o.customer_id = c.id
+        ORDER BY o.created_at DESC
+        `
+    );
+    return stmt.all();
 }
 
-// Fetch order plus all item rows for the order.
-function getOrderWithItems(orderId, transactionId) {
-    const stmtString = `
-        SELECT o.*, oi.device_id, oi.device_type
-        FROM orders AS o
-        INNER JOIN order_items oi ON o.order_id = oi.order_id
-        WHERE o.order_id = ? ${transactionId ? "OR o.transaction_id = ?" : ""}
-    `;
-    const stmt = db.prepare(stmtString);
+// Fetch order by order ID (and optionally transaction ID).
+function getOrder(orderId) {
+    const stmt = db.prepare(`
+        SELECT o.*, c.company_name FROM orders AS o
+        LEFT JOIN customers AS c ON o.customer_id = c.id
+        WHERE order_id = ?
+    `
+    );
+    return stmt.get(orderId);
+}
 
-    let order;
-    if (transactionId) {
-        order = stmt.all(orderId, transactionId);
-    } else {
-        order = stmt.all(orderId);
-    }
-
-    return order;
+// Fetch processing orders that are pending and failed
+function getPendingOrProcessingOrders() {
+    const stmt = db.prepare(
+        `
+            SELECT *,
+            (strftime('%s', 'now', 'localtime') - strftime('%s', created_at)) / 60.0 AS minutes_passed
+            FROM orders
+            WHERE process_status IN ('pending', 'processing') AND payment_status IN ('pending', 'failed') AND minutes_passed >= 5
+        `
+    );
+    return stmt.all();
 }
 
 // Insert a new order record.
 function insertOrder(order) {
     const stmt = db.prepare(`
         INSERT INTO orders 
-        (order_id, amount, company_name, email, status)
-        VALUES (?, ?, ?, ?, ?)
+        (order_id, amount, customer_id)
+        VALUES (?, ?, ?)
         `);
-    return stmt.run(order.orderId, order.amount, order.companyName, order.email, order.status || 'pending');
+    return stmt.run(order.orderId, order.amount, order.customerId);
 }
 
-// Update order fields with optional additional WHERE conditions.
-function updateOrder(orderId, companyName, email, updateFields, additionalConditions = {}) {
+// Update order fields
+function updateOrder(orderId, updateFields, additionalConditions = {}) {
     const filedCaluse = Object.keys(updateFields).
         map(key => `${key} = ?`).join(", ");
 
-    const conditionalClause = Object.keys(additionalConditions)
-        .map(key => `${key} = ?`).join(" AND ");
+    const additionalClauses = Object.keys(additionalConditions).map(key => {
+        const operator = additionalConditions[key].operator || '=';
+        return `${key} ${operator} ${operator === 'IN' ? `(${additionalConditions[key].value.map(() => '?').join(',')})` : '?'}`;
+    }).join(" AND ");
 
+    const whereClause = additionalClauses ? `WHERE order_id = ? AND ${additionalClauses}` : 'WHERE order_id = ?';
+    const additionalConditionsValues = Object.values(additionalConditions).reduce((acc, cond) => {
+        if (cond.operator === 'IN' && Array.isArray(cond.value)) {
+            return [...acc, ...cond.value];
+        }
+        return [...acc, cond.value];
+    }, []);
+
+    // Error is happending here. Need to check tomorrow. Error: SqliteError: near "?": syntax error 
     const stmt = db.prepare(`
         UPDATE orders
         SET ${filedCaluse}
-        WHERE order_id = ? AND company_name = ? AND email = ?
-        ${conditionalClause ? " AND " + conditionalClause : ""}
+        ${whereClause} 
     `);
 
-    return stmt.run(...Object.values(updateFields), orderId, companyName, email, ...Object.values(additionalConditions));
+    return stmt.run(...Object.values(updateFields), orderId, ...additionalConditionsValues);
 }
 
-module.exports = { insertOrder, updateOrder, getOrder, getOrderWithItems };
+module.exports = { 
+    getAllOrders,
+    insertOrder, 
+    updateOrder, 
+    getOrder, 
+    getPendingOrProcessingOrders 
+};

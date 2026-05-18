@@ -118,11 +118,38 @@ h1 {
     color: #1a1a1a;
 }
 
+.payment-status {
+    font-size: 18px;
+    font-weight: 600;
+    margin: -10px 0 15px 0;
+    padding: 5px 15px;
+    border-radius: 15px;
+    display: inline-block;
+    color: #fff;
+}
+
+.payment-status.success {
+    background-color: #28a745;
+}
+
+.payment-status.failed {
+    background-color: #dc3545;
+}
+
+.payment-status.pending {
+    background-color: #f0ad4e;
+}
+
+.payment-status.error {
+    background-color: #dc3545;
+}
+
 .status-message {
     color: #666;
     font-size: 15px;
     line-height: 1.6;
     margin-bottom: 24px;
+    white-space: pre-line;
 }
 
 .details {
@@ -155,6 +182,31 @@ h1 {
 .detail-value {
     color: #1a1a1a;
     font-weight: 700;
+}
+
+.machine-table-title {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    color: #1a1a1a;
+    font-weight: 600;
+    text-align: left;
+}
+
+.machine-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.machine-table th,
+.machine-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.machine-table th {
+    background-color: #f2f2f2;
 }
 
 .actions {
@@ -262,6 +314,13 @@ h1 {
     margin: 0;
     font-size: 13px;
     color: #999;
+}
+
+.screenshot-notice {
+    margin: 20px 0;
+    font-size: 14px;
+    color: #666;
+    text-align: center;
 }
 
 /* Responsive */

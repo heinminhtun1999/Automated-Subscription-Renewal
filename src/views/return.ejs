@@ -7,83 +7,77 @@
         <div class="container">
             <%
                 const hasData = !!data;
-                const statusRaw = hasData && data.status ? data.status.toLowerCase().trim() : '';
+                const processStatus = hasData && data.processStatus ? data.processStatus.toLowerCase().trim() : 'error';
+                const paymentStatus = hasData && data.paymentStatus ? data.paymentStatus.toLowerCase().trim() : 'error';
+                const transactionDate = hasData && data.transactionDate ? new Date(data.transactionDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase() : '-';
                 const orderId = hasData ? data.orderId : '-';
-                const message = hasData && data.message ? data.message : "";
+                const message = hasData && data.message ? data.message : "An unexpected error occurred.";
                 const transactionId = hasData ? data.transactionId : '-';
-                const amountValue = hasData && typeof data.amount === 'number'
-                    ? data.amount.toFixed(2)
-                    : '0.00';
-                const statusCheckUrl = '/payment-status';
+                const amountValue = hasData ? parseFloat(data.amount).toFixed(2) : '0.00';
 
-                const statusConfig = {
-                    paid: {
-                        className: 'success',
-                        accentColor: '#28a745',
-                        icon: '✔',
-                        title: 'Payment Successful',
-                        message: message || 'Your payment has been processed successfully. Thank you.',
-                        amountLabel: 'Amount Paid',
-                        statusLabel: 'Completed'
-                    },
-                    failed: {
-                        className: 'failed',
-                        accentColor: '#dc3545',
-                        icon: 'X',
-                        title: 'Payment Failed',
-                        message: message || 'We could not process your payment. Please try again or contact support.',
-                        amountLabel: 'Amount',
-                        statusLabel: 'Failed'
-                    },
+                const processStatusConfig = {
                     pending: {
                         className: 'pending',
                         accentColor: '#f0ad4e',
                         icon: '...',
-                        title: 'Payment Pending',
-                        message: message || 'Your payment is still being processed. The status will be updated shortly. Please check again in a few minutes.',
-                        amountLabel: 'Amount',
-                        statusLabel: 'Pending'
+                        title: 'Order Pending'
                     },
                     processing: {
                         className: 'processing',
                         accentColor: '#17a2b8',
                         icon: '⏳',
-                        title: 'Order Processing',
-                        message: message || 'Payment completed. We are processing your order. Please check back shortly for the final status.',
-                        amountLabel: 'Amount',
-                        statusLabel: 'Processing'
+                        title: 'Order Processing'
                     },
-                    refunded: {
-                        className: 'refunded',
-                        accentColor: '#17a2b8',
-                        icon: 'R',
-                        title: 'Payment Refunded',
-                        message: message || 'Your payment has been refunded. The funds will return to your original payment method in a few business days.',
-                        amountLabel: 'Amount',
-                        statusLabel: 'Refunded'
+                    completed: {
+                        className: 'success',
+                        accentColor: '#28a745',
+                        icon: '✔',
+                        title: 'Order Completed'
+                    },
+                    failed: {
+                        className: 'failed',
+                        accentColor: '#dc3545',
+                        icon: 'X',
+                        title: 'Order Failed'
                     },
                     error: {
                         className: 'error',
                         accentColor: '#dc3545',
                         icon: '!',
-                        title: 'Processing Error',
-                        message: message || 'An error occurred while processing your order. Please contact support with your order information for assistance.',
-                        amountLabel: 'Amount',
-                        statusLabel: 'Error'
+                        title: 'Processing Error'
                     }
                 };
 
-                const selectedStatus = hasData
-                    ? (statusConfig[statusRaw] || statusConfig.refunded)
-                    : null;
+                const paymentStatusConfig = {
+                    pending: {
+                        className: 'pending',
+                        text: 'Payment Pending'
+                    },
+                    paid: {
+                        className: 'success',
+                        text: 'Payment Successful'
+                    },
+                    failed: {
+                        className: 'failed',
+                        text: 'Payment Failed'
+                    },
+                    error: {
+                        className: 'error',
+                        text: 'Payment Error'
+                    }
+                };
+
+                const selectedProcessStatus = processStatusConfig[processStatus] || processStatusConfig.error;
+                const selectedPaymentStatus = paymentStatusConfig[paymentStatus] || paymentStatusConfig.error;
             %>
 
-            <% if (selectedStatus) { %>
-                <div class="status-card <%= selectedStatus.className %>" style="border-left: 5px solid <%= selectedStatus.accentColor %>;" id="status-card">
-                    <div class="icon" style="background: <%= selectedStatus.accentColor %>;"><%= selectedStatus.icon %></div>
+            <% if (hasData) { %>
+                <div class="status-card <%= selectedProcessStatus.className %>" style="border-left: 5px solid <%= selectedProcessStatus.accentColor %>;" id="status-card">
+                    <div class="icon" style="background: <%= selectedProcessStatus.accentColor %>;"><%= selectedProcessStatus.icon %></div>
 
-                    <h1 id="status-title"><%= selectedStatus.title %></h1>
-                    <p class="status-message" id="status-message"><%= selectedStatus.message %></p>
+                    <h1 id="status-title"><%= selectedProcessStatus.title %></h1>
+                    <h2 class="payment-status <%= selectedPaymentStatus.className %>" id="payment-status"><%= selectedPaymentStatus.text %></h2>
+                    <div class="status-message" id="status-message"><%- message %></div>
 
                     <div class="details">
                         <div class="detail-row">
@@ -91,7 +85,7 @@
                             <strong class="detail-value" id="order-id"><%= orderId %></strong>
                         </div>
                         <div class="detail-row">
-                            <span class="detail-label"><%= selectedStatus.amountLabel %></span>
+                            <span class="detail-label">Amount</span>
                             <strong class="detail-value" id="amount-value">RM <%= amountValue %></strong>
                         </div>
                         <div class="detail-row">
@@ -99,15 +93,42 @@
                             <strong class="detail-value" id="transaction-id"><%= transactionId %></strong>
                         </div>
                         <div class="detail-row">
-                            <span class="detail-label">Status</span>
-                            <strong class="detail-value" id="status-value"><%= selectedStatus.statusLabel %></strong>
+                            <span class="detail-label">Transaction Date</span>
+                            <strong class="detail-value" id="transaction-date"><%= transactionDate %></strong>
                         </div>
                     </div>
 
+                    <% if (hasData && data.machines && data.machines.length > 0) { %>
+                        <div class="details">
+                            <h3 class="machine-table-title">Renewed Machines</h3>
+                            <table class="machine-table">
+                                <thead>
+                                    <tr>
+                                        <th>Machine ID</th>
+                                        <th>Machine Type</th>
+                                        <th>Renewal Fees</th>
+                                        <th>Renewed Until</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% data.machines.forEach(machine => { %>
+                                        <tr>
+                                            <td><%= machine.machine_id %></td>
+                                            <td><%= machine.machine_type_name %></td>
+                                            <td>RM <%= parseFloat(machine.subscription_fees).toFixed(2) %></td>
+                                            <td><%= new Date(machine.end_date).toLocaleDateString('en-GB') %></td>
+                                        </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                    <% } %>
+
+                    <p class="screenshot-notice">For your records, you may want to take a screenshot of this page.</p>
                     <div class="actions">
                         <button class="btn btn-secondary" onclick="window.location.href='/support'">Contact
                             Support</button>
-                        <button class="btn btn-primary" onclick="window.location.href='<%= statusCheckUrl %>'">Check Status Later</button>
+                        <button class="btn btn-primary" onclick="window.location.href='/status-check'">Check Status Later</button>
                     </div>
                 </div>
             <% } else { %>
@@ -119,7 +140,7 @@
                     <div class="actions">
                         <button class="btn btn-secondary" onclick="window.location.href='/support'">Contact
                             Support</button>
-                        <button class="btn btn-primary" onclick="window.location.href='<%= statusCheckUrl %>'">Check Status Later</button>
+                        <button class="btn btn-primary" onclick="window.location.href='/status-check'">Check Status Later</button>
                     </div>
                 </div>
             <% } %>

@@ -8,7 +8,7 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 // Import Controllers
 const reminderEmailController = require('./controllers/reminderEmail');
-const terminalsController = require('./controllers/terminals');
+const { machineSelection } = require('./controllers/machineSelection');
 const { requestPayment, paymentReturn, paymentCancel, renderPamentCheckerPage, paymentCallback } = require('./controllers/payment');
 const { getOrderInfo } = require('./controllers/orders');
 const { renderHomePage } = require('./controllers/admin');
@@ -72,11 +72,11 @@ app.use((req, res, next) => {
 
     // Push current URL to history, exclude certain routes like static files, API calls, and the back route itself to prevent cluttering the history
     const currentUrl = req.originalUrl;
-    if (!currentUrl.startsWith('/api') && 
-    !currentUrl.startsWith('/admin/back') && 
-    !currentUrl.startsWith('/static') && 
-    !currentUrl.includes(".") &&
-    (!req.session.history[req.session.history.length - 1] !== currentUrl)) {
+    if (!currentUrl.startsWith('/api') &&
+        !currentUrl.startsWith('/admin/back') &&
+        !currentUrl.startsWith('/static') &&
+        !currentUrl.includes(".") &&
+        (!req.session.history[req.session.history.length - 1] !== currentUrl)) {
         req.session.history.push(currentUrl);
     }
 
@@ -84,6 +84,19 @@ app.use((req, res, next) => {
         req.session.history.shift(); // Keep only the last 10 entries
     }
     next();
+})
+
+
+// ================== Reconciliation in development environment ==================
+if (process.env.NODE_ENV === 'development') {
+    const runCronJobs = require('../scripts/cron');
+    setInterval(() => {
+        runCronJobs();
+    }, 1 * 60 * 1000); // Run every 5 minutes
+}
+
+app.get('/', (req, res) => {
+    return res.redirect('/status-check');
 })
 
 // ==== Admin Panel Routes ====
@@ -135,7 +148,7 @@ app.delete('/api/admin/machines/type/:typeId/fields/:fieldId', verifyOrigin, han
 app.get('/send-email', reminderEmailController);
 
 // Require verified session to access terminal list.
-app.get('/terminals', terminalsController);
+app.get('/machines', machineSelection);
 
 // OTP requests and payment initiation require origin checks.
 app.post('/payment', verifyOrigin, requestPayment);
@@ -195,11 +208,15 @@ app.use((err, req, res, next) => {
     });
 });
 
-// TODO:: Implement data validation and santization such as allowing only certain fields, type validation for all api endpoints
-
 // Start Server
 app.listen(port, () => {
     console.log(`Development Server is running on ${port}: ${process.env.NODE_ENV}`);
 });
 
 
+// TODO:: Implement data validation and santization such as allowing only certain fields, type validation for all api endpoints
+
+
+// TODO::
+// 1. Setup cron job that automatically set renewal_process_id to null for machines that expired.
+// 2. Remove renewal_process_id if the order is paid

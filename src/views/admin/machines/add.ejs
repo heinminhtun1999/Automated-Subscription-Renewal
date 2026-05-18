@@ -43,7 +43,7 @@
                             <% if (data.customers.length === 0) { %>
                                 <p class="text-gray-500 mt-2 text-sm px-3">No customers found. Please add a customer first.</p>
                             <% } else { %>
-                                <div class="mt-2 max-h-48 overflow-y-auto" id="company-name-suggestions-list"  data-selected-company-id="">   
+                                <div class="mt-2 max-h-48 overflow-y-auto" id="company-name-suggestions-list"  data-selected-customer-id="">   
                                 </div>
                             <% } %>
                         <% } else { %>
@@ -82,6 +82,8 @@
                         <option value="active" selected>Active</option>
                         <option value="inactive">Inactive</option>
                     </select>
+                    <span class="mt-1 text-xs text-gray-400">If end date is in the past, status will be set to inactive.</span>
+                    <span class="mt-1 hidden text-xs text-red-500" data-error-for="machine-status"></span>
                 </div>
             </div>
 

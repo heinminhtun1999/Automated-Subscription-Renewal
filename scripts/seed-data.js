@@ -153,7 +153,7 @@ function buildMachineData(fields) {
 }
 
 function buildDates() {
-    const registered = faker.date.recent({ days: 365 });
+    const registered = faker.date.past({ years: 2 });
     const endDate = new Date(registered);
     endDate.setFullYear(endDate.getFullYear() + 1);
 
@@ -249,6 +249,36 @@ function seedMachines(count) {
     return inserted();
 }
 
+function seedEmailsAndEmailMachines() {
+    const machines = db.prepare("SELECT id, company_id, end_date FROM machines WHERE status = 'active'").all();
+    if (!machines.length) {
+        console.log("No active machines found to seed emails.");
+        return 0;
+    }
+
+    const insertEmail = db.prepare("INSERT INTO emails (company_id) VALUES (?)");
+    const insertEmailMachine = db.prepare(`
+        INSERT INTO email_machines (machine_id, first_email_id, valid_until)
+        VALUES (?, ?, ?)
+    `);
+
+    const inserted = db.transaction(() => {
+        let emailCount = 0;
+        machines.forEach((machine) => {
+            const emailResult = insertEmail.run(machine.company_id);
+            const emailId = emailResult.lastInsertRowid;
+
+            if (emailId) {
+                insertEmailMachine.run(machine.id, emailId, machine.end_date);
+                emailCount++;
+            }
+        });
+        return emailCount;
+    });
+
+    return inserted();
+}
+
 try {
     const args = process.argv.slice(2);
     const customersCount = parseCount(args, "customers", 20, 0);
@@ -257,9 +287,10 @@ try {
     const seededCustomers = seedCustomers(customersCount);
     ensureMachineTypes();
     const seededMachines = seedMachines(machinesCount);
+    const seededEmails = seedEmailsAndEmailMachines();
 
     console.log(
-        `Seeded ${seededCustomers} customers and ${seededMachines} machines into ${dbPath}`
+        `Seeded ${seededCustomers} customers, ${seededMachines} machines, and ${seededEmails} email records into ${dbPath}`
     );
 } catch (error) {
     console.error("Failed to seed data:", error);

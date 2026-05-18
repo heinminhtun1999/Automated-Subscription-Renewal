@@ -1,52 +1,70 @@
-const { uid, getGroupedData } = require("../utils/dataProcessors");
-const { SHEET_CONFIGS, PAYMENT_STATUS, PAYMENT_REQUIRED_FIELDS } = require("../utils/constants");
-const { preparePaymentBody } = require("../utils/services/fiuu");
-const { redirectTemplate } = require("../utils/htmlTemplates");
-const { insertOrder, updateOrder, getOrder, getOrderWithItems } = require("../repositories/orderRepository");
-const { insertOrderItem } = require("../repositories/orderItemRepository");
-const { validateSkey, checkRequiredFields } = require("../utils/utils");
-const { updateCellValue } = require("../utils/services/sheets");
 const logger = require("../utils/services/winston");
 const db = require("../db/db");
+const { SHEET_CONFIGS, PAYMENT_STATUS, PAYMENT_REQUIRED_FIELDS } = require("../utils/constants");
+const { uid, getGroupedData, getUserMessage } = require("../utils/dataProcessors");
+const { preparePaymentBody } = require("../utils/services/fiuu");
+const { redirectTemplate } = require("../utils/htmlTemplates");
+const { insertOrder, updateOrder, getOrder } = require("../repositories/orderRepository");
+const { getCustomerById } = require("../repositories/customerRepository");
+const { insertOrderItem, getOrderItemsByOrderId } = require("../repositories/orderItemRepository");
+const { getMachinesByIds, updateMachine } = require("../repositories/machineRepository");
+const { getEmailMachineByRenewalProcessIds, updateMultipleEmailMachinesByOrderIdAndMachineIds, updateEmailMachineByMachineIdAndRenewalProcessId } = require("../repositories/emailMachinesRepository");
+const { validateSkey, checkRequiredFields } = require("../utils/utils");
+const { updateCellValue } = require("../utils/services/sheets");
 const { log } = require("winston");
+const { ne } = require("@faker-js/faker");
 
 // Build payment request, persist order + items, and redirect to gateway.
 async function requestPayment(req, res, next) {
 
-    const { terminalIds, companyName } = req.body;
+    const { machineIds, customerId } = req.body;
 
-    const data = req.session.data;
-    if (!data) {
+    if (!customerId) {
         const err = new Error('Requested data not found. Please refresh the page and try again.\nIf the issue persists, contact support.');
+        err.title = "Not Found";
         err.status = 400;
         return next(err);
     }
 
-    // Map sheet rows to selected devices and normalize fields.
-    const selectedTerminals = data.map(item => {
-        return {
-            deviceId: uid(item),
-            deviceType: item['Sheet Name'],
-            renewalFee: item['Renewal Fee (RM)'].value || 0,
-        }
-    }).filter(item => terminalIds.includes(item.deviceId));
+    const customer = getCustomerById(customerId);
 
-    if (selectedTerminals.length === 0) {
-        const err = new Error('No valid terminals selected. Please select at least one terminal and try again.');
+    const machineIdsFromPayload = JSON.parse(machineIds || []);
+    if (machineIdsFromPayload.length === 0) {
+        const err = new Error('No machines selected. Please select at least one machine and try again.');
+        err.title = "Bad Request";
         err.status = 400;
+        return next(err);
+    }
+
+    const selectedMachines = getMachinesByIds(machineIdsFromPayload);
+    if (selectedMachines.length === 0 || selectedMachines.length !== machineIdsFromPayload.length) {
+        const err = new Error('Selected machines not found.\nIf the issue persists, contact support.');
+        err.title = "Not Found";
+        err.status = 400;
+        return next(err);
+    }
+
+    const renewalProcessIds = selectedMachines.map(machine => machine.renewal_process_id);
+    const emailMachines = getEmailMachineByRenewalProcessIds(renewalProcessIds);
+    const emailMachineRenewalProcessIds = emailMachines.map(em => em.renewal_process_id);
+    const areAllMachineIdsValid = machineIdsFromPayload.every(id => emailMachines.some(emailMachine => emailMachine.machine_id === parseInt(id)));
+    if (emailMachines.length === 0 || renewalProcessIds.length !== emailMachines.length || !areAllMachineIdsValid) {
+        const err = new Error('We have encountered an issue while processing your request.\nIf the issue persists, contact support.');
+        err.title = "Server Error";
+        err.status = 500;
         return next(err);
     }
 
     // Sum fees for payment amount.
-    const total = selectedTerminals.reduce((sum, terminal) => sum + parseFloat(terminal.renewalFee), 0).toFixed(2);
+    const total = selectedMachines.reduce((sum, machine) => sum + parseFloat(machine.subscription_fees), 0).toFixed(2);
 
     try {
 
         const bodyData = {
-            beneficiaryName: data[0]['Beneficiary Name'].value,
-            email: data[0]['Email Address'].value,
-            contactNumber: data[0]['Contact Number'].value,
-            companyName,
+            beneficiaryName: customer.beneficiary_name,
+            email: customer.email,
+            contactNumber: customer.contact_number,
+            companyName: customer.company_name,
             total: total
         }
 
@@ -56,23 +74,20 @@ async function requestPayment(req, res, next) {
 
         const orderInfo = {
             orderId: paymentBody.orderid,
-            companyName,
-            amount: bodyData.total,
-            email: bodyData.email,
-            status: 'pending'
+            customerId: customer.id,
+            amount: parseFloat(bodyData.total).toFixed(2),
         }
-
         // Atomically insert order and items.
-        db.transaction((orderInfo, terminals) => {
+        db.transaction(() => {
             insertOrder(orderInfo);
-            for (const terminal of terminals) {
+            for (const machines of selectedMachines) {
                 insertOrderItem(
                     orderInfo.orderId,
-                    terminal.deviceId,
-                    terminal.deviceType
+                    machines.id
                 );
+                const result = updateEmailMachineByMachineIdAndRenewalProcessId(machines.id, machines.renewal_process_id, { order_id: orderInfo.orderId });
             }
-        }).immediate(orderInfo, selectedTerminals);
+        }).immediate(orderInfo, selectedMachines);
 
         // Convert payload to hidden form inputs for gateway POST.
         const hiddenInputs = Object.entries(paymentBody).map(([key, value]) => {
@@ -93,7 +108,6 @@ async function requestPayment(req, res, next) {
 function paymentReturn(req, res, next) {
 
     const body = req.body;
-
     if (!body || Object.keys(body).length === 0) {
         const err = new Error('No data received from payment gateway. If you have completed the payment, please contact support for assistance.');
         err.title = 'Order Processing Error';
@@ -101,35 +115,33 @@ function paymentReturn(req, res, next) {
         return next(err);
     }
 
-    const processingPayload = {
-        tranID: body.tranID,
-        orderid: body.orderid,
-        amount: body.amount,
-        status: 'processing',
-    }
-
     const requiredFieldsCheck = checkRequiredFields(body, PAYMENT_REQUIRED_FIELDS);
     if (!requiredFieldsCheck.valid) {
         const missingField = requiredFieldsCheck.missingField;
         logger.warn(`Missing ${missingField} in payment return data:`, body);
-        if (missingField === "orderid" || missingField === "tranID") {
-            const err = new Error('Order ID or Transaction ID missing in payment data from payment provider. If you have completed the payment, please contact support with your order information for assistance.');
-            err.title = 'Order Processing Error';
-            err.status = 400;
-            return next(err);
-        } else {
-            return res.render('return', { data: processingPayload });
-        }
+
+        const err = new Error('Error processing the payment data received from the payment gateway. If you have completed the payment, please contact support with your order information for assistance.');
+        err.title = 'Order Processing Error';
+        err.status = 400;
+        return next(err);
     }
 
     // Fail closed if signature validation fails.
     if (!validateSkey(body)) {
-        logger.warn('Hash verification failed for payment return:', body);
-        return res.render('return', { data: processingPayload });
+        logger.warn('Hash verification failed for payment return:', body, 'Computed Skey:', computeSkey(body), 'Provided Skey:', body.skey);
+        const err = new Error('Invalid data signature in payment return.');
+        err.title = 'Order Processing Error';
+        err.status = 400;
+        return next(err);
     }
 
     try {
         const existingOrder = getOrder(body.orderid, body.tranID);
+        body.amount = parseFloat(body.amount).toFixed(2);
+
+        const machinesFromOrder = getOrderItemsByOrderId(existingOrder.order_id);
+        const machineIdsFromOrder = machinesFromOrder.map(item => item.machine_id);
+        const machines = getMachinesByIds(machineIdsFromOrder);
 
         if (!existingOrder) {
             logger.error('Order not found for payment return:', body.orderid);
@@ -138,24 +150,118 @@ function paymentReturn(req, res, next) {
                     orderId: body.orderid,
                     amount: body.amount,
                     transactionId: body.tranID,
-                    status: 'error',
-                    message: 'Order not found. If you have completed the payment, please contact support with your order information for assistance.',
+                    paymentStatus: 'error',
+                    processStatus: 'error',
+                    transactionDate: body.created_at,
+                    message: `Order not found for ${body.orderid}. If you have completed the payment, please contact support with your order information for assistance.`,
                 }
             });
         }
 
-        const payload = {
-            orderId: existingOrder.order_id,
-            amount: existingOrder.amount,
-            transactionId: body.tranID,
-            status: existingOrder.process_status == 'processing' ? 'processing' : existingOrder.status,
-        };
+        const result = updateOrder(existingOrder.order_id,
+            {
+                process_status: 'processing',
+                process_worker_level: 1
+            },
+            {   // Where conditions
+                process_status: {
+                    operator: '=',
+                    value: 'pending'
+                }
+            });
+        if (result.changes === 0) {
 
-        res.render('return', { data: payload });
+            logger.warn('No order record updated to processing status for payment return. Possible concurrent update or order already processed:', body.orderid);
+            let failedRemark = existingOrder.failed_remark;
+            failedRemark = failedRemark ? "\n" + failedRemark.split(",").filter(m => m.includes("Error Description")).join("").replace("Error Description: ", "Reason: ") : "";
+            return res.render('return', {
+                data: {
+                    orderId: existingOrder.order_id,
+                    transactionId: existingOrder.transaction_id || body.tranID,
+                    amount: existingOrder.amount.toFixed(2),
+                    processStatus: existingOrder.process_status,
+                    message: getUserMessage(existingOrder.payment_status, existingOrder.process_status) + failedRemark,
+                    paymentStatus: existingOrder.payment_status,
+                    transactionDate: existingOrder.paid_on,
+                    machines: existingOrder.payment_status === 'paid' && existingOrder.process_status === 'completed' ? machines : null
+                }
+            });
+        }
+
+        // ----------- Handle different payment statuses and update order accordingly. -----------
+
+        // Failed payment - mark order as failed with failure remark to prevent retries, and show failure message. 
+        // Process status remains pending as we are waiting for callback to confirm final status; 
+        // if callback is not received within expected timeframe, we can set up a cron job to mark it as 
+        // completed with failed status to prevent indefinite pending state.
+        if (body.status === "11") {
+            updateOrder(existingOrder.order_id, {
+                transaction_id: body.tranID,
+                payment_status: PAYMENT_STATUS[body.status],
+                failed_remark: `Error Code: ${body.error_code}, Error Description: ${body.error_desc}`,
+                channel: body.channel,
+            }, { process_status: { operator: '=', value: 'processing' }, process_worker_level: { operator: '<=', value: 1 } });
+
+            return res.render('return', {
+                data: {
+                    orderId: existingOrder.order_id,
+                    transactionId: body.tranID,
+                    amount: existingOrder.amount,
+                    transactionDate: existingOrder.created_at,
+                    paymentStatus: 'failed',
+                    processStatus: 'pending',
+                    message: `${body.error_desc}\nWe are verifying the payment and will update your order status shortly.`
+                }
+            });
+        }
+
+        // Pending payment - show pending message but do not update process status to completed as we are waiting for the callback to confirm the final status. 
+        // Setting process_status back to pending to allow the callback handler to get the order entry and update the status.
+        if (body.status === "22") {
+            updateOrder(existingOrder.order_id, {
+                transaction_id: body.tranID,
+                payment_status: PAYMENT_STATUS[body.status],
+                channel: body.channel,
+                process_status: 'pending',
+            }, { process_status: { operator: '=', value: 'processing' }, process_worker_level: { operator: '<=', value: 1 } });
+
+            return res.render('return', {
+                data: {
+                    orderId: existingOrder.order_id,
+                    transactionId: body.tranID,
+                    amount: existingOrder.amount,
+                    paymentStatus: 'pending',
+                    processStatus: 'pending',
+                    transactionDate: existingOrder.created_at,
+                    message: getUserMessage('pending', 'pending')
+                }
+            });
+        }
+
+        // For successful payment, we will show processing status as we are waiting for the callback to update the final status. 
+        // This is to handle the case where user completes payment but does not return to the site or callback is delayed for some reason. 
+        // We will set it to completed in callback once we update the machines.
+
+        return res.render('return', {
+            data: {
+                orderId: existingOrder.order_id,
+                transactionId: body.tranID,
+                amount: existingOrder.amount,
+                paymentStatus: 'paid',
+                processStatus: 'processing',
+                transactionDate: existingOrder.created_at,
+                message: getUserMessage('paid', 'processing'),
+                machines: null // We will only show machines on the return page if the order is fully completed to avoid confusion, as we are waiting for callback to confirm final status and update machines.
+            }
+        })
+
+        // TODO:: Remove updating when the payment is success. Only update from callback for success. 
+        // Other statuses may be updated from return but not final meaning process_status will not be updated to completed in this return.
+        // Set up cron job to check for orders in processing status for more than X mins or hours. 
 
     } catch (e) {
         logger.error('Error processing payment return:', e);
-        const err = new Error('An error occurred while processing the payment return. Please contact support with your order information for assistance.');
+        const err = new Error('An error occurred while processing the order. If you made a payment, please contact support for assistance.');
         err.title = 'Order Processing Error';
         err.status = 500;
         return next(err);
@@ -165,167 +271,125 @@ function paymentReturn(req, res, next) {
 // Handle server-to-server payment callback and update sheets.
 async function paymentCallback(req, res) {
     const body = req.body;
-    console.log('Received payment callback:', body);
+
     if (!body || Object.keys(body).length === 0) {
-        return res.status(400).send('No data received');
+        logger.warn('No data received in payment callback.');
+        return res.status(400).json({ error: 'No data received.' });
     }
 
     const requiredFieldsCheck = checkRequiredFields(body, PAYMENT_REQUIRED_FIELDS);
     if (!requiredFieldsCheck.valid) {
-        return res.status(400).send(`Missing required field: ${requiredFieldsCheck.missingField}`);
+        const missingField = requiredFieldsCheck.missingField;
+        logger.warn(`Missing ${missingField} in payment return data:`, body);
+        return res.status(400).send(`Missing required field: ${missingField}`);
     }
 
+    // Fail closed if signature validation fails.
     if (!validateSkey(body)) {
-        return res.status(400).send('Invalid data signature');
+        logger.warn('Hash verification failed for payment return:', body, 'Computed Skey:', computeSkey(body), 'Provided Skey:', body.skey);
+        return res.status(400).send('Invalid data signature.');
     }
 
-    res.status(200).send('Success OK');
-
-    let existingOrder;
-    const updatedRows = [];
+    res.status(200).send("RECEIVEDOK");
 
     try {
-        existingOrder = getOrderWithItems(body.orderid, body.tranID);
-
-        if (existingOrder.length === 0) {
+        body.amount = parseFloat(body.amount).toFixed(2);
+        const existingOrder = getOrder(body.orderid, body.tranID);
+        if (!existingOrder) {
             logger.error('Order not found for payment callback:', body.orderid);
             return;
         }
-
-        // Flatten order rows into a single order with device list.
-        existingOrder = existingOrder.reduce((acc, item) => {
-            const data = {
-                ...acc,
-                devices: [
-                    ...acc.devices,
-                    {
-                        deviceId: item.device_id,
-                        deviceType: item.device_type
+        db.transaction(() => {
+            const result = updateOrder(existingOrder.order_id,
+                {
+                    process_status: 'processing',
+                    process_worker_level: 2
+                },
+                {
+                    process_status: {
+                        operator: 'IN',
+                        value: ['pending', 'processing']
+                    },
+                    process_worker_level: {
+                        operator: '<',
+                        value: 2
                     }
-                ]
-            }
-            delete data.device_id;
-            delete data.device_type;
-            return data;
-        }, { ...existingOrder[0], devices: [] });
-
-        const processingStatus = existingOrder.process_status;
-        if (processingStatus === "completed" || processingStatus === "processing") {
-            return;
-        }
-
-        if (body.status === "22") return;
-
-        const status = PAYMENT_STATUS[body.status];
-        const updateData = {
-            status,
-            transaction_id: body.tranID,
-            paid_on: body.paydate,
-            channel: body.channel,
-            process_status: status === "paid" ? "processing" : "completed",
-            failed_remark: body.error_code || body.error_desc ? `Error Code: ${body.error_code}, Error Description: ${body.error_desc}` : null
-        }
-
-        updateOrder(existingOrder.order_id, existingOrder.company_name, existingOrder.email, updateData, { process_status: 'pending' });
-        if (status === "paid") {
-
-            const groupedData = await getGroupedData(true, ["firstEmailNotNotified", "firstEmailNotified"]);
-            const companyData = groupedData[existingOrder.company_name];
-
-            const filteredTerminals = [];
-            for (const device of existingOrder.devices) {
-                const matchedTerminal = companyData.find(item => uid(item) === device.deviceId && item['Sheet Name'] === device.deviceType);
-                filteredTerminals.push(matchedTerminal);
+                });
+            if (result.changes === 0) {
+                logger.warn('No order record updated to processing status for payment callback. Possible concurrent update or order already processed:', body.orderid);
+                return;
             }
 
-            for (const terminal of filteredTerminals) {
-                const dateNames = SHEET_CONFIGS.filter(config => config.sheetKey == terminal['Sheet Name'])[0];
-                const endDate = terminal[dateNames.endDateColumn];
-                const renewalEndDate = terminal[dateNames.renewalEndDateColumn];
-
-                const affectedRow = {
-                    recipient: terminal
-                };
-
-                let result;
-                // Prefer renewal end date; fallback to end date if missing.
-                if (renewalEndDate && new Date(renewalEndDate)) {
-                    affectedRow.oldValue = renewalEndDate.value;
-                    affectedRow.dateType = dateNames.renewalEndDate;
-
-                    const newDate = new Date(renewalEndDate.value);
-                    newDate.setFullYear(newDate.getFullYear() + 1);
-                    const dateString = newDate.toLocaleDateString('en-GB', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric'
-                    }).replaceAll("'", "");
-
-                    result = await updateCellValue(dateNames.renewalEndDateColumn, terminal, dateString);
-                } else if (endDate && new Date(endDate)) {
-                    affectedRow.oldValue = endDate.value;
-                    affectedRow.dateType = dateNames.endDate;
-
-                    const newDate = new Date(endDate.value);
-                    newDate.setFullYear(newDate.getFullYear() + 1);
-                    const dateString = newDate.toLocaleDateString('en-GB', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric'
-                    }).replaceAll("'", "");
-
-                    result = await updateCellValue(dateNames.endDateColumn, terminal, dateString);
-                } else {
-                    throw new Error(`Sheet Error: No valid date found for terminal ${terminal['Company Name'].value} - ${terminal['Sheet Name']} - ${uid(terminal)}. Manual intervention required to update the renewal date.`);
-                }
-
-                if (result.ok) {
-                    updatedRows.push(affectedRow);
-                } else {
-                    throw new Error(`Sheet Error: date update failed,\n${result.error}`);
-                }
+            if (body.status === "11") {
+                updateOrder(existingOrder.order_id, {
+                    transaction_id: body.tranID,
+                    payment_status: PAYMENT_STATUS[body.status],
+                    failed_remark: `Error Code: ${body.error_code}, Error Description: ${body.error_desc}`,
+                    channel: body.channel,
+                    process_status: 'failed',
+                    paid_on: body.paydate,
+                }, { process_status: { operator: '=', value: 'processing' }, process_worker_level: { operator: '<=', value: 2 } });
+                return;
             }
-            updateOrder(existingOrder.order_id, existingOrder.company_name, existingOrder.email, { process_status: 'completed' }, { process_status: 'processing' });
-        }
+
+            if (body.status === "22") {
+                updateOrder(existingOrder.order_id, {
+                    transaction_id: body.tranID,
+                    payment_status: PAYMENT_STATUS[body.status],
+                    channel: body.channel,
+                    process_status: 'pending',
+                    process_worker_level: 0
+                }, { process_status: { operator: '=', value: 'processing' }, process_worker_level: { operator: '<=', value: 2 } });
+                return
+            }
+
+            // For successful payment,
+            // Update the order record, and update end date for the machines linked to this order, and remove renewal process IDs for future renewals.
+            // Remove 
+            // Finally, set process_status to completed to mark the order as fully processed.
+            const orderItems = getOrderItemsByOrderId(existingOrder.order_id);
+            const machineIds = orderItems.map(item => item.machine_id);
+            const machines = getMachinesByIds(machineIds);
+            for (const machine of machines) {
+                const newEndDate = new Date(machine.end_date);
+                newEndDate.setFullYear(newEndDate.getFullYear() + 1)
+                updateMachine(machine.id, {
+                    end_date: newEndDate.toISOString(),
+                    renewal_process_id: null,
+                    renewal_count: machine.renewal_count + 1,
+                    last_renewal_date: new Date().toISOString()
+                });
+            }
+
+            updateMultipleEmailMachinesByOrderIdAndMachineIds(existingOrder.order_id, machineIds, { renewal_process_id: null });
+
+            updateOrder(existingOrder.order_id,
+                {
+                    transaction_id: body.tranID,
+                    payment_status: PAYMENT_STATUS[body.status],
+                    channel: body.channel,
+                    process_status: 'completed',
+                    paid_on: body.paydate
+                },
+                {
+                    process_status:
+                    {
+                        operator: '=',
+                        value: 'processing'
+                    },
+                    process_worker_level:
+                    {
+                        operator: '<=',
+                        value: 2
+                    }
+                });
+        }).immediate();
 
     } catch (e) {
-
-        logger.error('Initiating rollback due to error in payment callback processing:', e.stack || e);
-
-        if (existingOrder) {
-            try {
-                const rollbackData = {
-                    status: 'pending',
-                    transaction_id: null,
-                    paid_on: null,
-                    channel: null,
-                    process_status: 'pending',
-                    failed_remark: null
-                };
-                updateOrder(existingOrder.order_id, existingOrder.company_name, existingOrder.email, rollbackData);
-                logger.info(`Order status rolled back to pending for Order ID: ${existingOrder.order_id} after callback processing failure.`);
-            } catch (dbUpdateRollBackError) {
-                logger.error('Critical Error: Failed to roll back order after callback processing failure:', dbUpdateRollBackError.stack || dbUpdateRollBackError);
-            }
-        }
-
-        if (updatedRows.length > 0) {
-            for (const row of updatedRows) {
-                try {
-                    const rollbackResult = updateCellValue(row.dateType, row.recipient, row.oldValue);
-                    logger.info(`Rolled back sheet update for ${row.recipient['Company Name'].value} - ${row.recipient['Sheet Name']} - ${uid(row.recipient)} to old value: ${row.oldValue}`);
-                    if (!rollbackResult.ok) {
-                        throw new Error(`Critical Error: Failed to roll back sheet update for ${row.recipient['Company Name'].value} - ${row.recipient['Sheet Name']} - ${uid(row.recipient)}:\n${rollbackResult.error}`);
-                    }
-                } catch (rollbackError) {
-                    logger.error(`Critical Error: Failed to roll back sheet update for ${row.recipient['Company Name'].value} - ${row.recipient['Sheet Name']} - ${uid(row.recipient)}:`, rollbackError.stack || rollbackError);
-
-                }
-            }
-        }
-        logger.error('Rollback completed. Investigate the root cause of the failure and manually verify the order status and sheet data integrity.');
+        logger.error('Error processing payment callback:', e, "Order ID:", body.orderid);
+    } finally {
+        return;
     }
-    return;
 }
 
 // Render the payment cancel screen.
@@ -345,3 +409,139 @@ module.exports = {
     renderPamentCheckerPage,
     paymentCallback
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+// const existingOrder = getOrder(body.orderid, body.tranID);
+
+//         if (!existingOrder) {
+//             logger.error('Order not found for payment return:', body.orderid);
+//             return res.render('return', {
+//                 data: {
+//                     orderId: body.orderid,
+//                     amount: body.amount,
+//                     transactionId: body.tranID,
+//                     status: 'error',
+//                     message: 'Order not found. If you have completed the payment, please contact support with your order information for assistance.',
+//                 }
+//             });
+//         }
+
+//         return res.render('return', {
+//             data: {
+//                 orderId: existingOrder.order_id,
+//                 transactionId: body.tranID,
+//                 amount: body.amount,
+//                 paymentStatus: PAYMENT_STATUS[existingOrder.payment_status] || 'unknown',
+//                 processStatus: existingOrder.process_status
+//             }
+//         })
+
+
+//         const result = updateOrder(existingOrder.order_id, { process_status: 'processing' }, { process_status: 'pending' });
+//         if (result.changes === 0) {
+
+//             logger.warn('No order record updated to processing status for payment return. Possible concurrent update or order already processed:', body.orderid);
+//             const paymentStatus = PAYMENT_STATUS[existingOrder.payment_status];
+
+//             return res.render('return', {
+//                 data: {
+//                     orderId: body.orderid,
+//                     transactionId: body.tranID,
+//                     amount: body.amount,
+//                     processStatus: existingOrder.process_status,
+//                     message: getUserMessage(paymentStatus, existingOrder.process_status),
+//                     paymentStatus,
+//                 }
+//             });
+//         }
+
+//         // Handle different payment statuses and update order accordingly.
+
+//         // For failed payments, mark order as completed with failure remark to prevent retries, and show failure message.
+//         if (body.status === "11") {
+
+//             updateOrder(existingOrder.order_id, {
+//                 transaction_id: body.tranID,
+//                 payment_status: PAYMENT_STATUS[body.status],
+//                 failed_remark: `Error Code: ${body.error_code}, Error Description: ${body.error_desc}`,
+//                 channel: body.channel
+//             }, { process_status: 'processing' });
+
+//             return res.render('return', {
+//                 data: {
+//                     orderId: body.orderid,
+//                     transactionId: body.tranID,
+//                     amount: body.amount,
+//                     paymentStatus: 'failed',
+//                     processStatus: 'processing',
+//                     message: getUserMessage('failed', 'processing') + body.error_desc ? body.error_desc : '',
+//                 }
+//             });
+//         }
+
+//         // Pending payment
+//         if (body.status === "22") {
+//             updateOrder(existingOrder.order_id, {
+//                 transaction_id: body.tranID,
+//                 payment_status: PAYMENT_STATUS[body.status],
+//                 channel: body.channel
+//             }, { process_status: 'processing' });
+
+//             return res.render('return', {
+//                 data: {
+//                     orderId: body.orderid,
+//                     transactionId: body.tranID,
+//                     amount: body.amount,
+//                     paymentStatus: 'pending',
+//                     processStatus: 'processing',
+//                     message: getUserMessage('pending', 'processing')
+//                 }
+//             });
+//         }
+
+// db.transaction(() => {
+//     const result = updateOrder(existingOrder.order_id, {
+//         transaction_id: body.tranID,
+//         payment_status: PAYMENT_STATUS[body.status],
+//         channel: body.channel,
+//         process_status: 'completed',
+//         paid_on: body.paydate
+//     }, { process_status: 'processing' });
+
+//     const orderItems = getOrderItemsByOrderId(existingOrder.order_id);
+//     const machineIds = orderItems.map(item => item.machine_id);
+//     const machines = getMachinesByIds(machineIds);
+
+//     for (const machine of machines) {
+//         const newEndDate = new Date(machine.end_date);
+//         newEndDate.setFullYear(newEndDate.getFullYear() + 1)
+//         updateMachine(machine.id, {
+//             end_date: newEndDate.toISOString(),
+//             renewal_process_id: null,
+//             renewal_count: machine.renewal_count + 1,
+//             last_renewal_date: new Date().toISOString()
+//         });
+//     }
+
+//     updateMultipleEmailMachinesByOrderIdAndMachineIds(existingOrder.order_id, machineIds, { renewal_process_id: null });
+// }).immediate();

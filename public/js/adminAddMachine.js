@@ -4,7 +4,7 @@ const companySuggestionContainer = document.getElementById('company-suggestion-c
 const companySuggestionListContainer = document.getElementById('company-name-suggestions-list');
 const companyList = document.querySelectorAll('[data-company-list]');
 const selectedCompanyName = document.getElementById('selected-company-name');
-const selectedCompanyId = document.querySelector('[data-selected-company-id]');
+const selectedCustomerId = document.querySelector('[data-selected-customer-id]');
 const companyDropdown = document.getElementById('company-name-dropdown');
 const additionalFieldsListContainer = document.getElementById('additional-fields-list');
 const addMachineSubmitButton = document.getElementById('add-machine-submit');
@@ -14,9 +14,10 @@ const feesInput = document.getElementById('subscription-fees');
 const machineStatusInput = document.getElementById('machine-status');
 
 function formatDateInputValue(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 }
 
@@ -95,7 +96,7 @@ if (window.customersData) {
         }
 
         const els = companies.map(company => {
-            const isSelected = selectedCompanyId.dataset.selectedCompanyId === String(company.id);
+            const isSelected = selectedCustomerId.dataset.selectedCustomerId === String(company.id);
             return `<p class="px-3 py-2 my-1 cursor-pointer hover:bg-emerald-300 hover:text-white rounded-md font-semibold text-sm ${isSelected ? 'bg-emerald-300 text-white' : ''}" data-customer-id="${company.id}" onClick="selectCompany(this)">${company.company_name}</p>`;
         })
         companySuggestionListContainer.innerHTML = els.join('');
@@ -108,11 +109,11 @@ if (window.customersData) {
         selectedCompanyName.textContent = companyName;
         selectedCompanyName.classList.remove('text-gray-500');
 
-        const previouslySelectedCompanyId = selectedCompanyId.dataset.selectedCompanyId;
+        const previouslySelectedCustomerId = selectedCustomerId.dataset.selectedCustomerId;
 
-        document.querySelector(`[data-customer-id="${previouslySelectedCompanyId}"]`)?.classList.remove('bg-emerald-300', 'text-white');
+        document.querySelector(`[data-customer-id="${previouslySelectedCustomerId}"]`)?.classList.remove('bg-emerald-300', 'text-white');
 
-        selectedCompanyId.dataset.selectedCompanyId = companyId;
+        selectedCustomerId.dataset.selectedCustomerId = companyId;
         companySuggestionContainer.classList.add('hidden');
         companySuggestions.value = '';
 
@@ -182,10 +183,48 @@ if (machineRegistrationDateInput && endDateInput) {
     endDateInput.value = formatDateInputValue(new Date(today.getTime() + oneYear));
 
     machineRegistrationDateInput.addEventListener('change', (e) => {
+
         const selectedDate = new Date(e.target.value).getTime();
-        const endDate = new Date(selectedDate + oneYear);
-        endDateInput.value = formatDateInputValue(endDate);
+        const endDate = new Date(endDateInput.value).getTime();
+
+        if (selectedDate > endDate) {
+            endDateInput.value = formatDateInputValue(selectedDate);
+            changeActiveStatusBasedOnDates(selectedDate);
+            return;
+        }
+
+        if (isNaN(endDate)) {
+            const oneYear = 1000 * 60 * 60 * 24 * 365;
+            const calculateEndDate = new Date(selectedDate + oneYear);
+            endDateInput.value = formatDateInputValue(calculateEndDate);
+            changeActiveStatusBasedOnDates(calculateEndDate);
+            return;
+        }
+
     });
+
+    endDateInput.addEventListener('change', (e) => {
+        const selectedDate = new Date(e.target.value).getTime();
+        changeActiveStatusBasedOnDates(selectedDate);
+    });
+
+    machineStatusInput.addEventListener('change', (e) => {
+        const status = e.target.value;
+        if (status === 'active' && (new Date(endDateInput.value).getTime() < Date.now())) {
+            const machineStatusErrorSpan = document.querySelector(`[data-error-for="machine-status"]`);
+            machineStatusErrorSpan.textContent = 'Cannot set status to active if end date is in the past. Please update the end date or change the status to inactive.';
+            machineStatusErrorSpan.classList.remove('hidden');
+            e.target.value = 'inactive';
+            setTimeout(() => {
+                machineStatusErrorSpan.classList.add('hidden');
+            }, 5000);
+        }
+    });
+
+    const changeActiveStatusBasedOnDates = (date) => {
+        const isActive = date > Date.now();
+        machineStatusInput.value = isActive ? 'active' : 'inactive';
+    }
 }
 
 
@@ -195,7 +234,7 @@ if (addMachineSubmitButton && typeSelector) {
         clearMachineFieldErrors();
 
         const machineTypeId = typeSelector.value.trim();
-        const companyId = selectedCompanyId?.dataset.selectedCompanyId?.trim() || '';
+        const customerId = selectedCustomerId?.dataset.selectedCustomerId?.trim() || '';
         const machineIdInput = document.getElementById('machine-id');
         const subscriptionFeesInput = document.getElementById('subscription-fees');
         const registrationDateInput = document.getElementById('machine-registration-date');
@@ -214,7 +253,7 @@ if (addMachineSubmitButton && typeSelector) {
             return;
         }
 
-        if (!companyId) {
+        if (!customerId) {
             setMachineFieldError('company-name', "Customer's company name is required.");
             isValid = false;
         }
@@ -236,7 +275,7 @@ if (addMachineSubmitButton && typeSelector) {
 
         const body = {
             machine_type_id: Number(machineTypeId),
-            company_id: Number(companyId),
+            customer_id: Number(customerId),
             machine_id: machineId,
             subscription_fees: Number(subscriptionFees),
             status,

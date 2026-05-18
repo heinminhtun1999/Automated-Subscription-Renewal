@@ -1,17 +1,32 @@
 const { getOrder } = require('../repositories/orderRepository');
+const { getOrderItemsByOrderId } = require("../repositories/orderItemRepository");
+const { getMachinesByIds } = require("../repositories/machineRepository");
+const { getUserMessage } = require("../utils/dataProcessors");
+const logger = require('../utils/services/winston');
 
 function getOrderInfo(req, res) {
-    const { orderId, transactionId } = req.query;
+    const { orderId } = req.query;
     try {
-        const order = getOrder(orderId, transactionId);
+        const order = getOrder(orderId);
         if (order) {
-            res.json({ success: true, order });
+            let failedRemark = order.failed_remark;
+            failedRemark = failedRemark ? failedRemark.split(",").filter(m => m.includes("Error Description")).join("").replace("Error Description: ", "Reason: ") : "";
+            order.failed_remark = failedRemark.replace("Reason: ", "");
+            const message = getUserMessage(order.payment_status, order.process_status) + `\n${failedRemark}`;
+            if (order.payment_status === 'paid' && order.process_status === 'completed') {
+                const orderItems = getOrderItemsByOrderId(orderId);
+                const machineIds = orderItems.map(item => item.machine_id);
+                const machines = getMachinesByIds(machineIds);
+                return res.status(200).json({ success: true, order, machines, message });
+            } else {
+                return res.status(200).json({ success: true, order, machines: [], message });
+            }
         } else {
-            res.status(404).json({ success: false, message: 'Order not found' });
+            return res.status(404).json({ success: false, message: 'Order not found' });
         }
     } catch (error) {
         logger.error('Error fetching order info:', error);
-        res.status(500).json({ success: false, message: 'An error occurred while fetching order information' });
+        return res.status(500).json({ success: false, message: 'An error occurred while fetching order information' });
     }
 }
 

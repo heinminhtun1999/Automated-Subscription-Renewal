@@ -8,7 +8,7 @@ const companySuggestionContainer = document.getElementById('company-suggestion-c
 const companySuggestionListContainer = document.getElementById('company-name-suggestions-list');
 const companySuggestions = document.getElementById('company-name-search');
 const selectedCompanyName = document.getElementById('selected-company-name');
-const selectedCompanyId = document.querySelector('[data-selected-company-id]');
+const selectedCustomerId = document.querySelector('[data-selected-customer-id]');
 const machineStatusInput = document.getElementById('machine-status');
 
 
@@ -89,10 +89,10 @@ async function fetchMachineTypeFields(typeId) {
 if (window.data) {
     const data = formatData(window.data);
     const machine = data.machine;
-    const companyData = data.customers || [];
+    const customerData = data.customers || [];
 
-    filteredCompanyData = companyData;
-    renderCompanyList(filteredCompanyData);
+    filteredCustomerData = customerData;
+    renderCompanyList(filteredCustomerData);
 
     companyDropdown.addEventListener('click', () => {
         companySuggestionContainer.classList.toggle('hidden');
@@ -102,40 +102,40 @@ if (window.data) {
 
     companySuggestions.addEventListener('input', async (e) => {
         const query = e.target.value.trim();
-        filteredCompanyData = companyData.filter(company => company.company_name.toLowerCase().includes(query.toLowerCase()));
-        renderCompanyList(filteredCompanyData);
+        filteredCustomerData = customerData.filter(customer => customer.company_name.toLowerCase().includes(query.toLowerCase()));
+        renderCompanyList(filteredCustomerData);
     });
 
-    function renderCompanyList(companies) {
-        if (!companies || companies.length === 0) {
+    function renderCompanyList(customers) {
+        if (!customers || customers.length === 0) {
             companySuggestionListContainer.innerHTML = '<p class="text-gray-500 text-sm px-3">No results found.</p>';
             return;
         }
 
-        const els = companies.map(company => {
-            const isSelected = selectedCompanyId.dataset.selectedCompanyId === String(company.id);
-            return `<p class="px-3 py-2 my-1 cursor-pointer hover:bg-emerald-300 hover:text-white rounded-md font-semibold text-sm ${isSelected ? 'bg-emerald-300 text-white' : ''}" data-customer-id="${company.id}" onClick="selectCompany(this)">${company.company_name}</p>`;
+        const els = customers.map(customer => {
+            const isSelected = selectedCustomerId.dataset.selectedCustomerId === String(customer.id);
+            return `<p class="px-3 py-2 my-1 cursor-pointer hover:bg-emerald-300 hover:text-white rounded-md font-semibold text-sm ${isSelected ? 'bg-emerald-300 text-white' : ''}" data-customer-id="${customer.id}" onClick="selectCompany(this)">${customer.company_name}</p>`;
         })
         companySuggestionListContainer.innerHTML = els.join('');
     }
 
     function selectCompany(element) {
-        const companyId = element.getAttribute('data-customer-id');
+        const customerId = element.getAttribute('data-customer-id');
         const companyName = element.textContent;
 
         selectedCompanyName.textContent = companyName;
         selectedCompanyName.classList.remove('text-gray-500');
 
-        const previouslySelectedCompanyId = selectedCompanyId.dataset.selectedCompanyId;
+        const previouslySelectedCustomerId = selectedCustomerId.dataset.selectedCustomerId;
 
-        document.querySelector(`[data-customer-id="${previouslySelectedCompanyId}"]`)?.classList.remove('bg-emerald-300', 'text-white');
+        document.querySelector(`[data-customer-id="${previouslySelectedCustomerId}"]`)?.classList.remove('bg-emerald-300', 'text-white');
 
-        selectedCompanyId.dataset.selectedCompanyId = companyId;
+        selectedCustomerId.dataset.selectedCustomerId = customerId;
         companySuggestionContainer.classList.add('hidden');
         companySuggestions.value = '';
 
-        filteredCompanyData = companyData;
-        renderCompanyList(filteredCompanyData);
+        filteredCustomerData = customerData;
+        renderCompanyList(filteredCustomerData);
         setMachineFieldError('company-name', '');
     }
 
@@ -178,7 +178,7 @@ if (window.data) {
             clearMachineFieldErrors();
 
             const machineTypeId = typeSelector.value.trim();
-            const companyId = selectedCompanyId?.dataset.selectedCompanyId?.trim() || '';
+            const customerId = selectedCustomerId?.dataset.selectedCustomerId?.trim() || '';
             const machineIdInput = document.getElementById('machine-id');
             const subscriptionFeesInput = document.getElementById('subscription-fees');
             const registrationDateInput = document.getElementById('machine-registration-date');
@@ -194,7 +194,7 @@ if (window.data) {
 
             if (!machineTypeId) return;
 
-            if (!companyId) {
+            if (!customerId) {
                 setMachineFieldError('company-name', "Customer's company name is required.");
                 isValid = false;
             }
@@ -216,7 +216,7 @@ if (window.data) {
 
             const body = {
                 machine_type_id: Number(machineTypeId),
-                company_id: Number(companyId),
+                customer_id: Number(customerId),
                 machine_id: machineId,
                 subscription_fees: Number(subscriptionFees),
                 status,
@@ -259,17 +259,51 @@ if (window.data) {
 }
 
 // Handle machine regestration date and end date inputs with default values and error handling.
-if (machineRegistrationDateInput && endDateInput) {
+if (machineRegistrationDateInput && endDateInput && machineStatusInput) {
 
     machineRegistrationDateInput.addEventListener('change', (e) => {
-        if (isNaN(new Date(endDateInput.value).getTime())) {
-            const oneYear = 1000 * 60 * 60 * 24 * 365;
-            const selectedDate = new Date(e.target.value).getTime();
-            const endDate = new Date(selectedDate + oneYear);
-            endDateInput.value = formatDate(endDate);
+        
+        const selectedDate = new Date(e.target.value).getTime();
+        const endDate = new Date(endDateInput.value).getTime();
+        
+        if (selectedDate > endDate) {
+            endDateInput.value = formatDate(selectedDate);
+            changeActiveStatusBasedOnDates(selectedDate);
+            return;
+        }
 
+        if (isNaN(endDate)) {
+            const oneYear = 1000 * 60 * 60 * 24 * 365;
+            const calculateEndDate = new Date(selectedDate + oneYear);
+            endDateInput.value = formatDate(calculateEndDate);
+            changeActiveStatusBasedOnDates(calculateEndDate);
+            return;
+        } 
+    });
+
+    endDateInput.addEventListener('change', (e) => {
+        const selectedDate = new Date(e.target.value).getTime();
+        changeActiveStatusBasedOnDates(selectedDate);
+    });
+
+    machineStatusInput.addEventListener('change', (e) => {
+        const status = e.target.value;
+        if (status === 'active' && (new Date(endDateInput.value).getTime() < Date.now())) {
+            const machineStatusErrorSpan = document.querySelector(`[data-error-for="machine-status"]`);
+            machineStatusErrorSpan.textContent = 'Cannot set status to active if end date is in the past. Please update the end date or change the status to inactive.';
+            machineStatusErrorSpan.classList.remove('hidden');
+            e.target.value = 'inactive';
+            setTimeout(() => {
+                machineStatusErrorSpan.classList.add('hidden');
+            }, 5000);
         }
     });
+
+    const changeActiveStatusBasedOnDates = (date) => {
+        const isActive = date > Date.now();
+        console.log(date, Date.now(), isActive);
+        machineStatusInput.value = isActive ? 'active' : 'inactive';
+    }
 }
 
 

@@ -25,13 +25,12 @@ function intializeMachineTypes() {
 
                     // Insert associated fields
                     fields.forEach(field => {
-                        const { name } = field;
-                        console.log(`Inserting field: ${name} for machine type ID: ${machineTypeId}`);
+                        console.log(`Inserting field: ${field} for machine type ID: ${machineTypeId}`);
                         const stmt = db.prepare(`
                             INSERT INTO machine_type_fields (machine_type_id, name)
                             VALUES (?, ?)`
                         );
-                        stmt.run(machineTypeId, name);
+                        stmt.run(machineTypeId, field);
                     });
                 }).immediate();
             }

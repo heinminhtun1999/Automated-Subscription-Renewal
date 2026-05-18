@@ -55,6 +55,10 @@ function formatDate(date) {
     });
 }
 
+function normalizeDate(date) {
+    return new Date(date).toISOString().split('T')[0];
+}
+
 module.exports = {
     generateMd5,
     generateOTP,
@@ -62,5 +66,6 @@ module.exports = {
     verifyJWT,
     validateSkey,
     checkRequiredFields,
-    formatDate
+    formatDate,
+    normalizeDate
 };

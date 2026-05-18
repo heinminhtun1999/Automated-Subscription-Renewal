@@ -41,11 +41,11 @@
                     <div class="mt-5">
                         <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
                             <% for (const [key, value] of Object.entries(data)) { %>
-                                <% if (key !== 'id' && key !== 'type_id' && key !== 'company_id') { %>
+                                <% if (key !== 'id' && key !== 'type_id' && key !== 'customer_id') { %>
                                     <div class="rounded-md bg-gray-50 px-5 py-4 hover:bg-gray-100 transition-colors border border-gray-200">
                                         <p class="text-xs font-bold text-gray-500"><%= key %></p>
                                         <% if (key.toLowerCase() === 'company name') { %>
-                                            <a href="/admin/customers/<%= data.company_id %>" class="mt-1 break-words text-sm text-gray-800 underline"><%= value || '-' %></a>
+                                            <a href="/admin/customers/<%= data.customer_id %>" class="mt-1 break-words text-sm text-gray-800 underline"><%= value || '-' %></a>
                                         <% } else { %>
                                             <p class="mt-1 break-words text-sm text-gray-800 <%= key.toLowerCase() == 'status' ? value == 'active' ? 'text-emerald-400' : 'text-red-400' : '' %>"><%= value || '-' %></p>
                                         <% } %>

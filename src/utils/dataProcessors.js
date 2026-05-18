@@ -122,7 +122,7 @@ function groupByCompany(data) {
     const groupedData = {};
 
     for (const row of data) {
-        const company = row['Company Name'].value;
+        const company = row.company_name;
 
         if (!groupedData[company]) {
             groupedData[company] = [row];
@@ -139,6 +139,30 @@ async function getGroupedData(includeExpired = false, fieldsToInclude = []) {
     const combinedData = getCombinedPipelineByDueDate(sheetData.data.valueRanges, includeExpired, fieldsToInclude);
     const groupedData = groupByCompany(combinedData);
     return groupedData;
+}
+
+function getUserMessage(paymentStatus, processStatus) {
+    if (paymentStatus === 'paid' && processStatus === 'completed') {
+        return 'Payment successful. Order completed.';
+    }
+
+    if (paymentStatus === 'paid' && processStatus === 'pending') {
+        return 'Payment received. We are processing your order.';
+    }
+
+    if (paymentStatus === 'paid' && processStatus === 'failed') {
+        return 'Payment received, but something went wrong. Please contact support.';
+    }
+
+    if (processStatus === 'processing') {
+        return 'We are verifying your payment. Please wait.';
+    }
+
+    if (paymentStatus === 'failed') {
+        return 'Payment failed. Please try again.';
+    }
+
+    return 'Waiting for payment.';
 }
 
 // Convert column index to cell value (e.g., 0 -> A, 1 -> B, ..., 25 -> Z, 26 -> AA, 27 -> AB, ...)
@@ -183,5 +207,6 @@ module.exports = {
     groupByCompany,
     separateNotified,
     uid,
-    getGroupedData
+    getGroupedData,
+    getUserMessage
 };

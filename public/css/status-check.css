@@ -69,6 +69,22 @@ body {
     border-left: 5px solid #f0ad4e;
 }
 
+.status-card.processing {
+    border-left: 5px solid #17a2b8;
+}
+
+.status-card.success {
+    border-left: 5px solid #28a745;
+}
+
+.status-card.failed {
+    border-left: 5px solid #dc3545;
+}
+
+.status-card.error {
+    border-left: 5px solid #dc3545;
+}
+
 .icon {
     width: 80px;
     height: 80px;
@@ -151,7 +167,6 @@ h1 {
 }
 
 .result-value {
-    color: #1a1a1a;
     font-weight: 700;
 }
 
@@ -164,6 +179,12 @@ h1 {
 .result-placeholder {
     margin: 0;
     color: #666;
+}
+
+.error-message {
+    color: #d9534f;
+    font-weight: 600;
+    margin-bottom: 16px;
 }
 
 .btn {
@@ -255,6 +276,44 @@ h1 {
     margin: 0;
     font-size: 13px;
     color: #999;
+}
+
+.machine-table-title {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    color: #1a1a1a;
+    font-weight: 600;
+    text-align: left;
+}
+
+.machine-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.machine-table th,
+.machine-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.machine-table th {
+    background-color: #f2f2f2;
+}
+
+.machines-table-container {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    margin-top: 20px;
+    text-align: left;
+}
+
+.machines-table-container.hidden {
+    display: none;
 }
 
 @media (max-width: 768px) {

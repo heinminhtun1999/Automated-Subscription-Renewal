@@ -1,24 +1,24 @@
 const options = {
     responsive: false,
-    stateSave: true,
+    stateSave: false,
     columnControl: ['order', 'spacer', ['orderAsc', 'orderDesc', 'spacer', 'search', 'orderClear', 'searchClear']],
     columnDefs: [
         { targets: '_all', className: 'dt-head-left' },
         {
             targets: '_all',
             createdCell: function (td, cellData, rowData, row, col) {
-                if (col == 6 && cellData) {
-                    const endDate = new Date(cellData);
-                    const today = new Date();
-                    if (endDate < today) {
-                        td.classList.add('!bg-red-300');
-                        td.innerHTML = cellData + ' <strong>(Expired)</strong>';
-                    }
-                }
+                // if (col == 6 && cellData) {
+                //     const endDate = new Date(cellData);
+                //     const today = new Date();
+                //     if (endDate < today) {
+                //         td.classList.add('!bg-red-300');
+                //         td.innerHTML = cellData + ' <strong>(Expired)</strong>';
+                //     }
+                // }
                 if (col == 8 && cellData) {
                     td.innerHTML = cellData === 'active'
-                        ? `<span class="bg-emerald-400 rounded-full pb-3 p-2 px-5 text-white !block !ml-auto text-center border border-emerald-300">${cellData}</span>`
-                        : `<span class="bg-red-400 rounded-full pb-3 p-2 px-5 text-white !block !ml-auto text-center border border-red-300">${cellData}</span>`;
+                        ? `<span class=" text-emerald-500 !block !ml-auto text-center">${cellData}</span>`
+                        : `<span class=" text-red-500 !block !ml-auto text-center ">${cellData}</span>`;
                 }
             }
         }
@@ -52,24 +52,28 @@ const options = {
 
 const machinesTable = document.getElementById('machinesTable');
 let selectedEndDatePeriod = 'all';
+let selectedStatus = 'all';
+
+const STATUS_OPTIONS = [
+    { value: 'all', label: 'Status: All' },
+    { value: 'active', label: 'Status: Active' },
+    { value: 'expired', label: 'Status: Expired' }
+];
 
 const END_DATE_PERIOD_OPTIONS = [
-    { value: 'all', label: 'Active Status: All' },
-    { value: 'this_month', label: 'Active Status: Expire This Month' },
-    { value: 'next_30_days', label: 'Active Status: Expire in Next 30 Days' },
-    { value: 'next_90_days', label: 'Active Status: Expire in Next 90 Days' },
-    { value: 'active', label: 'Active Status: Active (Not Expired)' },
-    { value: 'expired', label: 'Active Status: Expired' }
+    { value: 'all', label: 'End Date: All' },
+    { value: 'this_month', label: 'End Date: This Month' },
+    { value: 'next_30_days', label: 'End Date: Next 30 Days' },
+    { value: 'next_90_days', label: 'End Date: Next 90 Days' },
 ];
 
 let isEndDatePeriodFilterRegistered = false;
 
-function registerEndDatePeriodFilter() {
+function registerFilters() {
     if (isEndDatePeriodFilterRegistered || !window.DataTable?.ext?.search) return;
 
     window.DataTable.ext.search.push((settings, data) => {
         if (settings?.nTable?.id !== 'machinesTable') return true;
-        if (selectedEndDatePeriod === 'all') return true;
 
         const endDateIndex = settings.aoColumns.findIndex(col => col?.title === 'End Date');
         if (endDateIndex < 0) return true;
@@ -78,7 +82,14 @@ function registerEndDatePeriodFilter() {
         const endDate = parseRowDate(endDateRaw);
         if (!endDate) return false;
 
-        return isDateWithinPeriod(endDate, selectedEndDatePeriod);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const isExpired = endDate < today;
+
+        const statusFilter = selectedStatus === 'all' || (selectedStatus === 'active' && !isExpired) || (selectedStatus === 'expired' && isExpired);
+        const dateFilter = selectedEndDatePeriod === 'all' || isDateWithinPeriod(endDate, selectedEndDatePeriod);
+
+        return statusFilter && dateFilter;
     });
 
     isEndDatePeriodFilterRegistered = true;
@@ -110,15 +121,13 @@ function isDateWithinPeriod(targetDate, period) {
     if (period === 'this_month') return targetDate >= monthStart && targetDate <= monthEnd;
     if (period === 'next_30_days') return targetDate >= today && targetDate <= next30Days;
     if (period === 'next_90_days') return targetDate >= today && targetDate <= next90Days;
-    if (period === 'active') return targetDate >= today;
-    if (period === 'expired') return targetDate < today;
 
     return true;
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        registerEndDatePeriodFilter();
+        registerFilters();
 
         const res = await fetch('/api/admin/get-machine-types');
 
@@ -137,6 +146,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         dataTable.on('length.dt', () => updatePageSizeDisplay(dataTable));
 
         initializeMachineTypeSelector(dataTable, types, defaultTypeId);
+        initializeStatusSelector(dataTable);
         initializeEndDatePeriodSelector(dataTable);
 
     } catch (err) {
@@ -210,6 +220,45 @@ function initializeEndDatePeriodSelector(dataTable) {
         select.appendChild(opt);
     });
 
+    const statusSelect = root.querySelector('#statusSelect');
+    if (statusSelect) {
+        statusSelect.after(select);
+    } else {
+        const machineTypeSelect = root.querySelector('#machineTypeSelect');
+        if (machineTypeSelect) {
+            machineTypeSelect.after(select);
+        } else {
+            const ref = root.querySelectorAll('.dt-button')[1];
+            ref ? ref.after(select) : root.appendChild(select);
+        }
+    }
+
+    select.addEventListener('change', (e) => {
+        selectedEndDatePeriod = e.target.value;
+        dataTable.draw();
+    });
+}
+
+function initializeStatusSelector(dataTable) {
+    const root = dataTable.buttons().container()[0];
+    if (!root) return;
+
+    if (root.querySelector('#statusSelect')) {
+        root.querySelector('#statusSelect').remove();
+    }
+
+    const select = document.createElement('select');
+    select.id = 'statusSelect';
+    select.classList.add('machineTypeSelect');
+
+    STATUS_OPTIONS.forEach((option) => {
+        const opt = document.createElement('option');
+        opt.value = option.value;
+        opt.textContent = option.label;
+        opt.selected = option.value === selectedStatus;
+        select.appendChild(opt);
+    });
+
     const machineTypeSelect = root.querySelector('#machineTypeSelect');
     if (machineTypeSelect) {
         machineTypeSelect.after(select);
@@ -219,7 +268,7 @@ function initializeEndDatePeriodSelector(dataTable) {
     }
 
     select.addEventListener('change', (e) => {
-        selectedEndDatePeriod = e.target.value;
+        selectedStatus = e.target.value;
         dataTable.draw();
     });
 }
@@ -274,6 +323,7 @@ async function updateMachineTable(dataTable, typeId) {
         try {
             const types = await fetchMachineTypes();
             initializeMachineTypeSelector(newTable, types, typeId);
+            initializeStatusSelector(newTable);
             initializeEndDatePeriodSelector(newTable);
             newTable.draw();
         } catch (err) {
@@ -310,7 +360,8 @@ function buildColumns(data) {
         .filter(key => key !== 'id') // remove id from auto columns
         .map(key => {
             const isDateColumn = /date/i.test(key);
-
+            const isNumberColumn = /fees|count|number/i.test(key);
+            
             return {
                 data: key,
                 title: formatTitle(key),
@@ -322,6 +373,15 @@ function buildColumns(data) {
                                 return Number.isNaN(timestamp) ? Number.NEGATIVE_INFINITY : timestamp;
                             }
 
+                            return value;
+                        }
+                    }
+                    : isNumberColumn
+                    ? {
+                        render: (value, type) => {
+                            if (type === 'sort' || type === 'type') {
+                                return Number(value?.replace('RM ', '').replace(',', '')) || Number.NEGATIVE_INFINITY;
+                            }
                             return value;
                         }
                     }
