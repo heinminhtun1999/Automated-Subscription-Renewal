@@ -1,4 +1,5 @@
 // Module Imports
+const dotenv = require('dotenv');
 const runReminderEmailJob = require("../utils/services/reminderEmail");
 const logger = require('../utils/services/winston');
 

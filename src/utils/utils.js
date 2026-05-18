@@ -33,6 +33,10 @@ function generateOTP() {
 
 // Sign a JWT for the given payload.
 function generateJWT(payload) {
+    if (!process.env.JWT_SECRET) {
+        logger.error('JWT_SECRET environment variable is not set');
+        throw new Error('JWT_SECRET environment variable is required but not set');
+    }
     const token = jwt.sign(payload, process.env.JWT_SECRET);
     return token;
 }
