@@ -10,7 +10,7 @@ const { getAllEmailMachines } = require('../../repositories/emailMachinesReposit
 const logger = require('./winston');
 
 // Ensure environment variables are loaded
-dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
+dotenv.config({ path: path.join(__dirname, '..', '..', '..', '.env') });
 
 // Trigger reminder emails for upcoming renewals and return grouped data.
 const reminderEmailJob = async () => {

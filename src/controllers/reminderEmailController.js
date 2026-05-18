@@ -1,7 +1,11 @@
 // Module Imports
+const path = require('path');
 const dotenv = require('dotenv');
 const runReminderEmailJob = require("../utils/services/reminderEmail");
 const logger = require('../utils/services/winston');
+
+// Ensure environment variables are loaded from .env file
+dotenv.config({ path: path.join(__dirname, '..', '..', '..', '.env') });
 
 const reminderEmailController = async (req, res) => {
     try {
