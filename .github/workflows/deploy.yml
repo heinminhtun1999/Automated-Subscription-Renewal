@@ -92,12 +92,13 @@ jobs:
 
             # Remove old native binaries compiled against wrong ABI
             rm -rf node_modules
-            rm -rf package-lock.json
-            rm -rf ~/.npm/_cacache
 
 
             # Fresh install using Node 20 ABI
             \$(which npm) ci --omit=dev
+
+            # Rebuild native modules for Node 20
+            \$(which npm) rebuild
 
             # Stop existing process safely
             pm2 delete "$PM2_NAME" 2>/dev/null || true
