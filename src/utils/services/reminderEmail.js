@@ -46,7 +46,7 @@ const reminderEmailJob = async () => {
         return { success: true, len: machinesDueForRenewal.length, machines: machinesDueForRenewal, separated };
 
     } catch (error) {
-        logger.error('Error in reminderEmailController:', error);
+        logger.error('Error in reminderEmail:', error.stack || error);
         return { success: false, len: 0, machines: [], separated:[] };
     }
 

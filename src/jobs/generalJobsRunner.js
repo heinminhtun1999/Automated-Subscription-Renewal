@@ -2,7 +2,6 @@ const removeRenewalProcessId = require("./removeRenewalProcessId");
 const reconcilePayment = require("./reconcilePayment");
 const logger = require('../utils/services/winston');
 
-
 async function runCronJobs() {
     try {
         logger.info("Starting general cron jobs...");
