@@ -9,6 +9,9 @@ const { getMachineByDaysLeft } = require('../../repositories/machineRepository')
 const { getAllEmailMachines } = require('../../repositories/emailMachinesRepository');
 const logger = require('./winston');
 
+// Ensure environment variables are loaded
+dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
+
 // Trigger reminder emails for upcoming renewals and return grouped data.
 const reminderEmailJob = async () => {
 
