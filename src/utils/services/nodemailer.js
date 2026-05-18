@@ -1,5 +1,5 @@
 const nodemailer = require('nodemailer');
-const uuid = require('UUID');
+const uuid = require('uuid');
 const logger = require('./winston');
 const db = require('../../db/db');
 const { convert } = require('html-to-text');
