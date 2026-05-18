@@ -106,7 +106,7 @@ jobs:
             pm2 delete "Automated Subscription Renewal Cron" 2>/dev/null || true
 
             # Start both the web app and cron worker from the PM2 ecosystem config
-            pm2 start ecosystem.config.js --env $PM2_ENV
+            NODE_ENV=$PM2_ENV pm2 start ecosystem.config.js --env $PM2_ENV
 
             pm2 save
           EOF

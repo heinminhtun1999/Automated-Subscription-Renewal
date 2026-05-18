@@ -1,8 +1,10 @@
+const isProduction = process.env.NODE_ENV === 'production';
+
 module.exports = {
     apps: [
         {
             // PM2 process definition for the web app.
-            name: 'Automated Subscription Renewal',
+            name: isProduction ? 'asr' : 'asr-dev',
             script: 'src/index.js',
             env_file: '.env',
             env: {
@@ -18,7 +20,7 @@ module.exports = {
         },
         {
             // PM2 process definition for the cron worker.
-            name: 'Automated Subscription Renewal Cron',
+            name: isProduction ? 'asr-crons' : 'asr-dev-crons',
             script: 'src/jobs/worker.js',
             env_file: '.env',
             env: {
