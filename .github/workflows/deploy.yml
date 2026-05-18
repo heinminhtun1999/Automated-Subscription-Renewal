@@ -77,6 +77,12 @@ jobs:
             nvm install 20
             nvm use 20
 
+            echo "=============================="
+            echo "USING NODE: \$(node -v)"
+            echo "NODE PATH: \$(which node)"
+            echo "NPM PATH: \$(which npm)"
+            echo "=============================="
+
             cd $DEPLOY_PATH || exit 1
 
             if [ ! -f package-lock.json ]; then
@@ -84,13 +90,20 @@ jobs:
               exit 1
             fi
 
+            # Remove old native binaries compiled against wrong ABI
             rm -rf node_modules
-            npm ci --omit=dev
 
+            # Fresh install using Node 20 ABI
+            \$(which npm) ci --omit=dev
+
+            # Stop existing process safely
             pm2 delete "$PM2_NAME" 2>/dev/null || true
 
+            # Start app using exact Node 20 interpreter
             NODE_ENV=$PM2_ENV PORT=4000 \
             pm2 start src/index.js \
               --name "$PM2_NAME" \
               --interpreter \$(which node)
+
+            pm2 save
           EOF
