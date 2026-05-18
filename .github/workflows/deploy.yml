@@ -92,6 +92,9 @@ jobs:
 
             # Remove old native binaries compiled against wrong ABI
             rm -rf node_modules
+            rm -rf package-lock.json
+            rm -rf ~/.npm/_cacache
+
 
             # Fresh install using Node 20 ABI
             \$(which npm) ci --omit=dev
