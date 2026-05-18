@@ -32,7 +32,6 @@ const {
 const db = require('../db/db');
 const logger = require('../utils/services/winston');
 const { formatDate, normalizeDate } = require('../utils/utils');
-const { fi } = require('@faker-js/faker');
 const { add } = require('winston');
 const { render } = require('ejs');
 

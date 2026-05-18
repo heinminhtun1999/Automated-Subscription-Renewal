@@ -12,7 +12,6 @@ const { getEmailMachineByRenewalProcessIds, updateMultipleEmailMachinesByOrderId
 const { validateSkey, checkRequiredFields } = require("../utils/utils");
 const { updateCellValue } = require("../utils/services/sheets");
 const { log } = require("winston");
-const { ne } = require("@faker-js/faker");
 
 // Build payment request, persist order + items, and redirect to gateway.
 async function requestPayment(req, res, next) {
