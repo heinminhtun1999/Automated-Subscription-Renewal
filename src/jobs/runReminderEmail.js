@@ -2,7 +2,7 @@
 const runReminderEmailJob = require("../utils/services/reminderEmail");
 const logger = require('../utils/services/winston');
 
-(async () => {
+const reminderEmailRunnder = async () => {
     try {
         const result = await runReminderEmailJob();
         logger.info('Reminder Emails job successfullly processed via cron job.')
@@ -11,5 +11,6 @@ const logger = require('../utils/services/winston');
         logger.error('Error in runReminderEmail cronjob:', error);
         return;
     }
-})();
+};
 
+module.exports = reminderEmailRunnder;
