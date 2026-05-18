@@ -100,14 +100,13 @@ jobs:
             # Rebuild native modules for Node 20
             \$(which npm) rebuild
 
-            # Stop existing process safely
+            # Stop existing processes safely before recreating them from the ecosystem file
             pm2 delete "$PM2_NAME" 2>/dev/null || true
+            pm2 delete "Automated Subscription Renewal" 2>/dev/null || true
+            pm2 delete "Automated Subscription Renewal Cron" 2>/dev/null || true
 
-            # Start app using exact Node 20 interpreter
-            NODE_ENV=$PM2_ENV PORT=4000 \
-            pm2 start src/index.js \
-              --name "$PM2_NAME" \
-              --interpreter \$(which node)
+            # Start both the web app and cron worker from the PM2 ecosystem config
+            pm2 start ecosystem.config.js --env $PM2_ENV
 
             pm2 save
           EOF
