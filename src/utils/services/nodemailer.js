@@ -68,7 +68,6 @@ async function prepareAndSendDueDateEmail(combinedData) {
         const body = {
             customer_id: companyData[0].customer_id
         }
-        logger.info("Environment Variable: ", process.env)
         const token = generateJWT(body);
         const URL = process.env.PUBLIC_BASE_URL + "/machines?token=" + token;
 
