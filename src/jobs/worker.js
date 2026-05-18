@@ -4,4 +4,4 @@ const generalJobsRunner = require("./generalJobsRunner");
 const reminderEmailRunner = require("./runReminderEmail");
 
 cron.schedule("*/5 * * * *", generalJobsRunner);
-cron.schedule("*/5 * * * *", reminderEmailRunner);
+cron.schedule("0 */12 * * *", reminderEmailRunner);
