@@ -1,20 +1,19 @@
 // Module Imports
-const { getGroupedData, groupByCompany } = require('../utils/dataProcessors');
-const { prepareAndSendDueDateEmail } = require('../utils/services/nodemailer');
-const { getSheetData } = require('../utils/services/sheets');
-const { normalizeDate } = require('../utils/utils');
-const { getMachineByDaysLeft } = require('../repositories/machineRepository');
-const { getAllEmailMachines } = require('../repositories/emailMachinesRepository');
-const logger = require('../utils/services/winston');
-const e = require('express');
+const { getGroupedData, groupByCompany } = require('../dataProcessors');
+const { prepareAndSendDueDateEmail } = require('./nodemailer');
+const { getSheetData } = require('./sheets');
+const { normalizeDate } = require('../utils');
+const { getMachineByDaysLeft } = require('../../repositories/machineRepository');
+const { getAllEmailMachines } = require('../../repositories/emailMachinesRepository');
+const logger = require('./winston');
 
 // Trigger reminder emails for upcoming renewals and return grouped data.
-const reminderEmailController = async (req, res) => {
+const reminderEmailJob = async () => {
 
     try {
-
         const machinesDueForRenewal = getMachineByDaysLeft(45);
         const emailMachines = getAllEmailMachines();
+
         const map = new Map();
         emailMachines.forEach(em => {
             const key = em.renewal_process_id;
@@ -22,7 +21,6 @@ const reminderEmailController = async (req, res) => {
         })
 
         const separated = machinesDueForRenewal.reduce((acc, machine) => {
-
             const foundEmailMachine = machine.renewal_process_id ? map.get(machine.renewal_process_id) : null;
 
             if (foundEmailMachine) {
@@ -45,21 +43,14 @@ const reminderEmailController = async (req, res) => {
 
         await prepareAndSendDueDateEmail(groupedData);
 
-        return res.send({ len: machinesDueForRenewal.length, machines: machinesDueForRenewal, separated });
-        // const groupedData = await getGroupedData(false, ["firstEmailNotNotified", "secondEmailNotNotified"]);
+        return { success: true, len: machinesDueForRenewal.length, machines: machinesDueForRenewal, separated };
 
-        // // Send email to the customers with the list of terminals that are due for renewal, 
-        // // and update the notified column in the sheet accordingly. 
-        // // If there is any failure in sending email, log the error and send a summary email to customer service.
-        // await prepareAndSendDueDateEmail(groupedData, `${req.protocol}://${req.get('host')}`);
-
-        // return res.send(groupedData);
     } catch (error) {
         logger.error('Error in reminderEmailController:', error);
-        return res.status(500).send('An error occurred while processing the request.');
+        return { success: false, len: 0, machines: [], separated:[] };
     }
 
 
 };
 
-module.exports = reminderEmailController;
+module.exports = reminderEmailJob;

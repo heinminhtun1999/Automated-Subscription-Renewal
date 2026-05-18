@@ -7,7 +7,7 @@ const session = require('express-session');
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 // Import Controllers
-const reminderEmailController = require('./controllers/reminderEmail');
+const reminderEmailController = require('./controllers/reminderEmailController');
 const { machineSelection } = require('./controllers/machineSelection');
 const { requestPayment, paymentReturn, paymentCancel, renderPamentCheckerPage, paymentCallback } = require('./controllers/payment');
 const { getOrderInfo } = require('./controllers/orders');
@@ -89,15 +89,17 @@ app.use((req, res, next) => {
 
 // ================== Reconciliation in development environment ==================
 if (process.env.NODE_ENV === 'development') {
-    const runCronJobs = require('../scripts/cron');
+    const runCronJobs = require('./jobs/jobrunner');
     setInterval(() => {
         runCronJobs();
-    }, 1 * 60 * 1000); // Run every 5 minutes
+    }, 5 * 60 * 1000); // Run every 5 minutes
 }
+// ===============================================================================
 
 app.get('/', (req, res) => {
     return res.redirect('/status-check');
 })
+
 
 // ==== Admin Panel Routes ====
 

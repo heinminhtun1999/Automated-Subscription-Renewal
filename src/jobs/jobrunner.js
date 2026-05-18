@@ -1,6 +1,6 @@
 const removeRenewalProcessId = require("./removeRenewalProcessId");
 const reconcilePayment = require("./reconcilePayment");
-const logger = require('../src/utils/services/winston');
+const logger = require('../utils/services/winston');
 
 
 async function runCronJobs() {

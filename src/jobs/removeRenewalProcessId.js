@@ -1,6 +1,6 @@
-const db = require('../src/db/db');
-const logger = require('../src/utils/services/winston');
-const { getMachineByDaysLeft, updateMultipleMachines } = require('../src/repositories/machineRepository');
+const db = require('../db/db');
+const logger = require('../utils/services/winston');
+const { getMachineByDaysLeft, updateMultipleMachines } = require('../repositories/machineRepository');
 
 async function removeRenewalProcessId() {
     try {

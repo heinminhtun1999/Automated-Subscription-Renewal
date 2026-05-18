@@ -1,13 +1,13 @@
-const db = require("../src/db/db");
-const { getPendingOrProcessingOrders, updateOrder } = require("../src/repositories/orderRepository");
-const { getAllOrderItems } = require("../src/repositories/orderItemRepository");
-const logger = require("../src/utils/services/winston");
-const { generateMd5 } = require("../src/utils/utils");
-const { PAYMENT_STATUS } = require("../src/utils/constants");
-const { getMachinesByIds, updateMachine } = require("../src/repositories/machineRepository");
-const { updateMultipleEmailMachinesByOrderIdAndMachineIds } = require("../src/repositories/emailMachinesRepository");
-const { sendEmail } = require("../src/utils/services/nodemailer");
-const { failedOrdersNotificationTemplate, developerNotificationTemplate } = require("../src/utils/htmlTemplates");
+const db = require("../db/db");
+const { getPendingOrProcessingOrders, updateOrder } = require("../repositories/orderRepository");
+const { getAllOrderItems } = require("../repositories/orderItemRepository");
+const logger = require("../utils/services/winston");
+const { generateMd5 } = require("../utils/utils");
+const { PAYMENT_STATUS } = require("../utils/constants");
+const { getMachinesByIds, updateMachine } = require("../repositories/machineRepository");
+const { updateMultipleEmailMachinesByOrderIdAndMachineIds } = require("../repositories/emailMachinesRepository");
+const { sendEmail } = require("../utils/services/nodemailer");
+const { failedOrdersNotificationTemplate, developerNotificationTemplate } = require("../utils/htmlTemplates");
 
 async function reconcilePayments() {
     try {
