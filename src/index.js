@@ -9,7 +9,7 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 // Import Controllers
 const reminderEmailController = require('./controllers/reminderEmailController');
 const { machineSelection } = require('./controllers/machineSelection');
-const { requestPayment, paymentReturn, paymentCancel, renderPamentCheckerPage, paymentCallback } = require('./controllers/payment');
+const { requestPayment, paymentReturn, paymentCancel, renderPaymentCheckerPage, paymentCallback } = require('./controllers/payment');
 const { getOrderInfo } = require('./controllers/orders');
 const { renderHomePage } = require('./controllers/admin');
 const { renderEmailHistoryPage } = require('./controllers/emailsHistory');
@@ -44,7 +44,6 @@ const {
 
 // Import Middlewares
 const verifyOrigin = require('./middlewares/originCheck');
-const { render } = require('ejs');
 
 // Server Setup
 const app = express();
@@ -76,7 +75,7 @@ app.use((req, res, next) => {
         !currentUrl.startsWith('/admin/back') &&
         !currentUrl.startsWith('/static') &&
         !currentUrl.includes(".") &&
-        (!req.session.history[req.session.history.length - 1] !== currentUrl)) {
+        (req.session.history[req.session.history.length - 1] !== currentUrl)) {
         req.session.history.push(currentUrl);
     }
 
@@ -161,7 +160,7 @@ app.post('/callback', paymentCallback);
 
 app.get('/cancel', paymentCancel);
 
-app.get('/status-check', renderPamentCheckerPage);
+app.get('/status-check', renderPaymentCheckerPage);
 
 app.get('/get-order-info', getOrderInfo);
 
@@ -217,8 +216,3 @@ app.listen(port, () => {
 
 
 // TODO:: Implement data validation and santization such as allowing only certain fields, type validation for all api endpoints
-
-
-// TODO::
-// 1. Setup cron job that automatically set renewal_process_id to null for machines that expired.
-// 2. Remove renewal_process_id if the order is paid

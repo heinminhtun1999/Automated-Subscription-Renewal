@@ -32,8 +32,6 @@ const {
 const db = require('../db/db');
 const logger = require('../utils/services/winston');
 const { formatDate, normalizeDate } = require('../utils/utils');
-const { add } = require('winston');
-const { render } = require('ejs');
 
 // Data Processing functions
 function prepareMachineData(machine) {
@@ -86,7 +84,7 @@ function forceCheckActiveStatusBasedOnEndDate(status, endDate) {
     return status === 'inactive' ? 'inactive' : 'active';
 }
 
-// Controller functions
+// =============== Controller functions ===============
 function renderMachinesPage(req, res) {
     const { message, selected_machine_type } = req.query;
     if (message) {
@@ -204,7 +202,6 @@ function handleGetAllMachineTypesWithFields(req, res) {
         logger.error('Error fetching machine type with fields:', error);
         return res.status(500).json({ success: false, data: {}, message: `Failed to fetch machine type with fields. Please try again later. Error: ${error.message}` });
     }
-
 }
 
 function renderMachineTypesPage(req, res) {
@@ -240,7 +237,6 @@ function handleViewMachine(req, res) {
         logger.error('Error fetching machine:', error);
         return res.status(500).render('admin/machines/view', { data: {}, error: 'Failed to fetch machine. Please try again later.' });
     }
-    return;
 }
 
 function handleAddMachine(req, res) {
@@ -308,15 +304,16 @@ function handleEditMachine(req, res) {
         return res.status(400).json({ success: false, message: 'Machine ID is required.' });
     }
 
-    const requiredFields = ['machine_type_id', 'customer_id', 'machine_id', 'subscription_fees'];
-    requiredFields.forEach(field => {
-        if (!body[field]) {
-            throw new Error(`Field ${field} is required.`);
-        }
-    });
-
+    
     try {
 
+        const requiredFields = ['machine_type_id', 'customer_id', 'machine_id', 'subscription_fees'];
+        requiredFields.forEach(field => {
+            if (!body[field]) {
+                throw new Error(`Field ${field} is required.`);
+            }
+        });
+        
         const existingMachine = getMachineByMachineIdOrId(id);
         if (!existingMachine) {
             return res.status(404).json({ success: false, message: 'Machine not found.' });
@@ -506,7 +503,6 @@ function handleAddMachineType(req, res) {
 
             if (fields && Array.isArray(fields) && fields.length > 0) {
                 for (const fieldName of fields) {
-                    console.log('Adding field:', fieldName);
                     addMachineTypeFieldDB(lastInsertRowid, fieldName);
                 }
             }

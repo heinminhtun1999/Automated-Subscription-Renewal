@@ -307,12 +307,85 @@ const redirectTemplate = (hiddenInputs) => `<!DOCTYPE html>
 </script>
 </html>`;
 
+// Email template to notify Customer Support about successful subscription renewals.
+const subscriptionRenewalSuccessTemplate = ({ companyName, amount, transactionDate, orderId, machines = [] }) => {
+        const rows = machines && machines.length ? machines.map(m => `
+                        <tr>
+                                <td style="padding:10px;border-bottom:1px solid #e6edf3;">${m.machine_id}</td>
+                                <td style="padding:10px;border-bottom:1px solid #e6edf3;">${m.machine_type_name}</td>
+                                <td style="padding:10px;border-bottom:1px solid #e6edf3;">${m.subscription_fees}</td>
+                                <td style="padding:10px;border-bottom:1px solid #e6edf3;">${new Date(m.end_date).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" }).split(", ")[0]}</td>
+                        </tr>`).join('') : `
+                        <tr>
+                                <td colspan="4" style="padding:16px; text-align:center; color:#64748b;">No machines listed.</td>
+                        </tr>`;
+
+        return `<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Subscription Renewal Successful</title>
+    <style>
+        body { font-family: Arial, Helvetica, sans-serif; margin:0; padding:0; background-color:#f6f9fc; background-image: linear-gradient(180deg, #f7fbff 0%, #f6f9fc 50%, #ffffff 100%), radial-gradient(circle at 10% 10%, rgba(11,95,255,0.03) 0, rgba(11,95,255,0.03) 1px, transparent 1px); background-size: auto, 180px 180px; background-repeat: repeat, repeat; }
+        .container { max-width: 680px; margin: 24px auto; background:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 6px rgba(16,24,40,0.08); }
+        .header { background:#0b5fff; color:#fff; padding:20px 24px; }
+        .header h1 { margin:0; font-size:20px; }
+        .content { padding:20px 24px; color:#0f1724; }
+        .summary { margin:12px 0 20px; }
+        .summary p { margin:6px 0; }
+        table { width:100%; border-collapse:collapse; margin-top:12px; }
+        th, td { text-align:left; padding:10px; border-bottom:1px solid #e6edf3; font-size:14px; }
+        th { background:#f3f7fb; color:#0f1724; font-weight:600; }
+        .footer { background:#f8fafc; color:#64748b; padding:14px 24px; font-size:12px; }
+        .muted { color:#64748b; font-size:13px; }
+        @media (max-width:600px){ .container{ margin:12px } .header h1{ font-size:18px } th,td{ padding:8px } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Subscription Renewal Successful</h1>
+        </div>
+        <div class="content">
+            <p class="muted">This is an automated notification to inform that a subscription renewal has completed successfully.</p>
+
+            <div class="summary">
+                <p><strong>Company:</strong> ${companyName}</p>
+                <p><strong>Amount:</strong>RM ${amount.toFixed(2)}</p>
+                <p><strong>Transaction Date:</strong> ${new Date(transactionDate).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" })}</p>
+                <p><strong>Order ID:</strong> ${orderId}</p>
+            </div>
+
+            <h3>Machines Renewed</h3>
+
+            <table role="table" aria-label="Renewed machines">
+                <thead>
+                    <tr>
+                        <th>Machine ID</th>
+                        <th>Machine Type</th>
+                        <th>Amount</th>
+                        <th>End Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows}
+                </tbody>
+            </table>
+
+            <p style="margin-top:18px;">If you need more details, please check the admin dashboard.</p>
+        </div>
+    </div>
+</body>
+</html>`;
+};
+
 const failedOrdersNotificationTemplate = (orders) => {
     const rows = orders.map(order => `
         <tr>
             <td>${order.order_id}</td>
             <td>${order.transaction_id || 'N/A'}</td>
-            <td>${new Date(order.processed_at).toLocaleString()}</td>
+            <td>${order.processed_at}</td>
             <td>${order.amount}</td>
             <td>${order.payment_status}</td>
             <td>${order.error_message}</td>
@@ -506,11 +579,86 @@ const developerNotificationTemplate = (failedOrders, updateFailedOrders) => {
 };
 
 
+const reconciliationSuccessTemplate = (orders) => {
+    const rows = orders.map(order => `
+        <tr>
+            <td>${order.order_id}</td>
+            <td>RM ${Number(order.amount || 0).toFixed(2)}</td>
+            <td>${new Date(order.transaction_date).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" })}</td>
+        </tr>
+    `).join('');
+
+    return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Automated Subscription Renewal - Reconciliation Success</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    line-height: 1.6;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f4f4f4;
+                }
+                .container {
+                    max-width: 100%;
+                    width: 800px;
+                    margin: 20px auto;
+                    padding: 20px;
+                    border: 1px solid #ddd;
+                    border-radius: 5px;
+                    background-color: #fff;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
+                    table-layout: fixed;
+                }
+                th, td {
+                    padding: 12px;
+                    border: 1px solid #ddd;
+                    text-align: left;
+                    word-wrap: break-word;
+                }
+                th {
+                    background-color: #f2f2f2;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h2>Automated Subscription Renewal - Reconciliation Success</h2>
+                <p>The following orders were successfully processed during reconciliation.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Amount</th>
+                            <th>Transaction Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows}
+                    </tbody>
+                </table>
+            </div>
+        </body>
+        </html>
+    `;
+};
+
+
 module.exports = {
     dueDateTemplate,
     failListTemplate,
     otpTemplate,
     redirectTemplate,
+    subscriptionRenewalSuccessTemplate,
+    reconciliationSuccessTemplate,
     failedOrdersNotificationTemplate,
     developerNotificationTemplate
 };

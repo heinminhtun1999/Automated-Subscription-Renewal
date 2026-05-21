@@ -3,8 +3,14 @@ const db = require("../db/db");
 function getAllOrders() {
     const stmt = db.prepare(
         `
-        SELECT o.*, c.company_name, c.id AS customer_id FROM orders AS o
+        SELECT o.*, c.company_name, c.id AS customer_id, m.machine_id
+        FROM orders AS o
         JOIN customers AS c ON o.customer_id = c.id
+        LEFT JOIN (
+        SELECT m.machine_id, oi.order_id
+        FROM machines AS m
+        JOIN order_items AS oi ON oi.machine_id = m.id        
+        ) AS m ON m.order_id = o.order_id
         ORDER BY o.created_at DESC
         `
     );
@@ -29,7 +35,7 @@ function getPendingOrProcessingOrders() {
             SELECT *,
             (strftime('%s', 'now', 'localtime') - strftime('%s', created_at)) / 60.0 AS minutes_passed
             FROM orders
-            WHERE process_status IN ('pending', 'processing') AND payment_status IN ('pending', 'failed') AND minutes_passed >= 5
+            WHERE process_status IN ('pending', 'processing') AND minutes_passed >= 5
         `
     );
     return stmt.all();

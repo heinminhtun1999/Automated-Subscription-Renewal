@@ -7,7 +7,7 @@ const { PAYMENT_STATUS } = require("../utils/constants");
 const { getMachinesByIds, updateMachine } = require("../repositories/machineRepository");
 const { updateMultipleEmailMachinesByOrderIdAndMachineIds } = require("../repositories/emailMachinesRepository");
 const { sendEmail } = require("../utils/services/nodemailer");
-const { failedOrdersNotificationTemplate, developerNotificationTemplate } = require("../utils/htmlTemplates");
+const { failedOrdersNotificationTemplate, developerNotificationTemplate, reconciliationSuccessTemplate } = require("../utils/htmlTemplates");
 
 async function reconcilePayments() {
     try {
@@ -56,10 +56,35 @@ async function reconcilePayments() {
         }
 
         const failedToProcessOrders = [];
+        const successfullyProcessedOrders = [];
         for (const orderResult of orderResults) {
+
             const order = orderMap.get(orderResult.OrderID);
             if (order) {
                 try {
+
+                    if (orderResult?.ErrorCode && orderResult?.ErrorCode === "Q203") {
+                        updateOrder(order.order_id, {
+                            transaction_id: orderResult.TranID,
+                            payment_status: "failed",
+                            failed_remark: `Automatically marked as failed due to transaction not found in Fiuu database.\nPossible reason: User created order and did not select channel.`,
+                            channel: orderResult.Channel,
+                            process_status: 'failed',
+                            paid_on: orderResult.BillingDate
+                        }, {
+                            process_status: {
+                                operator: '=',
+                                value: 'processing'
+                            },
+                            process_worker_level: {
+                                operator: '<=',
+                                value: 2
+                            }
+                        });
+                        logger.info(`Order ${order.order_id} marked as failed. Error Code: ${orderResult.ErrorCode}, Error Description: ${orderResult.ErrorDesc}`);
+                        return;
+                    }
+
                     const statusFromPG = orderResult.StatCode;
                     const paymentStatus = PAYMENT_STATUS[statusFromPG];
 
@@ -67,6 +92,7 @@ async function reconcilePayments() {
                         logger.warn(`Received unknown payment status code from PG for order ${orderResult.OrderID}: ${statusFromPG}. Skipping update for this order. Full response:`, orderResult);
                         return;
                     }
+
                     db.transaction(() => {
 
                         // Checking concurrent update
@@ -165,10 +191,10 @@ async function reconcilePayments() {
                         }
 
                         // ========== Handling successful payment status ==========
-                        
+
                         // we proceed with updating machines and marking order as completed.
                         const orderRelatedMachineIds = orderItemsMap.get(order.order_id) || [];
-                        const machines = getMachinesByIds(orderRelatedMachineIds); 
+                        const machines = getMachinesByIds(orderRelatedMachineIds);
                         for (const machine of machines) {
                             const newEndDate = new Date(machine.end_date);
                             newEndDate.setFullYear(newEndDate.getFullYear() + 1)
@@ -205,16 +231,22 @@ async function reconcilePayments() {
                                     value: 2
                                 }
                             });
+
+                        successfullyProcessedOrders.push({
+                            order_id: order.order_id,
+                            transaction_date: orderResult.BillingDate,
+                            amount: order.amount
+                        });
                     }).immediate();
 
                 } catch (e) {
                     logger.error(`Error processing order ${orderResult.order_id}:`, e);
                     const prepareData = {
-                        order_id: orderResult.order_id,
-                        transaction_id: orderResult.TranID,
+                        order_id: order.order_id,
+                        transaction_id: order.TranID,
                         processed_at: new Date().toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" }),
                         error_message: (order.failed_remark ? order.failed_remark + ', ' : '') + "Server error during reconciliation: " + (e.message || 'Unknown error'),
-                        paymeent_status: PAYMENT_STATUS[orderResult.StatCode] || 'Unknown status code',
+                        payment_status: PAYMENT_STATUS[orderResult.StatCode] || 'Unknown status code',
                         amount: order.amount
                     }
                     failedToProcessOrders.push(prepareData);
@@ -222,16 +254,26 @@ async function reconcilePayments() {
             }
         }
 
+        // =========== Sending email for successfully processed orders ==========
+        if (successfullyProcessedOrders.length > 0) {
+            const emailBody = reconciliationSuccessTemplate(successfullyProcessedOrders);
+            await sendEmail(
+                process.env.CS_EMAIL,
+                '|Subscription Renewal| Reconciliation Successful Orders',
+                emailBody,
+                'Successful Reconciliation Orders'
+            );
+        }
+
         // =========== Handling orders that are failed to process ==========
-        
+
         if (failedToProcessOrders.length > 0) {
             const failedToUpdateProcessStatus = []; // track orders that failed to update process_status to failed
             for (const failedOrder of failedToProcessOrders) {
                 try {
-                    const message = failedOrder.
                     updateOrder(failedOrder.order_id, {
                         process_status: 'failed',
-                        failed_remark: `Server error during reconciliation: ${failedOrder.error_message}`,
+                        failed_remark: failedOrder.error_message,
                     },
                         {
                             process_status: {
@@ -245,7 +287,7 @@ async function reconcilePayments() {
                         });
                 } catch (e) {
                     const originalMessage = failedOrder.error_message;
-                    const newMessage = originalMessage + `\nFailed to update process_status to failed for this order due to database error: ${e.message || 'Unknown error'}` 
+                    const newMessage = originalMessage + `\nFailed to update process_status to failed for this order due to database error: ${e.message || 'Unknown error'}`
                     failedOrder.error_message = newMessage;
                     failedToUpdateProcessStatus.push(failedOrder);
                     logger.error(`Additionally, failed to update process_status to failed for order ${failedOrder.order_id} after processing error:`, e);
@@ -255,12 +297,12 @@ async function reconcilePayments() {
             // Notify customer service about the orders that failed during reconciliation processing with the corresponding error message for each order, 
             // so that they can follow up with the customers proactively and provide necessary support. This is important to maintain good customer service and address any potential issues that customers might be facing due to the failed orders.
             const emailBody = failedOrdersNotificationTemplate(failedToProcessOrders);
-            await sendEmail(process.env.CS_EMAIL, '|AR VENDING| Reconciliation Update Failed Orders', emailBody, 'Failed Reconciliation Orders', [process.env.DEV_EMAIL]);
-            
+            await sendEmail(process.env.CS_EMAIL, '|Subscription Renewal| Reconciliation Update Failed Orders', emailBody, 'Failed Reconciliation Orders', [process.env.DEV_EMAIL]);
+
             // Critical: If there are orders that failed to update process_status to failed after reconciliation processing error, we need to send an additional alert email to developer with the list of those orders and the corresponding error message for further investigation and manual handling. This is important to ensure that those orders are not left in an inconsistent state without proper attention.
             if (failedToUpdateProcessStatus.length > 0) {
                 const additionalEmailBody = developerNotificationTemplate(failedToProcessOrders, failedToUpdateProcessStatus);
-                await sendEmail(process.env.DEV_EMAIL, '|AR VENDING Subscription Renewal| Critical: Failed to Update Process Status', additionalEmailBody, 'Failed Reconciliation Orders - Update Failed');
+                await sendEmail(process.env.DEV_EMAIL, '|Subscription Renewal| Critical: Failed to Update Process Status', additionalEmailBody, 'Failed Reconciliation Orders - Update Failed');
             }
         }
 
@@ -280,7 +322,7 @@ async function indirectStatusInquiry(orderIds) {
             oIDs: oIDs,
         };
 
-        
+
         const skeyString = `${process.env.merchantID}${oIDs}${process.env.verifyKey}`;
         const skey = generateMd5(skeyString);
         orderBody.skey = skey;

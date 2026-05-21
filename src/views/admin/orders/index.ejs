@@ -16,6 +16,7 @@
                     <th>Paid On</th>
                     <th>Channel</th>
                     <th>Customer</th>
+                    <th>Machines</th>
                 </tr>
             </thead>
             <tbody>
@@ -35,6 +36,7 @@
                             <td title="<%= order.company_name %>">
                                 <a href="/admin/customers/<%= order.customer_id %>" target="_blank" class="underline"><%= order.company_name %></a>
                             </td>
+                            <td><%= order.machines.join(", ") %></td>
                         </tr>
                    <% }); %>
                 <% } else { %>

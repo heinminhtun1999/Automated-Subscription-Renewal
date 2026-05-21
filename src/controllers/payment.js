@@ -3,7 +3,7 @@ const db = require("../db/db");
 const { SHEET_CONFIGS, PAYMENT_STATUS, PAYMENT_REQUIRED_FIELDS } = require("../utils/constants");
 const { uid, getGroupedData, getUserMessage } = require("../utils/dataProcessors");
 const { preparePaymentBody } = require("../utils/services/fiuu");
-const { redirectTemplate } = require("../utils/htmlTemplates");
+const { redirectTemplate, subscriptionRenewalSuccessTemplate } = require("../utils/htmlTemplates");
 const { insertOrder, updateOrder, getOrder } = require("../repositories/orderRepository");
 const { getCustomerById } = require("../repositories/customerRepository");
 const { insertOrderItem, getOrderItemsByOrderId } = require("../repositories/orderItemRepository");
@@ -11,7 +11,7 @@ const { getMachinesByIds, updateMachine } = require("../repositories/machineRepo
 const { getEmailMachineByRenewalProcessIds, updateMultipleEmailMachinesByOrderIdAndMachineIds, updateEmailMachineByMachineIdAndRenewalProcessId } = require("../repositories/emailMachinesRepository");
 const { validateSkey, checkRequiredFields } = require("../utils/utils");
 const { updateCellValue } = require("../utils/services/sheets");
-const { log } = require("winston");
+const { sendEmail } = require("../utils/services/nodemailer");
 
 // Build payment request, persist order + items, and redirect to gateway.
 async function requestPayment(req, res, next) {
@@ -54,10 +54,11 @@ async function requestPayment(req, res, next) {
         return next(err);
     }
 
-    // Sum fees for payment amount.
-    const total = selectedMachines.reduce((sum, machine) => sum + parseFloat(machine.subscription_fees), 0).toFixed(2);
 
     try {
+
+        // Sum fees for payment amount.
+        const total = selectedMachines.reduce((sum, machine) => sum + parseFloat(machine.subscription_fees), 0).toFixed(2);
 
         const bodyData = {
             beneficiaryName: customer.beneficiary_name,
@@ -138,10 +139,6 @@ function paymentReturn(req, res, next) {
         const existingOrder = getOrder(body.orderid, body.tranID);
         body.amount = parseFloat(body.amount).toFixed(2);
 
-        const machinesFromOrder = getOrderItemsByOrderId(existingOrder.order_id);
-        const machineIdsFromOrder = machinesFromOrder.map(item => item.machine_id);
-        const machines = getMachinesByIds(machineIdsFromOrder);
-
         if (!existingOrder) {
             logger.error('Order not found for payment return:', body.orderid);
             return res.render('return', {
@@ -157,6 +154,12 @@ function paymentReturn(req, res, next) {
             });
         }
 
+        // Getting machines from order
+        const machinesFromOrder = getOrderItemsByOrderId(existingOrder.order_id);
+        const machineIdsFromOrder = machinesFromOrder.map(item => item.machine_id);
+        const machines = getMachinesByIds(machineIdsFromOrder);
+
+        // Concurrency checking
         const result = updateOrder(existingOrder.order_id,
             {
                 process_status: 'processing',
@@ -240,6 +243,13 @@ function paymentReturn(req, res, next) {
         // For successful payment, we will show processing status as we are waiting for the callback to update the final status. 
         // This is to handle the case where user completes payment but does not return to the site or callback is delayed for some reason. 
         // We will set it to completed in callback once we update the machines.
+        updateOrder(existingOrder.order_id, {
+            transaction_id: body.tranID,
+            payment_status: PAYMENT_STATUS[body.status],
+            channel: body.channel,
+            paid_on: body.paydate,
+            process_status: 'processing',
+        }, { process_status: { operator: '=', value: 'processing' }, process_worker_level: { operator: '<=', value: 1 } });
 
         return res.render('return', {
             data: {
@@ -269,6 +279,11 @@ function paymentReturn(req, res, next) {
 
 // Handle server-to-server payment callback and update sheets.
 async function paymentCallback(req, res) {
+    return
+    // setTimeout(() => {
+    //     console.log("Setting timeout")
+    // }, 1000 * 60 * 10)
+
     const body = req.body;
 
     if (!body || Object.keys(body).length === 0) {
@@ -293,11 +308,14 @@ async function paymentCallback(req, res) {
 
     try {
         body.amount = parseFloat(body.amount).toFixed(2);
-        const existingOrder = getOrder(body.orderid, body.tranID);
+        const existingOrder = getOrder(body.orderid);
         if (!existingOrder) {
             logger.error('Order not found for payment callback:', body.orderid);
             return;
         }
+
+        let emailPayload;
+
         db.transaction(() => {
             const result = updateOrder(existingOrder.order_id,
                 {
@@ -382,8 +400,20 @@ async function paymentCallback(req, res) {
                         value: 2
                     }
                 });
+
+            emailPayload = {
+                companyName: existingOrder.company_name,
+                amount: existingOrder.amount,
+                transactionDate: existingOrder.created_at,
+                orderId: existingOrder.order_id,
+                machines
+            }
         }).immediate();
 
+        if (emailPayload) {
+            const emailBody = subscriptionRenewalSuccessTemplate(emailPayload);
+            await sendEmail(process.env.CS_EMAIL, "Machines Subscription Renewal", emailBody)
+        }
     } catch (e) {
         logger.error('Error processing payment callback:', e, "Order ID:", body.orderid);
     } finally {
@@ -397,7 +427,7 @@ function paymentCancel(req, res) {
 }
 
 // Render a payment status check page.
-function renderPamentCheckerPage(req, res) {
+function renderPaymentCheckerPage(req, res) {
     res.render('status-check', { status: null });
 }
 
@@ -405,142 +435,6 @@ module.exports = {
     requestPayment,
     paymentReturn,
     paymentCancel,
-    renderPamentCheckerPage,
+    renderPaymentCheckerPage,
     paymentCallback
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-// ////////////////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
-
-
-// const existingOrder = getOrder(body.orderid, body.tranID);
-
-//         if (!existingOrder) {
-//             logger.error('Order not found for payment return:', body.orderid);
-//             return res.render('return', {
-//                 data: {
-//                     orderId: body.orderid,
-//                     amount: body.amount,
-//                     transactionId: body.tranID,
-//                     status: 'error',
-//                     message: 'Order not found. If you have completed the payment, please contact support with your order information for assistance.',
-//                 }
-//             });
-//         }
-
-//         return res.render('return', {
-//             data: {
-//                 orderId: existingOrder.order_id,
-//                 transactionId: body.tranID,
-//                 amount: body.amount,
-//                 paymentStatus: PAYMENT_STATUS[existingOrder.payment_status] || 'unknown',
-//                 processStatus: existingOrder.process_status
-//             }
-//         })
-
-
-//         const result = updateOrder(existingOrder.order_id, { process_status: 'processing' }, { process_status: 'pending' });
-//         if (result.changes === 0) {
-
-//             logger.warn('No order record updated to processing status for payment return. Possible concurrent update or order already processed:', body.orderid);
-//             const paymentStatus = PAYMENT_STATUS[existingOrder.payment_status];
-
-//             return res.render('return', {
-//                 data: {
-//                     orderId: body.orderid,
-//                     transactionId: body.tranID,
-//                     amount: body.amount,
-//                     processStatus: existingOrder.process_status,
-//                     message: getUserMessage(paymentStatus, existingOrder.process_status),
-//                     paymentStatus,
-//                 }
-//             });
-//         }
-
-//         // Handle different payment statuses and update order accordingly.
-
-//         // For failed payments, mark order as completed with failure remark to prevent retries, and show failure message.
-//         if (body.status === "11") {
-
-//             updateOrder(existingOrder.order_id, {
-//                 transaction_id: body.tranID,
-//                 payment_status: PAYMENT_STATUS[body.status],
-//                 failed_remark: `Error Code: ${body.error_code}, Error Description: ${body.error_desc}`,
-//                 channel: body.channel
-//             }, { process_status: 'processing' });
-
-//             return res.render('return', {
-//                 data: {
-//                     orderId: body.orderid,
-//                     transactionId: body.tranID,
-//                     amount: body.amount,
-//                     paymentStatus: 'failed',
-//                     processStatus: 'processing',
-//                     message: getUserMessage('failed', 'processing') + body.error_desc ? body.error_desc : '',
-//                 }
-//             });
-//         }
-
-//         // Pending payment
-//         if (body.status === "22") {
-//             updateOrder(existingOrder.order_id, {
-//                 transaction_id: body.tranID,
-//                 payment_status: PAYMENT_STATUS[body.status],
-//                 channel: body.channel
-//             }, { process_status: 'processing' });
-
-//             return res.render('return', {
-//                 data: {
-//                     orderId: body.orderid,
-//                     transactionId: body.tranID,
-//                     amount: body.amount,
-//                     paymentStatus: 'pending',
-//                     processStatus: 'processing',
-//                     message: getUserMessage('pending', 'processing')
-//                 }
-//             });
-//         }
-
-// db.transaction(() => {
-//     const result = updateOrder(existingOrder.order_id, {
-//         transaction_id: body.tranID,
-//         payment_status: PAYMENT_STATUS[body.status],
-//         channel: body.channel,
-//         process_status: 'completed',
-//         paid_on: body.paydate
-//     }, { process_status: 'processing' });
-
-//     const orderItems = getOrderItemsByOrderId(existingOrder.order_id);
-//     const machineIds = orderItems.map(item => item.machine_id);
-//     const machines = getMachinesByIds(machineIds);
-
-//     for (const machine of machines) {
-//         const newEndDate = new Date(machine.end_date);
-//         newEndDate.setFullYear(newEndDate.getFullYear() + 1)
-//         updateMachine(machine.id, {
-//             end_date: newEndDate.toISOString(),
-//             renewal_process_id: null,
-//             renewal_count: machine.renewal_count + 1,
-//             last_renewal_date: new Date().toISOString()
-//         });
-//     }
-
-//     updateMultipleEmailMachinesByOrderIdAndMachineIds(existingOrder.order_id, machineIds, { renewal_process_id: null });
-// }).immediate();

@@ -172,8 +172,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             });
                             table.appendChild(thead);
                             table.appendChild(tbody);
+                            statusCardElement.insertBefore(div, screenShotNoticeElement);
                         }
-                        statusCardElement.insertBefore(div, screenShotNoticeElement);
                     }
                 }
 

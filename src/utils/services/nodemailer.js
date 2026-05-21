@@ -190,7 +190,6 @@ async function sendEmail(to, subject, body, topic = 'General', cc = null) {
             info = await otherTransporter.sendMail(emailOptions);
         }
 
-
         logger.info(`${topic} email sent to ${to}: ${info.messageId}`);
 
         return { ok: true, messageId: info.messageId };

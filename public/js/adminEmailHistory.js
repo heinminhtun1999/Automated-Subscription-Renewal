@@ -196,7 +196,7 @@ const options = {
         { 'extend': 'colvis', 'text': 'Columns', className: 'columnVisibility' },
         { 'extend': 'pageLength', 'text': 'Rows Per Page: <span class="dt-page-size">-</span>', className: 'pageLength pageSizeDisplay' },
         { 'extend': 'spacer', 'text': '<span class="button-spacer"> | </span>', className: 'spacer' },
-        { 'extend': 'excel', 'text': '<i class="fa-solid fa-file-excel"></i>', className: 'exportExcel', titleAttr: 'Export to Excel', exportOptions: { columns: ':not(.no-export)' }},
+        { 'extend': 'excel', 'text': '<i class="fa-solid fa-file-excel"></i>', className: 'exportExcel', titleAttr: 'Export to Excel' },
     ],
     layout: {
         topStart: 'buttons'

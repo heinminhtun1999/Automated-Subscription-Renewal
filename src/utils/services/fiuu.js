@@ -14,7 +14,7 @@ function preparePaymentBody(data, baseUrl) {
 
     const body = {
         // amount: data["total"],
-        amount: '1.00',
+        amount: process.env.NODE_ENV === "development" ? '1.00' : data["total"],
         merchantID: process.env.merchantID,
         orderid: orderid,
         bill_name: data['beneficiaryName'],
