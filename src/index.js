@@ -121,7 +121,7 @@ app.post('/admin/login', (req, res) => {
 
     bcrypt.compare(password, process.env.ADMIN_PASSWORD_HASH, (err, result) => {
         if (err || !result) {
-            req.session.authError = err ? err : 'Incorrect Password';
+            req.session.authError = err ? JSON.stringify(err) : 'Incorrect Password';
             return res.redirect('/admin/login');
         }
 
