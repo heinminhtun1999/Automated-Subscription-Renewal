@@ -278,10 +278,6 @@ function paymentReturn(req, res, next) {
 
 // Handle server-to-server payment callback and update sheets.
 async function paymentCallback(req, res) {
-    return
-    // setTimeout(() => {
-    //     console.log("Setting timeout")
-    // }, 1000 * 60 * 10)
 
     const body = req.body;
 

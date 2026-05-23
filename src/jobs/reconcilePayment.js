@@ -54,7 +54,7 @@ async function reconcilePayments() {
             }
             orderItemsMap.get(item.order_id).push(item.machine_id);
         }
-
+        logger.info(`Reconciled orders: `, orderResults);
         const failedToProcessOrders = [];
         const successfullyProcessedOrders = [];
         for (const orderResult of orderResults) {
