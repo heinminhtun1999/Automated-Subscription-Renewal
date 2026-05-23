@@ -1,17 +1,16 @@
 <%- include('../../partials/adminMainSection', { pageTitle: 'AR Vending | Admin Panel', activePage: 'customers', subTitle: 'Add Customer', error: typeof error !== 'undefined' ? error : null }) %>
 
-<div class="py-4 px-14">
-    <div class="w-full h-full p-6 bg-white rounded-lg shadow-lg">
-        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
-            
+<div class="py-6 px-4 sm:px-8 lg:px-14">
+    <div class="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/70">
+        <div class="flex flex-col gap-4 border-b border-slate-100 pb-5 md:flex-row md:items-center md:justify-between">
             <a href="/admin/back" class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700">
                 <i class="fa-solid fa-arrow-left"></i> Back 
             </a>
         </div>
 
-        <div id="add-customer-alert" class="hidden mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></div>
+        <div id="add-customer-alert" class="hidden mt-6 mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></div>
 
-        <div id="add-customer-form" class="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div id="add-customer-form" class="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
             <div class="flex flex-col">
                 <label for="company-name" class="text-sm font-semibold text-gray-600">Company Name<span class="text-emerald-600"> *</span></label>
                 <input id="company-name" name="company_name" type="text" data-required="true" class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="AR Vending Solutions">

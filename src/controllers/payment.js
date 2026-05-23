@@ -1,7 +1,7 @@
 const logger = require("../utils/services/winston");
 const db = require("../db/db");
 const { SHEET_CONFIGS, PAYMENT_STATUS, PAYMENT_REQUIRED_FIELDS } = require("../utils/constants");
-const { uid, getGroupedData, getUserMessage } = require("../utils/dataProcessors");
+const { uid, getUserMessage } = require("../utils/dataProcessors");
 const { preparePaymentBody } = require("../utils/services/fiuu");
 const { redirectTemplate, subscriptionRenewalSuccessTemplate } = require("../utils/htmlTemplates");
 const { insertOrder, updateOrder, getOrder } = require("../repositories/orderRepository");
@@ -10,7 +10,6 @@ const { insertOrderItem, getOrderItemsByOrderId } = require("../repositories/ord
 const { getMachinesByIds, updateMachine } = require("../repositories/machineRepository");
 const { getEmailMachineByRenewalProcessIds, updateMultipleEmailMachinesByOrderIdAndMachineIds, updateEmailMachineByMachineIdAndRenewalProcessId } = require("../repositories/emailMachinesRepository");
 const { validateSkey, checkRequiredFields } = require("../utils/utils");
-const { updateCellValue } = require("../utils/services/sheets");
 const { sendEmail } = require("../utils/services/nodemailer");
 
 // Build payment request, persist order + items, and redirect to gateway.

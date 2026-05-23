@@ -73,8 +73,8 @@ async function reconcilePayments() {
                             paid_on: orderResult.BillingDate
                         }, {
                             process_status: {
-                                operator: '=',
-                                value: 'processing'
+                                operator: 'IN',
+                                value: ['pending', 'processing']
                             },
                             process_worker_level: {
                                 operator: '<=',

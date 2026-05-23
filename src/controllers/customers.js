@@ -8,6 +8,7 @@ const {
     deleteCustomer
 } = require('../repositories/customerRepository');
 const logger = require('../utils/services/winston');
+const { isValidEmail } = require("../utils/utils");
 
 // Data Processing and Validation functions
 function validateRequiredFields(data, requiredFields) {
@@ -49,6 +50,12 @@ function handleAddCustomer(req, res) {
         const isCustomerExist = getCustomerByEmail(body.email);
         if (isCustomerExist) {
             return res.status(409).json({ success: false, message: "A company with this email already exists." });
+        }
+
+        const isEmailValid = isValidEmail(body.email);
+        console.log(body.email, isEmailValid)
+        if (!isEmailValid) {
+            return res.status(400).json({ success: false, message: "Incorrect Email Format."})
         }
 
         const result = addCustomer(body);

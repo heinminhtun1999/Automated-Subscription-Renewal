@@ -21,11 +21,6 @@ const SHEET_CONFIGS = [
     { sheetKey: 'arvdn', endDateColumn: 'End Date', renewalEndDateColumn: 'Renewal End Date' }
 ];
 
-// Google API Scopes and Credentials Path
-const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
-const CREDENTIALS_PATH = path.join(process.cwd(), 'credentials.json');
-const RANGE = ['UID Customer List!A1:Z', 'MI20 UID Customer List!A1:Z', 'TID ARV2.5 Customer List!A1:Z', 'U20 Customer List!A1:Z', 'ARVDN!A1:Z'];
-
 // Email Due Dates
 const FIRST_EMAIL_DUE_DAYS = 45;
 const SECOND_EMAIL_DUE_DAYS = 7;
@@ -96,9 +91,7 @@ const DEFAULT_MACHINE_TYPE_MAPPING = [
 ]
 
 module.exports = {
-    SCOPES,
-    CREDENTIALS_PATH,
-    RANGE, ALPHABET,
+    ALPHABET,
     SHEET_NAMES,
     REVERSED_SHEET_NAMES,
     SHEET_CONFIGS,

@@ -31,7 +31,7 @@ const {
 } = require('../repositories/emailMachinesRepository');
 const db = require('../db/db');
 const logger = require('../utils/services/winston');
-const { formatDate, normalizeDate } = require('../utils/utils');
+const { formatDate, normalizeDate, checkRequiredFields } = require('../utils/utils');
 
 // Data Processing functions
 function prepareMachineData(machine) {
@@ -252,6 +252,13 @@ function handleAddMachine(req, res) {
         additional_fields
     } = req.body;
 
+    const requiredFieldCheck = checkRequiredFields(body, ['machine_type_id', 'customer_id', 'end_data', 'subscription_fees', 'machine_id']);
+    if (!requiredFieldCheck.valid) {
+        const missingField = requiredFieldsCheck.missingField;
+        logger.warn(`Missing ${missingField} in handleAddMachine:`, body);
+        return res.status(400).send(`Missing required field: ${missingField}`);
+    }
+
     try {
         const existingMachine = getMachineByMachineIdOrId(machineId = req.body.machine_id);
         if (existingMachine) {
@@ -304,16 +311,15 @@ function handleEditMachine(req, res) {
         return res.status(400).json({ success: false, message: 'Machine ID is required.' });
     }
 
-    
     try {
 
-        const requiredFields = ['machine_type_id', 'customer_id', 'machine_id', 'subscription_fees'];
-        requiredFields.forEach(field => {
-            if (!body[field]) {
-                throw new Error(`Field ${field} is required.`);
-            }
-        });
-        
+        const requiredFieldCheck = checkRequiredFields(body, ['machine_type_id', 'customer_id', 'machine_id', 'subscription_fees']);
+        if (!requiredFieldCheck.valid) {
+            const missingField = requiredFieldsCheck.missingField;
+            logger.warn(`Missing ${missingField} in handleAddMachine:`, body);
+            return res.status(400).send(`Missing required field: ${missingField}`);
+        }
+
         const existingMachine = getMachineByMachineIdOrId(id);
         if (!existingMachine) {
             return res.status(404).json({ success: false, message: 'Machine not found.' });
@@ -391,6 +397,10 @@ function handleAddMachineTypeField(req, res) {
 
     try {
         const { name } = req.body;
+        if (!name) {
+            return res.status(400).json({ success: false, message: 'Machine type name is required.' });
+        }
+
         const existingFields = getMachineTypeFields(id);
         const duplicate = existingFields.some(field => field.name.toLowerCase() === name.toLowerCase());
         addMachineTypeFieldDB(id, { name: duplicate ? `${name} (Duplicate)` : name });
@@ -490,7 +500,6 @@ function handleAddMachineType(req, res) {
     }
 
     const existingType = getMachineTypeByName(type_name);
-
     if (existingType) {
         return res.status(400).json({ success: false, message: 'A machine type with the same name already exists. Please choose a different name.' });
     }

@@ -1,5 +1,234 @@
 <%- include('../../partials/adminMainSection', { pageTitle: 'AR Vending | Admin Panel', activePage: 'home', error: typeof error !== 'undefined' ? error : null, subTitle: 'Home' }) %>
-<div>
-    <p>This is Home Page</p>
+<%
+    const summary = (typeof data !== 'undefined' && data && data.summary) ? data.summary : {
+        totalCustomers: 0,
+        totalMachines: 0,
+        totalOrders: 0,
+        pendingOrders: 0,
+        successfulOrders: 0,
+        expiringSoon: 0
+    };
+    const recentOrders = (typeof data !== 'undefined' && data && Array.isArray(data.recentOrders)) ? data.recentOrders : [];
+    const expiringMachines = (typeof data !== 'undefined' && data && Array.isArray(data.expiringMachines)) ? data.expiringMachines : [];
+
+    const statCards = [
+        { label: 'Customers', value: summary.totalCustomers, icon: 'fa-users', tone: 'from-emerald-500 to-emerald-600', note: 'Registered companies' },
+        { label: 'Machines', value: summary.totalMachines, icon: 'fa-desktop', tone: 'from-cyan-500 to-sky-600', note: 'Tracked devices' },
+        { label: 'Orders', value: summary.totalOrders, icon: 'fa-receipt', tone: 'from-slate-700 to-slate-900', note: 'All time order records' },
+        { label: 'Pending', value: summary.pendingOrders, icon: 'fa-clock', tone: 'from-amber-400 to-orange-500', note: 'Processing and pending' },
+        { label: 'Completed', value: summary.successfulOrders, icon: 'fa-circle-check', tone: 'from-green-500 to-emerald-600', note: 'Paid and finalized' },
+        { label: 'Expiring Soon', value: summary.expiringSoon, icon: 'fa-triangle-exclamation', tone: 'from-rose-500 to-red-600', note: 'Within 30 days' }
+    ];
+
+    function formatStatus(status) {
+        return (status || '').replace(/_/g, ' ');
+    }
+%>
+
+<div class="py-6 px-4 sm:px-8 lg:px-14 space-y-6">
+    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 via-emerald-400 to-cyan-500 text-white shadow-xl ring-1 ring-white/20">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.25),_transparent_35%),radial-gradient(circle_at_bottom_left,_rgba(255,255,255,0.12),_transparent_30%)]"></div>
+        <div class="relative grid gap-6 px-6 py-8 md:grid-cols-[1.6fr_1fr] md:px-8 md:py-10">
+            <div class="space-y-4">
+                <div class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold tracking-[0.18em] uppercase text-white/90 backdrop-blur">
+                    <i class="fa-solid fa-signal"></i>
+                    Live overview
+                </div>
+                <div class="space-y-2">
+                    <h2 class="text-3xl font-bold leading-tight md:text-4xl">Admin dashboard</h2>
+                    <p class="max-w-2xl text-sm leading-6 text-white/90 md:text-base">
+                        Monitor subscription renewals, spot expiring machines, and jump into the most important admin flows from one central view.
+                    </p>
+                </div>
+                <div class="flex flex-wrap gap-3 pt-2">
+                    <a href="/admin/customers" class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition-transform duration-200 hover:-translate-y-0.5">
+                        <i class="fa-solid fa-users"></i>
+                        View customers
+                    </a>
+                    <a href="/admin/machines" class="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold text-white ring-1 ring-white/30 backdrop-blur transition-transform duration-200 hover:-translate-y-0.5 hover:bg-white/20">
+                        <i class="fa-solid fa-desktop"></i>
+                        Review machines
+                    </a>
+                    <a href="/admin/orders" class="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold text-white ring-1 ring-white/30 backdrop-blur transition-transform duration-200 hover:-translate-y-0.5 hover:bg-white/20">
+                        <i class="fa-solid fa-receipt"></i>
+                        Open orders
+                    </a>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                <div class="rounded-2xl bg-white/15 p-4 backdrop-blur ring-1 ring-white/20">
+                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-white/75">Completion rate</p>
+                    <p class="mt-2 text-3xl font-bold"><%= summary.totalOrders ? Math.round((summary.successfulOrders / summary.totalOrders) * 100) : 0 %>%</p>
+                    <p class="mt-1 text-sm text-white/80">Paid and completed orders</p>
+                </div>
+                <div class="rounded-2xl bg-white/15 p-4 backdrop-blur ring-1 ring-white/20">
+                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-white/75">Action queue</p>
+                    <p class="mt-2 text-3xl font-bold"><%= summary.pendingOrders %></p>
+                    <p class="mt-1 text-sm text-white/80">Items waiting on processing</p>
+                </div>
+                <div class="col-span-2 rounded-2xl bg-white/15 p-4 backdrop-blur ring-1 ring-white/20">
+                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-white/75">Renewal watchlist</p>
+                    <p class="mt-2 text-3xl font-bold"><%= summary.expiringSoon %></p>
+                    <p class="mt-1 text-sm text-white/80">Machines expiring in the next 30 days</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <% statCards.forEach(card => { %>
+            <div class="group rounded-2xl border border-white/70 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-sm font-semibold text-gray-500"><%= card.label %></p>
+                        <p class="mt-2 text-3xl font-bold text-gray-900"><%= card.value %></p>
+                        <p class="mt-1 text-sm text-gray-500"><%= card.note %></p>
+                    </div>
+                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br <%= card.tone %> text-white shadow-md">
+                        <i class="fa-solid <%= card.icon %>"></i>
+                    </div>
+                </div>
+            </div>
+        <% }) %>
+    </section>
+
+    <section class="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+        <div class="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/70">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900">Recent orders</h3>
+                    <p class="mt-1 text-sm text-gray-500">Latest order activity across the renewal flow.</p>
+                </div>
+                <a href="/admin/orders" class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 transition-colors hover:text-emerald-700">
+                    View all
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </a>
+            </div>
+
+            <div class="mt-4 overflow-hidden rounded-2xl border border-slate-200/70">
+                <% if (recentOrders.length) { %>
+                    <div class="divide-y divide-slate-100">
+                        <% recentOrders.forEach(order => { %>
+                            <div class="grid gap-3 px-4 py-4 md:grid-cols-[1.3fr_0.8fr_0.8fr] md:items-center">
+                                <div>
+                                    <p class="font-semibold text-gray-900"><%= order.order_id %></p>
+                                    <p class="mt-1 text-sm text-gray-500"><%= order.company_name %></p>
+                                    <p class="mt-1 text-xs text-gray-400"><%= order.created_at_label %></p>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-700"><%= order.amount_label %></p>
+                                    <p class="mt-1 text-xs text-gray-400"><%= order.machines.length %> machine<%= order.machines.length > 1 ? 's' : '' %></p>
+                                </div>
+                                <div class="flex flex-wrap gap-2 md:justify-end">
+                                    <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700"><%= formatStatus(order.payment_status) %></span>
+                                    <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700"><%= formatStatus(order.process_status) %></span>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                <% } else { %>
+                    <div class="px-4 py-10 text-center text-sm text-gray-500">No orders available yet.</div>
+                <% } %>
+            </div>
+        </div>
+
+        <div class="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/70">
+            <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900">Expiring soon</h3>
+                    <p class="mt-1 text-sm text-gray-500">Machines that need attention within 30 days.</p>
+                </div>
+                <span class="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700"><%= summary.expiringSoon %></span>
+            </div>
+
+            <div class="mt-4 space-y-3">
+                <% if (expiringMachines.length) { %>
+                    <% expiringMachines.forEach(machine => { %>
+                        <div class="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4 transition-colors duration-200 hover:border-emerald-200 hover:bg-emerald-50/40">
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <p class="font-semibold text-gray-900"><%= machine.machine_id %></p>
+                                    <p class="mt-1 text-sm text-gray-500"><%= machine.company_name %></p>
+                                    <p class="mt-1 text-xs text-gray-400">Ends <%= machine.end_date_label %></p>
+                                </div>
+                                <div class="rounded-full bg-white px-3 py-1 text-sm font-bold text-rose-600 shadow-sm ring-1 ring-rose-100">
+                                    <%= machine.days_left_label %>d
+                                </div>
+                            </div>
+                            <div class="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-gray-600">
+                                <span class="rounded-full bg-white px-3 py-1 ring-1 ring-slate-200"><%= machine.machine_type_name %></span>
+                                <span class="rounded-full bg-white px-3 py-1 ring-1 ring-slate-200">RM <%= Number(machine.subscription_fees).toFixed(2) %></span>
+                                <span class="rounded-full bg-white px-3 py-1 ring-1 ring-slate-200"><%= formatStatus(machine.status) %></span>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-gray-500">
+                        No machines are nearing expiry right now.
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </section>
+
+    <section class="grid gap-6 lg:grid-cols-2">
+        <div class="rounded-3xl bg-slate-900 p-6 text-white shadow-lg">
+            <div class="flex items-center gap-3">
+                <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
+                    <i class="fa-solid fa-bolt text-emerald-300"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold">Quick actions</h3>
+                    <p class="text-sm text-white/70">Jump straight into the most-used admin flows.</p>
+                </div>
+            </div>
+
+            <div class="mt-5 grid gap-3 sm:grid-cols-3">
+                <a href="/admin/customers/add" class="rounded-2xl border border-white/10 bg-white/5 p-4 transition-transform duration-200 hover:-translate-y-0.5 hover:bg-white/10">
+                    <i class="fa-solid fa-user-plus text-emerald-300"></i>
+                    <p class="mt-3 font-semibold">Add customer</p>
+                    <p class="mt-1 text-sm text-white/70">Create a new company profile.</p>
+                </a>
+                <a href="/admin/machines/add" class="rounded-2xl border border-white/10 bg-white/5 p-4 transition-transform duration-200 hover:-translate-y-0.5 hover:bg-white/10">
+                    <i class="fa-solid fa-desktop text-cyan-300"></i>
+                    <p class="mt-3 font-semibold">Add machine</p>
+                    <p class="mt-1 text-sm text-white/70">Register a device and its renewal data.</p>
+                </a>
+                <a href="/admin/emails-history" class="rounded-2xl border border-white/10 bg-white/5 p-4 transition-transform duration-200 hover:-translate-y-0.5 hover:bg-white/10">
+                    <i class="fa-solid fa-envelope-open-text text-amber-300"></i>
+                    <p class="mt-3 font-semibold">Email history</p>
+                    <p class="mt-1 text-sm text-white/70">Review renewal outreach and status.</p>
+                </a>
+            </div>
+        </div>
+
+        <div class="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/70">
+            <h3 class="text-xl font-bold text-gray-900">Operations snapshot</h3>
+            <p class="mt-1 text-sm text-gray-500">A compact summary of the current admin workload.</p>
+
+            <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                <div class="rounded-2xl bg-emerald-50 p-4 ring-1 ring-emerald-100">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600">Customers</p>
+                    <p class="mt-2 text-2xl font-bold text-gray-900"><%= summary.totalCustomers %></p>
+                    <p class="mt-1 text-sm text-gray-600">Companies managed in the system.</p>
+                </div>
+                <div class="rounded-2xl bg-cyan-50 p-4 ring-1 ring-cyan-100">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">Machines</p>
+                    <p class="mt-2 text-2xl font-bold text-gray-900"><%= summary.totalMachines %></p>
+                    <p class="mt-1 text-sm text-gray-600">Registered devices across all customers.</p>
+                </div>
+                <div class="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">Orders</p>
+                    <p class="mt-2 text-2xl font-bold text-gray-900"><%= summary.totalOrders %></p>
+                    <p class="mt-1 text-sm text-gray-600">Historical order records captured.</p>
+                </div>
+                <div class="rounded-2xl bg-rose-50 p-4 ring-1 ring-rose-100">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-rose-600">Attention</p>
+                    <p class="mt-2 text-2xl font-bold text-gray-900"><%= summary.pendingOrders + summary.expiringSoon %></p>
+                    <p class="mt-1 text-sm text-gray-600">Pending orders and renewal watch items.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 </div>
 <%- include('../../partials/adminFooter') %>

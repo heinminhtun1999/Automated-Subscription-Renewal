@@ -1,13 +1,15 @@
 <%- include('./adminHeader', { pageTitle: pageTitle, activePage: activePage, error: error }) %>
     <div class="min-w-0 overflow-x-hidden">
-        <div class="flex items-center justify-between px-14 pt-8">
-            <div>
-                <h1 class="font-bold text-gray-600/80 text-2xl">Customer Management</h1>
-                <% if (typeof subTitle !== 'undefined') { %>
-                    <p class="font-semibold text-lg text-gray-600/80"> <%= subTitle %></p>
-                <% } %>
+        <div class="flex items-center justify-between px-4 pt-6 sm:px-8 lg:px-14 sm:pt-8">
+            <div class="space-y-1">
+                <p class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700 ring-1 ring-emerald-100">
+                    <i class="fa-solid fa-layer-group text-[10px]"></i>
+                    Admin Panel
+                </p>
+                <h1 class="text-2xl font-bold text-slate-800 sm:text-3xl"><%= typeof subTitle !== 'undefined' ? subTitle : 'Dashboard' %></h1>
+                <p class="text-sm text-slate-500">Manage customers, machines, orders, and renewal workflows from one place.</p>
             </div>
             <div class="flex flex-column p-6 gap-4 items-center h-24 md:hidden">
-                <i class="fa-solid fa-bars fa-lg cursor-pointer" id="hamburger2"></i>
+                <i class="fa-solid fa-bars fa-lg cursor-pointer text-slate-700" id="hamburger2"></i>
             </div>
         </div>

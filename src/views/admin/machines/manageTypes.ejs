@@ -1,16 +1,18 @@
 <%- include('../../partials/adminMainSection', { pageTitle: 'AR Vending | Admin Panel', activePage: 'machines', subTitle: 'Manage Machine Types', error: typeof error !== 'undefined' ? error : null }) %>
-<div class="py-4 px-14">
-    <div class="w-full h-full p-5 bg-white rounded-lg shadow-lg">
-        <div class="flex justify-between mb-6 gap-4">
-            <a href="/admin/back" class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700">
+<div class="py-6 px-4 sm:px-8 lg:px-14 space-y-6">
+
+    <section class="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/70">
+        <div class="flex justify-between gap-3 border-b border-slate-100 pb-4">
+            <a href="/admin/back"
+            class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700">
                 <i class="fa-solid fa-arrow-left"></i> Back
             </a>
-            <button class="inline-flex items-center gap-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded"
-                onclick="openAddTypeModal()">
-                <i class="fa-solid fa-plus"></i> Add Machine Type
+            <button class="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600" onclick="openAddTypeModal()">
+                <i class="fa-solid fa-plus mr-2"></i>Add type
             </button>
         </div>
-        <div class="overflow-x-auto">
+        <div class="overflow-hidden">
+            <div class="overflow-x-auto">
             <table id="machinesTypesTable" class="display nowrap !-z-1 border-collapse w-full">
             <thead>
                     <tr class="text-left">
@@ -44,7 +46,7 @@
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
 </div>
 
 <div id="type-modal" class="fixed inset-0 z-40 hidden">

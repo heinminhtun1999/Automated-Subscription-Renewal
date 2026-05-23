@@ -1,48 +1,54 @@
 <%- include('../../partials/adminMainSection', { pageTitle: 'AR Vending | Admin Panel', activePage: 'emails-history', error: typeof error !== 'undefined' ? error : null, subTitle: 'Email History' }) %>
-<div class="py-4 px-14">
-    <div class="w-full h-full p-5 bg-white rounded-lg shadow-lg">
-        <div class="overflow-x-auto">
-            <table id="emailHistoryTable" class="display nowrap !-z-1">
-            <thead>
-                <tr>
-                    <th>Email ID</th>
-                    <th>Date/Time</th>
-                    <th>Recipient</th>
-                    <th>Recipient Email</th>
-                    <th>Status</th>
-                    <th>Email Failed Reasons</th>
-                    <th>Renewed Machines</th>
-                    <th>Renewal Pending Machines</th>
-                    <th class="no-export">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% if (typeof data !== 'undefined') { %>
-                    <% data.forEach((email, i) => { %>
-                        <tr data-row-id="<%= email.id %>" data-email-data="<%= JSON.stringify(email) %>">
-                            <td><%= email.id %></td>
-                            <td><%= email.sent_date %></td>
-                            <td title="<%= email.company_name %>" id="company_name">
-                                <a href="/admin/customers/<%= email.customer_id %>" target="_blank" class="underline"><%= email.company_name %></a>
-                            </td>
-                            <td><%= email.recipient_email %></td>
-                            <td class="<%= email.status === 'sent' ? '!text-green-500' : email.status === 'pending' ? '!text-yellow-500' : '!text-red-500' %>"><%= email.status %></td>
-                            <td><%= email.failed_reason %></td>
-                            <td><%= email.machines.renewed.map(machine => machine.machine_id).join(', ') %></td>
-                            <td><%= email.machines.pendingRenewal.map(machine => machine.machine_id).join(', ') %></td>
-                            <td>
-                                <button class="bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-4 rounded" onclick="openEmailHistoryDetailsModal('<%= JSON.stringify(email) %>')">View Details</button>
-                            </td>
-                        </tr>
-                   <% }); %>
-                <% } else { %>
+<%
+    const emails = Array.isArray(data) ? data : [];
+%>
+<div class="py-6 px-4 sm:px-8 lg:px-14 space-y-6">
+
+    <section class="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/70">
+        <div class="overflow-hidden">
+            <div class="overflow-x-auto">
+                <table id="emailHistoryTable" class="display nowrap !-z-1 min-w-full">
+                <thead>
                     <tr>
-                        <td colspan="11" class="text-center py-4">No email found.</td>
+                        <th>Email ID</th>
+                        <th>Date/Time</th>
+                        <th>Recipient</th>
+                        <th>Recipient Email</th>
+                        <th>Status</th>
+                        <th>Email Failed Reasons</th>
+                        <th>Renewed Machines</th>
+                        <th>Renewal Pending Machines</th>
+                        <th class="no-export">Action</th>
                     </tr>
-                <% } %>
-            </tbody> 
-            </table>
+                </thead>
+                <tbody>
+                    <% if (emails.length) { %>
+                        <% emails.forEach((email, i) => { %>
+                            <tr data-row-id="<%= email.id %>" data-email-data="<%= JSON.stringify(email) %>">
+                                <td><%= email.id %></td>
+                                <td><%= email.sent_date %></td>
+                                <td title="<%= email.company_name %>" id="company_name">
+                                    <a href="/admin/customers/<%= email.customer_id %>" target="_blank" class="text-emerald-600 underline decoration-emerald-300 decoration-2 underline-offset-2"><%= email.company_name %></a>
+                                </td>
+                                <td><%= email.recipient_email %></td>
+                                <td class="<%= email.status === 'sent' ? '!text-green-500' : email.status === 'pending' ? '!text-yellow-500' : '!text-red-500' %>"><%= email.status %></td>
+                                <td><%= email.failed_reason %></td>
+                                <td><%= email.machines.renewed.map(machine => machine.machine_id).join(', ') %></td>
+                                <td><%= email.machines.pendingRenewal.map(machine => machine.machine_id).join(', ') %></td>
+                                <td>
+                                    <button class="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600" onclick="openEmailHistoryDetailsModal('<%= JSON.stringify(email) %>')">View Details</button>
+                                </td>
+                            </tr>
+                       <% }); %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="11" class="py-8 text-center text-sm text-gray-500">No email found.</td>
+                        </tr>
+                    <% } %>
+                </tbody> 
+                </table>
+            </div>
         </div>
-    </div>
+    </section>
 </div>
 <%- include('../../partials/adminFooter', { scripts: ['/js/adminEmailHistory.js']}) %>

@@ -63,6 +63,12 @@ function normalizeDate(date) {
     return new Date(date).toISOString().split('T')[0];
 }
 
+// Basic email format check for sheet data filtering.
+function isValidEmail(email) {
+    const emailRegex = /^[A-Za-z0-9._-]+@[A-Za-z]+\.[A-Za-z]{2,3}(?:\.[A-Za-z]{2,3})?$/;
+    return emailRegex.test(email);
+}
+
 module.exports = {
     generateMd5,
     generateOTP,
@@ -71,5 +77,6 @@ module.exports = {
     validateSkey,
     checkRequiredFields,
     formatDate,
-    normalizeDate
+    normalizeDate,
+    isValidEmail
 };

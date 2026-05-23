@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Vending | Admin Login</title>
+    <link rel="icon" href="/images/ARV NEW LOGO.png">
+    <script src="https://kit.fontawesome.com/f2eac0dbd1.js" crossorigin="anonymous"></script>
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body class="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_32%),radial-gradient(circle_at_bottom_right,_rgba(34,211,238,0.18),_transparent_30%),linear-gradient(135deg,_#f8fafc_0%,_#ecfeff_50%,_#f0fdf4_100%)] font-['Plus_Jakarta_Sans',sans-serif] text-slate-900">
+    <main class="relative flex min-h-screen items-center justify-center px-4 py-10">
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="absolute -left-20 top-16 h-64 w-64 rounded-full bg-emerald-300/20 blur-3xl"></div>
+            <div class="absolute right-0 top-1/3 h-72 w-72 rounded-full bg-cyan-300/20 blur-3xl"></div>
+            <div class="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-slate-300/25 blur-3xl"></div>
+        </div>
+
+        <section>
+            <div class="flex items-center justify-center p-6 sm:p-8 lg:p-10">
+                <div class="w-full max-w-md space-y-6">
+                    <div class="flex items-center justify-between lg:hidden">
+                        <div class="flex items-center gap-3">
+                            <img src="/images/ARV NEW LOGO.png" alt="AR Vending Logo" class="h-12 w-12 rounded-2xl bg-white p-2 shadow-sm ring-1 ring-slate-200">
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">Internal access</p>
+                                <h1 class="text-2xl font-bold text-slate-900">AR Vending Admin</h1>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-[1.75rem] border border-slate-200/80 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] sm:p-8">
+                        <div class="flex items-start gap-4">
+                            <div>
+                                <p class="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">ARVending Customer Management Admin Portal</p>
+                                <h2 class="mt-1 text-2xl font-bold text-slate-900">Sign in to continue</h2>
+                                <p class="mt-2 text-sm leading-6 text-slate-500">
+                                    Enter the admin password to access the control panel.
+                                </p>
+                            </div>
+                        </div>
+
+                        <form class="mt-7 space-y-5" action="/admin/login" method="post">
+                            <input type="hidden" name="redirect_url" value="<%= typeof redirectURL && redirectURL ? redirectURL : '/admin' %>"/>
+                            <div class="space-y-2">
+                                <label for="password" class="text-sm font-semibold text-slate-700">Password</label>
+                                <div class="relative">
+                                    <span class="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-400">
+                                        <i class="fa-solid fa-key"></i>
+                                    </span>
+                                    <input
+                                        id="password"
+                                        name="password"
+                                        type="password"
+                                        placeholder="Enter admin password"
+                                        class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-11 py-3.5 text-slate-900 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+                                        autocomplete="current-password"
+                                        required
+                                    >
+                                    <% if (typeof error !== 'undefined') { %>
+                                        <span class="mt-1 text-xs text-red-500" id="error-text"><%= error %></span>
+                                    <% } %>
+                                </div>
+                            </div>
+
+                            <button
+                                    type="submit"
+                                    class="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-cyan-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition duration-200 hover:-translate-y-0.5 hover:from-emerald-500 hover:to-cyan-500 focus:outline-none focus:ring-4 focus:ring-emerald-200"
+                                >
+                                    <i class="fa-solid fa-right-to-bracket"></i>
+                                    Access admin panel
+                                </button>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+<script src="/js/adminLogin.js"></script>
+</html>

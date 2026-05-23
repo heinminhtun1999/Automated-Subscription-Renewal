@@ -5,21 +5,25 @@
         window.selectedMachineType = "<%= selectedMachineType %>";
     </script>
 <% } %>
-<div class="py-4 px-14">
-    <div class="w-full h-full p-5 bg-white rounded-lg shadow-lg">
-        <div class="flex justify-start mb-6 gap-4">
-            <a href="/admin/machine-types/manage" class="px-3 py-1 text-white bg-emerald-400 rounded hover:bg-emerald-500 transition-colors duration-200 text-sm font-semibold">
-                <i class="fa-solid fa-plus fa-sm"></i> Manage Machine Types
-            </a>
-            <a href="/admin/machines/add" class="px-3 py-1 text-white bg-emerald-400 rounded hover:bg-emerald-500 transition-colors duration-200 text-sm font-semibold">
-                <i class="fa-solid fa-plus fa-sm"></i> Add New Machine
-            </a>
+<div class="py-6 px-4 sm:px-8 lg:px-14 space-y-6">
+
+    <section class="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/70">
+        <div class="flex flex-wrap items-center justify-end gap-3 border-b border-slate-100 pb-4">
+            <div class="flex flex-wrap gap-3">
+                <a href="/admin/machine-types/manage" class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">
+                    <i class="fa-solid fa-gears fa-sm"></i> Manage Machine Types
+                </a>
+                <a href="/admin/machines/add" class="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600">
+                    <i class="fa-solid fa-plus fa-sm"></i> Add New Machine
+                </a>
+            </div>
         </div>
-        <div class="overflow-x-auto">
-            <table id="machinesTable" class="display nowrap !-z-1">
-                
-            </table>
+
+        <div class="mt-4 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table id="machinesTable" class="display nowrap !-z-1 min-w-full"></table>
+            </div>
         </div>
-    </div>
+    </section>
 </div>
 <%- include('../../partials/adminFooter', {scripts: ['/js/adminMachines.js']}) %>

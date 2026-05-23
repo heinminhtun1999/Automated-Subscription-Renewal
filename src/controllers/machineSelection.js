@@ -1,5 +1,5 @@
 const { verifyJWT } = require("../utils/utils");
-const { uid, getGroupedData } = require("../utils/dataProcessors");
+const { uid } = require("../utils/dataProcessors");
 const { SHEET_CONFIGS } = require("../utils/constants");
 const { getMachineByDaysLeftAndCustomerId } = require("../repositories/machineRepository");
 const { getCustomerById } = require("../repositories/customerRepository");

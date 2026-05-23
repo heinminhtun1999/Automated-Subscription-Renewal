@@ -137,12 +137,8 @@ if (addCustomerForm && addCustomerSubmit) {
                 body: JSON.stringify(body),
             })
 
-            if (!response.ok) {
-                throw new Error('Failed to add customer. Please try again later.');
-            }
-
-            const result = await response.json();
-            window?.renderSuccess(result.message || 'Customer added successfully!');
+            const data = await window?.parseResponseData(response);
+            window?.renderSuccess(data.message || 'Customer added successfully!');
             window.location = '/admin/customers';
         } catch (error) {
             console.error('Error submitting add customer form:', error);

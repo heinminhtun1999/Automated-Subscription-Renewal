@@ -1,9 +1,8 @@
 // Module Imports
 const path = require('path');
 const dotenv = require('dotenv');
-const { getGroupedData, groupByCompany } = require('../dataProcessors');
+const { groupByCompany } = require('../dataProcessors');
 const { prepareAndSendDueDateEmail } = require('./nodemailer');
-const { getSheetData } = require('./sheets');
 const { normalizeDate } = require('../utils');
 const { getMachineByDaysLeft } = require('../../repositories/machineRepository');
 const { getAllEmailMachines } = require('../../repositories/emailMachinesRepository');
