@@ -1,4 +1,5 @@
 const isProduction = process.env.NODE_ENV === 'production';
+const path = require('path');
 
 module.exports = {
     apps: [
@@ -6,7 +7,7 @@ module.exports = {
             // PM2 process definition for the web app.
             name: isProduction ? 'asr' : 'asr-dev',
             cwd: __dirname,
-            script: 'src/index.js',
+            script: path.join(__dirname, 'src/index.js'),
             env_file: '.env',
             env: {
                 // Default development environment variables.
@@ -23,7 +24,7 @@ module.exports = {
             // PM2 process definition for the cron worker.
             name: isProduction ? 'asr-crons' : 'asr-dev-crons',
             cwd: __dirname,
-            script: 'src/jobs/worker.js',
+            script: path.join(__dirname, 'src/jobs/worker.js'),
             env_file: '.env',
             env: {
                 NODE_ENV: 'development'
