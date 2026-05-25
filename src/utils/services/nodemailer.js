@@ -8,6 +8,10 @@ const { generateJWT } = require('../utils');
 const { insertEmailMachine, updateEmailMachine } = require('../../repositories/emailMachinesRepository');
 const { updateMachine } = require('../../repositories/machineRepository');
 const { insertEmail, updateEmail } = require('../../repositories/emailsRepository');
+const dotenv = require('dotenv');
+const path = require('path');
+
+dotenv.config({ path: path.join(__dirname, '..', '..', '..', '.env') });
 
 // Nodemailer Setup
 const reminderTransporter = nodemailer.createTransport({
