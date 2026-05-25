@@ -19,6 +19,8 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1053.0",
+    "@aws-sdk/shared-ini-file-loader": "^3.370.0",
     "@google-cloud/local-auth": "^2.1.0",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",

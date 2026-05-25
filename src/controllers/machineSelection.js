@@ -10,8 +10,10 @@ const machineSelection = async (req, res) => {
     const { token } = req.query;
 
     if (!token) {
-        const err = new Error("Requested resource was not found.");
-        err.status = 404;
+        const err = new Error();
+        err.status = 401;
+        err.title = "Unauthorized"
+        err.message = "Unauthorized access. Token is required."
         return next(err);
     }
 

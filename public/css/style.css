@@ -2825,6 +2825,10 @@ select:focus::picker-icon {
   max-width: 0px;
 }
 
+.group.collapsed .group-\[\.collapsed\]\:gap-0{
+  gap: 0px;
+}
+
 .group.collapsed .group-\[\.collapsed\]\:rounded-none{
   border-radius: 0px;
 }

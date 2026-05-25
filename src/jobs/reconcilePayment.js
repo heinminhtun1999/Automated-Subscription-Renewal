@@ -13,7 +13,7 @@ async function reconcilePayments() {
     try {
         const orders = getPendingOrProcessingOrders();
         if (orders.length === 0) return;
-
+        
         const orderMap = new Map();
         const orderIds = [];
 
@@ -54,7 +54,7 @@ async function reconcilePayments() {
             }
             orderItemsMap.get(item.order_id).push(item.machine_id);
         }
-        logger.info(`Reconciled orders: `, orderResults);
+        
         const failedToProcessOrders = [];
         const successfullyProcessedOrders = [];
         for (const orderResult of orderResults) {
@@ -82,7 +82,7 @@ async function reconcilePayments() {
                             }
                         });
                         logger.info(`Order ${order.order_id} marked as failed. Error Code: ${orderResult.ErrorCode}, Error Description: ${orderResult.ErrorDesc}`);
-                        return;
+                        continue;
                     }
 
                     const statusFromPG = orderResult.StatCode;
@@ -90,7 +90,7 @@ async function reconcilePayments() {
 
                     if (!paymentStatus) {
                         logger.warn(`Received unknown payment status code from PG for order ${orderResult.OrderID}: ${statusFromPG}. Skipping update for this order. Full response:`, orderResult);
-                        return;
+                        continue;
                     }
 
                     db.transaction(() => {

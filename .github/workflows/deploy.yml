@@ -39,11 +39,11 @@ jobs:
       - name: Determine deployment target
         run: |
           if [[ "${GITHUB_REF_NAME}" == "development" ]]; then
-            echo "DEPLOY_PATH=/home/subscription-renewal-dev" >> $GITHUB_ENV
+            echo "DEPLOY_PATH=/home/subscription-renewal-dev/app" >> $GITHUB_ENV
             echo "PM2_ENV=development" >> $GITHUB_ENV
             echo "PM2_NAME=asr-dev" >> $GITHUB_ENV
           else
-            echo "DEPLOY_PATH=/home/subscription-renewal-prod" >> $GITHUB_ENV
+            echo "DEPLOY_PATH=/home/subscription-renewal-prod/app" >> $GITHUB_ENV
             echo "PM2_ENV=production" >> $GITHUB_ENV
             echo "PM2_NAME=asr" >> $GITHUB_ENV
           fi

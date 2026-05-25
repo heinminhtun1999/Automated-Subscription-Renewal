@@ -135,7 +135,7 @@ function paymentReturn(req, res, next) {
     }
 
     try {
-        const existingOrder = getOrder(body.orderid, body.tranID);
+        const existingOrder = getOrder(body.orderid);
         body.amount = parseFloat(body.amount).toFixed(2);
 
         if (!existingOrder) {
