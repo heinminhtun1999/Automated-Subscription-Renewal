@@ -6,11 +6,10 @@ const path = require("path");
 const dotenv = require('dotenv');
 const { execSync } = require("child_process");
 
-dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
-
 const BACKUP_DIR = path.join(__dirname, '..', '..', '..', 'backups');
 const DB_PATH = path.join(__dirname, '..', 'db', 'database.db');
-const RETENTION_DAYS = 30;
+const CLOUD_RETENTION_DAYS = 30;
+const LOCAL_RETENTION_DAYS = 7;
 const BACKUP_BUCKET_NAME = process.env.B2_BUCKET_NAME || process.env.B2_BACKUP_NAME;
 
 const s3 = new S3Client({
@@ -49,11 +48,10 @@ async function backupDatabase() {
         logger.info(`Database backup uploaded to Backblaze: ${filename}`);
 
         // Enforce retention — delete backups older than 30 days
-        await enforceRetention();
+        await enforceCloudRetention();
 
-        // Clean up local file after successful upload
-        // fs.unlinkSync(localPath);
-
+        // Enforce retention - delete local backups older than 7 days
+        await enforceLocalRetention();
     } catch (error) {
         logger.error("Database backup failed:", error);
         await sendEmail(
@@ -61,12 +59,14 @@ async function backupDatabase() {
             "|ASR| Critical: Database Backup Failed",
             `<p>Database backup failed at ${new Date().toLocaleString()}.</p><p>${error.message}</p>`
         );
+    } finally {
+        return;
     }
 }
 
-async function enforceRetention() {
+async function enforceCloudRetention() {
     const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - RETENTION_DAYS);
+    cutoff.setDate(cutoff.getDate() - CLOUD_RETENTION_DAYS);
 
     if (!BACKUP_BUCKET_NAME) {
         throw new Error('Missing Backblaze bucket name. Set B2_BUCKET_NAME or B2_BACKUP_NAME in .env.');
@@ -79,8 +79,6 @@ async function enforceRetention() {
     if (!listed.Contents) return;
     for (const obj of listed.Contents) {
         if (obj.LastModified < cutoff) {
-            const localPath = path.join(BACKUP_DIR, obj.Key);
-            fs.unlinkSync(localPath);
             await s3.send(new DeleteObjectCommand({
                 Bucket: BACKUP_BUCKET_NAME,
                 Key: obj.Key,
@@ -90,4 +88,21 @@ async function enforceRetention() {
     }
 }
 
+async function enforceLocalRetention() {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - LOCAL_RETENTION_DAYS);
+
+    const isFolderExist = fs.existsSync(BACKUP_DIR);
+    if (!isFolderExist) return;
+
+    const files = fs.readdirSync(BACKUP_DIR);
+    for (const file of files) {
+        const filePath = path.join(BACKUP_DIR, file);
+        const stat = fs.statSync(filePath);
+        if (stat.mtimeMs < cutoff.getTime()) {
+            fs.unlinkSync(filePath);
+            logger.info(`Deleted old local backup: ${file}`);
+        }
+    }
+}
 module.exports = backupDatabase;

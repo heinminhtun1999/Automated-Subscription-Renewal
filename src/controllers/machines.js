@@ -498,17 +498,17 @@ function handleAddMachineType(req, res) {
     if (!type_name) {
         return res.status(400).json({ success: false, message: 'Machine type name is required.' });
     }
-
-    const existingType = getMachineTypeByName(type_name);
-    if (existingType) {
-        return res.status(400).json({ success: false, message: 'A machine type with the same name already exists. Please choose a different name.' });
-    }
-
     try {
-        let lastInsertRowid;
 
+        const existingType = getMachineTypeByName(type_name);
+        if (existingType) {
+            return res.status(400).json({ success: false, message: 'A machine type with the same name already exists. Please choose a different name.' });
+        }
+
+
+        let lastInsertRowid;
         db.transaction(() => {
-            ({ lastInsertRowid } = addMachineType(type_name));
+            lastInsertRowid = addMachineType(type_name).lastInsertRowid;
 
             if (fields && Array.isArray(fields) && fields.length > 0) {
                 for (const fieldName of fields) {

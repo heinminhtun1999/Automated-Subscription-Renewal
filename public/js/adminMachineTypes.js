@@ -199,6 +199,7 @@ function openAddTypeModal() {
 
                 if (result.data && machineTypesDataTable) {
                     const newType = result.data;
+                    console.log(newType)
                     const typeData = {
                         typeId: newType.type_id,
                         typeName: newType.name,
@@ -228,7 +229,7 @@ function openAddTypeModal() {
 
             } catch (error) {
                 console.error('Error adding machine type:', error);
-                window?.setError(error.message || 'Failed to add machine type. Please try again later.');
+                window?.renderError(error.message || 'Failed to add machine type. Please try again later.');
                 return;
             }
         });
