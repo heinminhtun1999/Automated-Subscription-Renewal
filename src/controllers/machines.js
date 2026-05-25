@@ -462,6 +462,10 @@ function handleDeleteMachineTypeField(req, res) {
 
     try {
         deleteMachineTypeField(typeId, fieldId);
+        
+        const machines = getMachinesByTypeDB(typeId);
+        
+
         const data = getMachineTypeByIdWithFields(typeId);
         return res.status(200).json({ success: true, data, message: 'Machine type field deleted successfully.' });
     } catch (error) {
