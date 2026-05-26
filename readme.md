@@ -177,7 +177,7 @@ B2_KEY_ID=
 B2_SECRET_ACCESS_KEY=
 B2_END_POINT=                   # e.g. https://s3.us-west-004.backblazeb2.com
 B2_REGION=                      # e.g. us-west-004
-B2_BUCKET_NAME=                 # Your Backblaze bucket name
+B2_BUCKET_NAME=                 # Backblaze bucket name
 ```
 
 ### Generating the admin password hash
@@ -186,10 +186,10 @@ Run this once in Node.js to generate bcrypt hash:
 
 ```js
 const bcrypt = require('bcrypt');
-bcrypt.hash('your-password-here', 10).then(console.log);
+bcrypt.hash('password-here', 10).then(console.log);
 ```
 
-Paste the output into `ADMIN_PASSWORD_HASH` in your `.env`.
+Paste the output into `ADMIN_PASSWORD_HASH` in `.env`.
 
 ---
 
