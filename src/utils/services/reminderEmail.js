@@ -30,7 +30,8 @@ const reminderEmailJob = async () => {
     `
 
     try {
-        const machinesDueForRenewal = getMachineByDaysLeft(45);
+        const machinesDueForRenewal = getMachineByDaysLeft(45, false, 'active');
+        console.log(machinesDueForRenewal)
         const emailMachines = getAllEmailMachines();
 
         // Add to mapping for efficiency
@@ -67,7 +68,7 @@ const reminderEmailJob = async () => {
 
     } catch (error) {
         logger.error('Error in reminderEmail:', error.stack || error);
-        return { success: false, len: 0, machines: [], separated: [] };
+        return { success: false, len: 0, machines: [], separated: [], error };
     }
 
 

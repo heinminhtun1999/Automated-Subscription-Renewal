@@ -50,12 +50,14 @@ function renderHomePage(req, res) {
             created_at_label: formatDateTime(order.created_at),
             amount_label: `RM ${Number(order.amount).toFixed(2)}`
         }));
-
-        const expiringMachines = getMachineByDaysLeft(30, false).slice(0, 6).map(machine => ({
-            ...machine,
-            end_date_label: formatDateTime(machine.end_date),
-            days_left_label: Math.ceil(machine.days_left)
-        }));
+        const expiringMachines = getMachineByDaysLeft(30, false).slice(0, 6).map(machine => {
+            console.log(machine)
+            return {
+                ...machine,
+                end_date_label: formatDateTime(machine.end_date),
+                days_left_label: Math.ceil(machine.days_left)
+            }
+        });
 
         const totalCustomers = getCount('customers');
         const totalMachines = getCount('machines');

@@ -47,16 +47,20 @@ function getMachinesByIds(ids) {
     return db.prepare(stmt).all(...ids);
 }
 
-function getMachineByDaysLeft(daysLeft, includeExpired = false) {
+function getMachineByDaysLeft(daysLeft, includeExpired = false, active) {
     const stmt = `
         SELECT m.*, c.id AS customer_id, c.company_name, c.pic_name, c.email, mt.name AS machine_type_name, 
         julianday(m.end_date) - julianday('now') AS days_left
         FROM machines AS m
         JOIN machine_types AS mt ON m.machine_type_id = mt.id
         JOIN customers AS c ON m.customer_id = c.id
-        WHERE ${includeExpired ? "" : "days_left > 0 AND"} days_left <= ?
+        WHERE ${includeExpired ? "" : "days_left > 0 AND"} days_left <= ? ${active ? 'AND m.status = ?' : ''}
     `
-    return db.prepare(stmt).all(daysLeft);
+    if (active) {
+        return db.prepare(stmt).all(daysLeft, active);
+    } else {
+        return db.prepare(stmt).all(daysLeft);
+    }
 }
 
 function getMachineByDaysLeftAndCustomerId(daysLeft, customerId, includeExpired = false) {
@@ -103,7 +107,7 @@ function updateMultipleMachines(ids, machineData) {
     });
 
     const values = Object.values(machineData).reduce((acc, a) => [...acc, ...a.reduce((acc, b) => [...acc, ...b], [])], []);
-    
+
     const stmt = `
         UPDATE machines
         SET ${fields.join(",")}

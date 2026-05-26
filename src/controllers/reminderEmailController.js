@@ -10,11 +10,15 @@ dotenv.config({ path: path.join(__dirname, '..', '..', '..', '.env') });
 const reminderEmailController = async (req, res) => {
     try {
         const result = await runReminderEmailJob();
+
+        if (!result.success) {
+            throw new Error(result.error)
+        }
         logger.info('Reminder Emails job successfullly processed via controller.')
         return res.send(result);
     } catch (error) {
         logger.error('Error in reminderEmailController:', error);
-        return res.status(500).send('An error occurred while processing the request.');
+        return res.status(500).json({success: false, message: error.message || 'An error occurred while processing the request.'});
     }
 };
 

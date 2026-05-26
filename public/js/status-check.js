@@ -92,21 +92,10 @@ async function getPaymentStatus() {
     try {
         const response = await fetch('/get-order-info?orderId=' + orderId);
 
-        let data;
-
-        try {
-            data = await response.json();
-        } catch (error) {
-            throw new Error('Invalid response from server.', error);
-        }
-
-        if (!data.success) {
-            throw new Error(data.message || 'Failed to retrieve order information.');
-        }
+        const data = await parseResponseData(response);
 
         const order = data.order;
         const machines = data.machines;
-        console.log(machines)
         const paymentStatusColor = order.payment_status === 'paid' ? 'text-green-600' : order.payment_status === 'failed' ? 'text-red-600' : 'text-orange-600';
         const processStatusColor = order.process_status === 'completed' ? 'text-green-600' : order.process_status === 'failed' ? 'text-red-600' : 'text-orange-600';
 
@@ -159,4 +148,22 @@ async function getPaymentStatus() {
         
         return;
     }
+}
+
+async function parseResponseData(response) {
+    let data;
+
+    try {
+        data = await response.json();
+    } catch (err) {
+        console.error('Failed to parse JSON response:', err);
+        data = null;
+    }
+    
+    if (!response.ok) {
+        const errorMessage = data?.message || 'An unexpected error occurred. Please try again later.';
+        console.log(data)
+        throw new Error(errorMessage);
+    } 
+    return data;
 }

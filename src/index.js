@@ -3,6 +3,7 @@ const express = require('express');
 const path = require('path');
 const dotenv = require('dotenv');
 const session = require('express-session');
+const { rateLimit } = require('express-rate-limit');
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 // Import Controllers
@@ -46,6 +47,18 @@ const {
 const verifyOrigin = require('./middlewares/originCheck');
 const isAuthenticated = require("./middlewares/auth");
 
+// Rate Limiter Setup
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    handler: (req, res) => {
+        return res.status(429).json({
+            success: false,
+            message: 'Too many attempts. Please try again after 15 minutes.'
+        });
+    }
+});
+
 // Server Setup
 const app = express();
 const port = process.env.PORT;
@@ -85,7 +98,7 @@ app.use((req, res, next) => {
         req.session.history.shift(); // Keep only the last 10 entries
     }
     next();
-})
+});
 
 
 // ================== Reconciliation in development environment ==================
@@ -108,10 +121,11 @@ app.get('/', (req, res) => {
 
 app.get('/admin/login', renderLoginPage);
 
-app.post('/admin/login', handleAuth);
+app.post('/admin/login', limiter, handleAuth);
 
 // Middleware to check if the user is authorized to access admin routes
-// app.use('/admin', isAuthenticated);
+app.use('/admin', isAuthenticated);
+app.use('/api', isAuthenticated);
 
 app.get('/admin', renderHomePage);
 
@@ -171,7 +185,7 @@ app.get('/cancel', paymentCancel);
 
 app.get('/status-check', renderPaymentCheckerPage);
 
-app.get('/get-order-info', getOrderInfo);
+app.get('/get-order-info', limiter, getOrderInfo);
 
 app.get('/admin/back', (req, res) => {
     const history = req.session.history || [];
