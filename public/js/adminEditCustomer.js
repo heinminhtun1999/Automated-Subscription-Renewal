@@ -80,7 +80,7 @@ saveBtn.addEventListener('click', async () => {
             body: JSON.stringify(body)
         });
 
-        const result = window.parseResponseData(response);
+        const result = await window.parseResponseData(response);
         
         window.renderSuccess(result.message || 'Customer updated successfully.');
         window.location.href = `/admin/customers/${customerId}`;
