@@ -17,14 +17,13 @@ async function requestPayment(req, res, next) {
 
     const { machineIds, customerId } = req.body;
 
+    // Checking if the customerID present in the payload
     if (!customerId) {
         const err = new Error('Requested data not found. Please refresh the page and try again.\nIf the issue persists, contact support.');
         err.title = "Not Found";
         err.status = 400;
         return next(err);
     }
-
-    const customer = getCustomerById(customerId);
 
     const machineIdsFromPayload = JSON.parse(machineIds || []);
     if (machineIdsFromPayload.length === 0) {
@@ -56,9 +55,12 @@ async function requestPayment(req, res, next) {
 
     try {
 
+        const customer = getCustomerById(customerId);
+
         // Sum fees for payment amount.
         const total = selectedMachines.reduce((sum, machine) => sum + parseFloat(machine.subscription_fees), 0).toFixed(2);
 
+        // Construct body for PG request payload
         const bodyData = {
             beneficiaryName: customer.beneficiary_name,
             email: customer.email,
@@ -67,6 +69,7 @@ async function requestPayment(req, res, next) {
             total: total
         }
 
+        // Prepare URL for return, callback and cancel urls
         const baseURL = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`;
 
         const paymentBody = preparePaymentBody(bodyData, baseURL);
@@ -76,6 +79,7 @@ async function requestPayment(req, res, next) {
             customerId: customer.id,
             amount: parseFloat(bodyData.total).toFixed(2),
         }
+        
         // Atomically insert order and items.
         db.transaction(() => {
             insertOrder(orderInfo);
@@ -261,11 +265,7 @@ function paymentReturn(req, res, next) {
                 message: getUserMessage('paid', 'processing'),
                 machines: null // We will only show machines on the return page if the order is fully completed to avoid confusion, as we are waiting for callback to confirm final status and update machines.
             }
-        })
-
-        // TODO:: Remove updating when the payment is success. Only update from callback for success. 
-        // Other statuses may be updated from return but not final meaning process_status will not be updated to completed in this return.
-        // Set up cron job to check for orders in processing status for more than X mins or hours. 
+        });
 
     } catch (e) {
         logger.error('Error processing payment return:', e);
@@ -312,6 +312,8 @@ async function paymentCallback(req, res) {
         let emailPayload;
 
         db.transaction(() => {
+
+            // Concurrency checking
             const result = updateOrder(existingOrder.order_id,
                 {
                     process_status: 'processing',
@@ -332,6 +334,9 @@ async function paymentCallback(req, res) {
                 return;
             }
 
+            // ----------- Handle different payment statuses and update order accordingly. -----------
+
+            // Failed Payment
             if (body.status === "11") {
                 updateOrder(existingOrder.order_id, {
                     transaction_id: body.tranID,
@@ -344,6 +349,7 @@ async function paymentCallback(req, res) {
                 return;
             }
 
+            // Pending Payment
             if (body.status === "22") {
                 updateOrder(existingOrder.order_id, {
                     transaction_id: body.tranID,
@@ -357,7 +363,6 @@ async function paymentCallback(req, res) {
 
             // For successful payment,
             // Update the order record, and update end date for the machines linked to this order, and remove renewal process IDs for future renewals.
-            // Remove 
             // Finally, set process_status to completed to mark the order as fully processed.
             const orderItems = getOrderItemsByOrderId(existingOrder.order_id);
             const machineIds = orderItems.map(item => item.machine_id);
@@ -373,6 +378,7 @@ async function paymentCallback(req, res) {
                 });
             }
 
+            // Cleaning up renewal_process_id
             updateMultipleEmailMachinesByOrderIdAndMachineIds(existingOrder.order_id, machineIds, { renewal_process_id: null });
 
             updateOrder(existingOrder.order_id,
@@ -405,6 +411,7 @@ async function paymentCallback(req, res) {
             }
         }).immediate();
 
+        // Send the email notification to customer support after the payment and the process is successfully completed
         if (emailPayload) {
             const emailBody = subscriptionRenewalSuccessTemplate(emailPayload);
             await sendEmail(process.env.CS_EMAIL, "Machines Subscription Renewal", emailBody)

@@ -14,10 +14,26 @@ dotenv.config({ path: path.join(__dirname, '..', '..', '..', '.env') });
 // Trigger reminder emails for upcoming renewals and return grouped data.
 const reminderEmailJob = async () => {
 
+
+    `Finds machines approaching their subscription expiry and sends due date
+     reminder emails with a JWT-signed machine selection link.
+     
+    Two email tiers:
+      - First reminder: machines expiring within 45 days with no prior reminder sent
+      - Second reminder: machines expiring within 7 days that already received a first reminder
+     
+    Flow:
+       1. Query machines expiring within 45 days
+       2. Split into first-email and second-email lists based on renewal_process_id
+       3. Group each list by company name
+       4. Send one email per company containing all their relevant machines
+    `
+
     try {
         const machinesDueForRenewal = getMachineByDaysLeft(45);
         const emailMachines = getAllEmailMachines();
 
+        // Add to mapping for efficiency
         const map = new Map();
         emailMachines.forEach(em => {
             const key = em.renewal_process_id;
@@ -51,7 +67,7 @@ const reminderEmailJob = async () => {
 
     } catch (error) {
         logger.error('Error in reminderEmail:', error.stack || error);
-        return { success: false, len: 0, machines: [], separated:[] };
+        return { success: false, len: 0, machines: [], separated: [] };
     }
 
 

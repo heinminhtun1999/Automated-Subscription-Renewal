@@ -52,6 +52,7 @@ async function backupDatabase() {
 
         // Enforce retention - delete local backups older than 7 days
         await enforceLocalRetention();
+        
     } catch (error) {
         logger.error("Database backup failed:", error);
         await sendEmail(

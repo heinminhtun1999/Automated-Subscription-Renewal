@@ -97,14 +97,19 @@ function updateMachine(id, machineData) {
 }
 
 function updateMultipleMachines(ids, machineData) {
-    const fields = Object.keys(machineData).map(key => `${key} = ?`).join(", ");
-    const values = Object.values(machineData);
+    const fields = Object.keys(machineData).map(key => {
+        return `${key} = CASE
+            ${Array.from({ length: machineData[key].length }, _ => `WHEN id = ? THEN ?`).join("\n")}\nEND`
+    });
 
+    const values = Object.values(machineData).reduce((acc, a) => [...acc, ...a.reduce((acc, b) => [...acc, ...b], [])], []);
+    
     const stmt = `
         UPDATE machines
-        SET ${fields}
+        SET ${fields.join(",")}
         WHERE id IN (${ids.map(() => "?").join(", ")})
     `
+
     return db.prepare(stmt).run(...values, ...ids);
 }
 

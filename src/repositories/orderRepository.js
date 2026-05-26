@@ -17,7 +17,6 @@ function getAllOrders() {
     return stmt.all();
 }
 
-// Fetch order by order ID (and optionally transaction ID).
 function getOrder(orderId) {
     const stmt = db.prepare(`
         SELECT o.*, c.company_name FROM orders AS o
@@ -28,7 +27,6 @@ function getOrder(orderId) {
     return stmt.get(orderId);
 }
 
-// Fetch processing orders that are pending and failed
 function getPendingOrProcessingOrders() {
     const stmt = db.prepare(
         `
@@ -41,7 +39,6 @@ function getPendingOrProcessingOrders() {
     return stmt.all();
 }
 
-// Insert a new order record.
 function insertOrder(order) {
     const stmt = db.prepare(`
         INSERT INTO orders 
@@ -51,7 +48,6 @@ function insertOrder(order) {
     return stmt.run(order.orderId, order.amount, order.customerId);
 }
 
-// Update order fields
 function updateOrder(orderId, updateFields, additionalConditions = {}) {
     const filedCaluse = Object.keys(updateFields).
         map(key => `${key} = ?`).join(", ");
@@ -69,7 +65,6 @@ function updateOrder(orderId, updateFields, additionalConditions = {}) {
         return [...acc, cond.value];
     }, []);
 
-    // Error is happending here. Need to check tomorrow. Error: SqliteError: near "?": syntax error 
     const stmt = db.prepare(`
         UPDATE orders
         SET ${filedCaluse}

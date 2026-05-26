@@ -16,6 +16,7 @@ function groupByCompany(data) {
     return groupedData;
 }
 
+// Map order's payment status and process status to message to display to user
 function getUserMessage(paymentStatus, processStatus) {
     if (paymentStatus === 'paid' && processStatus === 'completed') {
         return 'Payment successful. Order completed.';

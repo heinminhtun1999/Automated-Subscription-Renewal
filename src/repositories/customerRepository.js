@@ -1,6 +1,5 @@
 const db = require('../db/db');
 
-// Fetch all companies with their latest email and device info.
 function getAllCustomers() {
     const query = `
         SELECT * 

@@ -1,4 +1,3 @@
-const { getMachinesByTypeDB } = require('../repositories/machineRepository');
 const {
     getAllType,
     getAllMachineTypesWithFields,
@@ -19,7 +18,9 @@ const {
     getMachineByMachineIdOrId,
     addMachine,
     deleteMachine,
-    updateMachine
+    updateMachine,
+    updateMultipleMachines,
+    getMachinesByTypeDB
 } = require('../repositories/machineRepository');
 const {
     getAllCustomers,
@@ -33,7 +34,10 @@ const db = require('../db/db');
 const logger = require('../utils/services/winston');
 const { formatDate, normalizeDate, checkRequiredFields } = require('../utils/utils');
 
-// Data Processing functions
+// =============== Data Processing functions ===================
+// =============================================================
+// =============================================================
+
 function prepareMachineData(machine) {
     const fields = getMachineTypeFields(machine.machine_type_id);
     const jsonData = JSON.parse(machine.data);
@@ -63,6 +67,7 @@ function prepareMachineData(machine) {
     return data;
 }
 
+// To filter machine_type_fields which are not registered in database from data json of machine
 function filterAdditionalFields(machineTypeId, additional_fields) {
     const additionalFields = getMachineTypeFields(machineTypeId).map(field => field.id);
     const columnsFromBody = Object.keys(additional_fields);
@@ -76,65 +81,30 @@ function filterAdditionalFields(machineTypeId, additional_fields) {
     return additionalDataObject
 }
 
+// To prevent setting active status to the expired machines
 function forceCheckActiveStatusBasedOnEndDate(status, endDate) {
     const isExpired = new Date(endDate).getTime() < Date.now();
 
     if (isExpired) return 'inactive';
 
-    return status === 'inactive' ? 'inactive' : 'active';
+    return status;
 }
 
-// =============== Controller functions ===============
+// =============== Controller functions ===================
+// ========================================================
+// ========================================================
+
+// =============== Controllers for machines ===============
+// ========================================================
+
+// =============== <Data fetching> ===============
+
 function renderMachinesPage(req, res) {
     const { message, selected_machine_type } = req.query;
     if (message) {
         return res.render('admin/machines/index', { success: true, message, selectedMachineType: selected_machine_type });
     }
     return res.render('admin/machines/index', { selectedMachineType: selected_machine_type });
-}
-
-function renderAddMachinePage(req, res) {
-
-    try {
-        const types = getAllType();
-        const customers = getAllCustomers();
-        return res.render('admin/machines/add', { data: { types, customers }, error: null });
-    } catch (e) {
-        logger.error('Error rendering add machine page:', e);
-        return res.render('admin/machines/add', { data: null, error: 'Failed to load add machine page. Please try again later.' });
-    }
-}
-
-function renderEditMachinePage(req, res) {
-    const { id } = req.params;
-
-    if (!id) {
-        return res.status(400).render('admin/machines/edit', { data: {}, error: 'Machine ID is required.' });
-    }
-
-    try {
-        const machine = getMachineByMachineIdOrId(id);
-
-        if (!machine) {
-            return res.status(404).render('admin/machines/edit', { data: {}, error: 'Machine not found.' });
-        }
-
-        const machineData = prepareMachineData(machine);
-        const types = getAllType();
-        const customers = getAllCustomers();
-
-        const data = {
-            machine: machineData,
-            types,
-            customers
-        }
-
-        return res.status(200).render('admin/machines/edit', { data, error: null });
-    } catch (error) {
-        logger.error('Error fetching machine:', error);
-        return res.status(500).render('admin/machines/edit', { data: {}, error: 'Failed to fetch machine. Please try again later.' });
-    }
-    return;
 }
 
 function getMachinesByType(req, res) {
@@ -179,42 +149,6 @@ function getMachinesByType(req, res) {
     }
 }
 
-function getAllMachineTypes(req, res) {
-    try {
-        const data = getAllType();
-        return res.status(200).json({ data, success: true });
-    } catch (error) {
-        logger.error('Error fetching machine types:', error);
-        return res.status(500).json({ data: [], success: false, message: `Failed to fetch machine types. Please try again later. Error: ${error.message}` });
-    }
-}
-
-function handleGetAllMachineTypesWithFields(req, res) {
-    const { id } = req.params;
-    if (!id) {
-        return res.status(400).json({ success: false, data: {}, message: 'Machine type ID is required.' });
-    }
-
-    try {
-        const data = getMachineTypeFields(id);
-        return res.status(200).json({ success: true, data, message: 'Machine type with fields fetched successfully.' });
-    } catch (error) {
-        logger.error('Error fetching machine type with fields:', error);
-        return res.status(500).json({ success: false, data: {}, message: `Failed to fetch machine type with fields. Please try again later. Error: ${error.message}` });
-    }
-}
-
-function renderMachineTypesPage(req, res) {
-    try {
-        const data = getAllMachineTypesWithFields();
-
-        return res.render('admin/machines/manageTypes', { data, error: null });
-    } catch (error) {
-        logger.error('Error rendering machine types management page:', error);
-        return res.render('admin/machines/manageTypes', { data: [], error: `Failed to load machine types management page. Please try again later. Error: ${error.message}` });
-    }
-}
-
 function handleViewMachine(req, res) {
     const { id } = req.params;
 
@@ -236,6 +170,19 @@ function handleViewMachine(req, res) {
     } catch (error) {
         logger.error('Error fetching machine:', error);
         return res.status(500).render('admin/machines/view', { data: {}, error: 'Failed to fetch machine. Please try again later.' });
+    }
+}
+
+// =============== <Insertion> ===============
+
+function renderAddMachinePage(req, res) {
+    try {
+        const types = getAllType();
+        const customers = getAllCustomers();
+        return res.render('admin/machines/add', { data: { types, customers }, error: null });
+    } catch (e) {
+        logger.error('Error rendering add machine page:', e);
+        return res.render('admin/machines/add', { data: null, error: 'Failed to load add machine page. Please try again later.' });
     }
 }
 
@@ -278,7 +225,6 @@ function handleAddMachine(req, res) {
         const additionalDataObject = filterAdditionalFields(machine_type_id, additional_fields);
 
         const isRegisteredDateValid = !registered_date || isNaN(new Date(registered_date).getTime());
-
         const registeredDate = isRegisteredDateValid ? new Date() : new Date(registered_date);
         const calculatedEndDate = end_date ? end_date : new Date(registeredDate.getTime() + (1000 * 60 * 60 * 24 * 365));
 
@@ -299,6 +245,40 @@ function handleAddMachine(req, res) {
     } catch (error) {
         logger.error('Error adding machine:', error);
         return res.status(500).json({ success: false, message: `Failed to add machine. Please try again later. Error: ${error.message}` });
+    }
+    return;
+}
+
+// =============== <Editing> ===============
+
+function renderEditMachinePage(req, res) {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).render('admin/machines/edit', { data: {}, error: 'Machine ID is required.' });
+    }
+
+    try {
+        const machine = getMachineByMachineIdOrId(id);
+
+        if (!machine) {
+            return res.status(404).render('admin/machines/edit', { data: {}, error: 'Machine not found.' });
+        }
+
+        const machineData = prepareMachineData(machine);
+        const types = getAllType();
+        const customers = getAllCustomers();
+
+        const data = {
+            machine: machineData,
+            types,
+            customers
+        }
+
+        return res.status(200).render('admin/machines/edit', { data, error: null });
+    } catch (error) {
+        logger.error('Error fetching machine:', error);
+        return res.status(500).render('admin/machines/edit', { data: {}, error: 'Failed to fetch machine. Please try again later.' });
     }
     return;
 }
@@ -364,8 +344,9 @@ function handleEditMachine(req, res) {
         logger.error('Error editing machine:', error);
         return res.status(500).json({ success: false, message: `Failed to edit machine. Please try again later. Error: ${error.message}` });
     }
-
 }
+
+// =============== <Deletion> ===============
 
 function handleDeleteMachine(req, res) {
     const { id } = req.params;
@@ -388,6 +369,112 @@ function handleDeleteMachine(req, res) {
     }
 }
 
+// =============== Controllers for machine types ===============
+// =============================================================
+
+// =============== <Data fetching> ===============
+
+function getAllMachineTypes(req, res) {
+    try {
+        const data = getAllType();
+        return res.status(200).json({ data, success: true });
+    } catch (error) {
+        logger.error('Error fetching machine types:', error);
+        return res.status(500).json({ data: [], success: false, message: `Failed to fetch machine types. Please try again later. Error: ${error.message}` });
+    }
+}
+
+function handleGetAllMachineTypesWithFields(req, res) {
+    const { id } = req.params;
+    if (!id) {
+        return res.status(400).json({ success: false, data: {}, message: 'Machine type ID is required.' });
+    }
+
+    try {
+        const data = getMachineTypeFields(id);
+        return res.status(200).json({ success: true, data, message: 'Machine type with fields fetched successfully.' });
+    } catch (error) {
+        logger.error('Error fetching machine type with fields:', error);
+        return res.status(500).json({ success: false, data: {}, message: `Failed to fetch machine type with fields. Please try again later. Error: ${error.message}` });
+    }
+}
+
+function renderMachineTypesPage(req, res) {
+    try {
+        const data = getAllMachineTypesWithFields();
+
+        return res.render('admin/machines/manageTypes', { data, error: null });
+    } catch (error) {
+        logger.error('Error rendering machine types management page:', error);
+        return res.render('admin/machines/manageTypes', { data: [], error: `Failed to load machine types management page. Please try again later. Error: ${error.message}` });
+    }
+}
+
+// =============== <Insertion> ===============
+
+function handleAddMachineType(req, res) {
+    const { type_name, fields } = req.body;
+
+    if (!type_name) {
+        return res.status(400).json({ success: false, message: 'Machine type name is required.' });
+    }
+    try {
+
+        const existingType = getMachineTypeByName(type_name);
+        if (existingType) {
+            return res.status(400).json({ success: false, message: 'A machine type with the same name already exists. Please choose a different name.' });
+        }
+
+
+        let lastInsertRowid;
+        db.transaction(() => {
+            lastInsertRowid = addMachineType(type_name).lastInsertRowid;
+
+            if (fields && Array.isArray(fields) && fields.length > 0) {
+                for (const fieldName of fields) {
+                    addMachineTypeFieldDB(lastInsertRowid, fieldName);
+                }
+            }
+        }).immediate();
+
+        const data = getMachineTypeByIdWithFields(lastInsertRowid);
+        return res.status(200).json({ success: true, data, message: 'Machine type added successfully.' });
+
+    } catch (error) {
+        logger.error('Error adding machine type:', error);
+        return res.status(500).json({ success: false, message: `Failed to add machine type. Please try again later. Error: ${error.message}` });
+    }
+}
+
+// =============== <Deletion> ===============
+
+function handleDeleteMachineType(req, res) {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({ success: false, message: 'Machine type ID is required.' });
+    }
+
+    try {
+        const existingType = getMachineTypeById(id);
+
+        if (!existingType) {
+            return res.status(404).json({ success: false, message: 'Machine type not found.' });
+        }
+
+        deleteMachineType(id);
+        return res.status(200).json({ success: true, message: 'Machine type deleted successfully.' });
+    } catch (error) {
+        logger.error('Error deleting machine type:', error);
+        return res.status(500).json({ success: false, message: `Failed to delete machine type. Please try again later. Error: ${error.message}` });
+    }
+}
+
+// =============== Controllers for machine type's fields ===============
+// =====================================================================
+
+// =============== <Insertion> ===============
+
 function handleAddMachineTypeField(req, res) {
     const { id } = req.params;
 
@@ -403,6 +490,7 @@ function handleAddMachineTypeField(req, res) {
 
         const existingFields = getMachineTypeFields(id);
         const duplicate = existingFields.some(field => field.name.toLowerCase() === name.toLowerCase());
+
         addMachineTypeFieldDB(id, { name: duplicate ? `${name} (Duplicate)` : name });
         const data = getMachineTypeByIdWithFields(id);
         return res.status(200).json({ success: true, data, message: 'Machine type field added successfully.' });
@@ -411,6 +499,8 @@ function handleAddMachineTypeField(req, res) {
         return res.status(500).json({ success: false, message: `Failed to add machine type field. Please try again later. Error: ${error.message}` });
     }
 }
+
+// =============== <Editing> ===============
 
 function handleUpdateMachineTypeFields(req, res) {
 
@@ -453,6 +543,8 @@ function handleUpdateMachineTypeFields(req, res) {
 
 }
 
+// =============== <Deletion> ===============
+
 function handleDeleteMachineTypeField(req, res) {
     const { typeId, fieldId } = req.params;
 
@@ -461,10 +553,25 @@ function handleDeleteMachineTypeField(req, res) {
     }
 
     try {
-        deleteMachineTypeField(typeId, fieldId);
-        
-        const machines = getMachinesByTypeDB(typeId);
-        
+        db.transaction(() => {
+            deleteMachineTypeField(typeId, fieldId);
+            const machines = getMachinesByTypeDB(typeId);
+
+            if (machines.length > 0) {
+                const ids = [];
+                // Structure: { columnName: [[id, value], [id, value], ...] }
+                const dataToUpdate = { data: [] };
+
+                machines.forEach(machine => {
+                    ids.push(machine.id);
+                    const d = JSON.parse(machine.data)
+                    delete d[fieldId]
+                    dataToUpdate["data"].push([machine.id, JSON.stringify(d)]);
+                });
+
+                updateMultipleMachines(ids, dataToUpdate);
+            }
+        }).immediate();
 
         const data = getMachineTypeByIdWithFields(typeId);
         return res.status(200).json({ success: true, data, message: 'Machine type field deleted successfully.' });
@@ -474,61 +581,7 @@ function handleDeleteMachineTypeField(req, res) {
     }
 }
 
-function handleDeleteMachineType(req, res) {
-    const { id } = req.params;
 
-    if (!id) {
-        return res.status(400).json({ success: false, message: 'Machine type ID is required.' });
-    }
-
-    try {
-        const existingType = getMachineTypeById(id);
-
-        if (!existingType) {
-            return res.status(404).json({ success: false, message: 'Machine type not found.' });
-        }
-
-        deleteMachineType(id);
-        return res.status(200).json({ success: true, message: 'Machine type deleted successfully.' });
-    } catch (error) {
-        logger.error('Error deleting machine type:', error);
-        return res.status(500).json({ success: false, message: `Failed to delete machine type. Please try again later. Error: ${error.message}` });
-    }
-}
-
-function handleAddMachineType(req, res) {
-    const { type_name, fields } = req.body;
-
-    if (!type_name) {
-        return res.status(400).json({ success: false, message: 'Machine type name is required.' });
-    }
-    try {
-
-        const existingType = getMachineTypeByName(type_name);
-        if (existingType) {
-            return res.status(400).json({ success: false, message: 'A machine type with the same name already exists. Please choose a different name.' });
-        }
-
-
-        let lastInsertRowid;
-        db.transaction(() => {
-            lastInsertRowid = addMachineType(type_name).lastInsertRowid;
-
-            if (fields && Array.isArray(fields) && fields.length > 0) {
-                for (const fieldName of fields) {
-                    addMachineTypeFieldDB(lastInsertRowid, fieldName);
-                }
-            }
-        }).immediate();
-
-        const data = getMachineTypeByIdWithFields(lastInsertRowid);
-        return res.status(200).json({ success: true, data, message: 'Machine type added successfully.' });
-
-    } catch (error) {
-        logger.error('Error adding machine type:', error);
-        return res.status(500).json({ success: false, message: `Failed to add machine type. Please try again later. Error: ${error.message}` });
-    }
-}
 
 module.exports = {
     renderMachinesPage,

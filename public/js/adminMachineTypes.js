@@ -199,7 +199,6 @@ function openAddTypeModal() {
 
                 if (result.data && machineTypesDataTable) {
                     const newType = result.data;
-                    console.log(newType)
                     const typeData = {
                         typeId: newType.type_id,
                         typeName: newType.name,

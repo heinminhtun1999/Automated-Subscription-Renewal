@@ -63,6 +63,8 @@ app.use(session({
         sameSite: 'strict' // 
     }
 }));
+
+// Route history tracking for back button
 app.use((req, res, next) => {
     //  Initialize history array if it doesn't exist
     if (!req.session.history) {
@@ -108,6 +110,7 @@ app.get('/admin/login', renderLoginPage);
 
 app.post('/admin/login', handleAuth);
 
+// Middleware to check if the user is authorized to access admin routes
 app.use('/admin', isAuthenticated);
 
 app.get('/admin', renderHomePage);
@@ -219,6 +222,3 @@ app.use((err, req, res, next) => {
 app.listen(port, () => {
     console.log(`Development Server is running on ${port}: ${process.env.NODE_ENV}`);
 });
-
-
-// TODO:: Implement data validation and santization such as allowing only certain fields, type validation for all api endpoints

@@ -4,6 +4,8 @@ const { getMachinesByIds } = require("../repositories/machineRepository");
 const { getUserMessage } = require("../utils/dataProcessors");
 const logger = require('../utils/services/winston');
 
+// Function to get order status and information
+// This is used by /check-status and in payment return pooling
 function getOrderInfo(req, res) {
     const { orderId } = req.query;
     try {

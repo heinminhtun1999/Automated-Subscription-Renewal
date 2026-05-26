@@ -114,7 +114,6 @@ async function prepareAndSendDueDateEmail(combinedData) {
 
                 // If the email is sent successfully, perform upsert. 
                 // If there is any failure in updating the sheet, log the error and continue with the next email sending without stopping the whole process.
-
                 for (const row of companyData) {
                     const isFirstEmailExist = row.emailMachine && row.renewal_process_id && row.emailMachine.first_email_id;
 

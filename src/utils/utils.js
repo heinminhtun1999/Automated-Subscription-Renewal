@@ -25,6 +25,7 @@ function checkRequiredFields(data, requiredFields) {
     }
     return { valid: true };
 }
+
 // Generate a 6-digit OTP.
 function generateOTP() {
     const otp = crypto.randomInt(100000, 999999).toString();
@@ -51,6 +52,8 @@ function verifyJWT(token) {
         return { valid: false, error: err };
     }
 }
+
+
 function formatDate(date) {
     return new Date(date).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -63,7 +66,7 @@ function normalizeDate(date) {
     return new Date(date).toISOString().split('T')[0];
 }
 
-// Basic email format check for sheet data filtering.
+// Basic email format check
 function isValidEmail(email) {
     const emailRegex = /^[A-Za-z0-9._-]+@[A-Za-z]+\.[A-Za-z]{2,3}(?:\.[A-Za-z]{2,3})?$/;
     return emailRegex.test(email);

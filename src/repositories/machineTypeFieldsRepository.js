@@ -16,7 +16,7 @@ function addMachineTypeFieldDB(machineTypeId, fieldName) {
         VALUES (?, ?)
         `
     )
-    return stmt.run(machineTypeId, fieldName);
+    return stmt.run(machineTypeId, fieldName.name);
 }
 
 function updateMachineTypeFields(machineTypeId, data) {

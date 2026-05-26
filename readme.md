@@ -68,8 +68,7 @@ The system also has a full **admin panel** for managing customers, machines, mac
 
 ```
 Automated-Subscription-Renewal/
-backup/ 
-    └── backups/                    # Local database backups (auto-generated)
+backups/                            # Local database backups (auto-generated)
 app/
     ├── .github/
     │   └── workflows/
@@ -625,8 +624,6 @@ sqlite3 /tmp/test-restore.db "SELECT COUNT(*) FROM customers;"
 sqlite3 /tmp/test-restore.db "SELECT COUNT(*) FROM machines;"
 ```
 
-Do this periodically — a backup you've never tested is a backup you can't trust.
-
 ---
 
 ## 14. Deployment
@@ -708,7 +705,6 @@ Defined in `.github/workflows/deploy.yml`. Triggers on push to `development` or 
 
 ### Security
 - [ ] Input validation and sanitization on all API endpoints (currently missing)
-- [ ] JWT tokens for machine selection links have no expiry — should add `expiresIn`
 - [ ] Admin panel has a single shared password — no individual accounts or audit trail
 - [ ] `verifyOrigin` is origin-based only — a proper CSRF token would be more robust
 
