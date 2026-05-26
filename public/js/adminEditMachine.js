@@ -11,6 +11,7 @@ const selectedCompanyName = document.getElementById('selected-company-name');
 const selectedCustomerId = document.querySelector('[data-selected-customer-id]');
 const machineStatusInput = document.getElementById('machine-status');
 
+let areMachineFieldsValid = true;
 
 function formatData(data) {
     return JSON.parse(data.replace(/&#34;/g, '"').replace(/&#39;/g, "'"));
@@ -176,7 +177,7 @@ if (window.data) {
     if (saveButton && typeSelector) {
         saveButton.addEventListener('click', async () => {
             clearMachineFieldErrors();
-
+            areMachineFieldsValid = true;
             const machineTypeId = typeSelector.value.trim();
             const customerId = selectedCustomerId?.dataset.selectedCustomerId?.trim() || '';
             const machineIdInput = document.getElementById('machine-id');
@@ -190,26 +191,24 @@ if (window.data) {
             const registeredDate = registrationDateInput?.value || formatDateInputValue(new Date());
             const endDate = endDateInput?.value || formatDateInputValue(new Date(new Date(registeredDate).getTime() + (1000 * 60 * 60 * 24 * 365)));
 
-            let isValid = true;
-
             if (!machineTypeId) return;
 
             if (!customerId) {
                 setMachineFieldError('company-name', "Customer's company name is required.");
-                isValid = false;
+                areMachineFieldsValid = false;
             }
 
             if (!machineId) {
                 setMachineFieldError('machine-id', 'Machine id is required.');
-                isValid = false;
+                areMachineFieldsValid = false;
             }
 
             if (!subscriptionFees || Number.isNaN(Number(subscriptionFees))) {
                 setMachineFieldError('subscription-fees', 'Enter a valid subscription fee.');
-                isValid = false;
+                areMachineFieldsValid = false;
             }
 
-            if (!isValid) {
+            if (!areMachineFieldsValid) {
                 window.renderError('Please fix the highlighted fields before continuing.');
                 return;
             }
@@ -288,14 +287,21 @@ if (machineRegistrationDateInput && endDateInput && machineStatusInput) {
 
     machineStatusInput.addEventListener('change', (e) => {
         const status = e.target.value;
+        const machineStatusErrorSpan = document.querySelector(`[data-error-for="machine-status"]`);
         if (status === 'active' && (new Date(endDateInput.value).getTime() < Date.now())) {
-            const machineStatusErrorSpan = document.querySelector(`[data-error-for="machine-status"]`);
             machineStatusErrorSpan.textContent = 'Cannot set status to active if end date is in the past. Please update the end date or change the status to inactive.';
             machineStatusErrorSpan.classList.remove('hidden');
             e.target.value = 'inactive';
+            areMachineFieldsValid = false;
             setTimeout(() => {
                 machineStatusErrorSpan.classList.add('hidden');
+                machineStatusErrorSpan.textContent = '';
+                areMachineFieldsValid = true
             }, 5000);
+        } else {
+            machineStatusErrorSpan.classList.add('hidden');
+            machineStatusErrorSpan.textContent = '';
+            areMachineFieldsValid = true;
         }
     });
 

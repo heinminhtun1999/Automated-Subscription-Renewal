@@ -201,9 +201,9 @@ function handleAddMachine(req, res) {
 
     const requiredFieldCheck = checkRequiredFields(body, ['machine_type_id', 'customer_id', 'end_data', 'subscription_fees', 'machine_id']);
     if (!requiredFieldCheck.valid) {
-        const missingField = requiredFieldsCheck.missingField;
+        const missingField = requiredFieldCheck.missingField;
         logger.warn(`Missing ${missingField} in handleAddMachine:`, body);
-        return res.status(400).send(`Missing required field: ${missingField}`);
+        return res.status(400).json({success: false, message: `Missing required field: ${missingField}`});
     }
 
     try {
@@ -286,7 +286,6 @@ function renderEditMachinePage(req, res) {
 function handleEditMachine(req, res) {
     const { id } = req.params;
     const body = req.body;
-
     if (!id) {
         return res.status(400).json({ success: false, message: 'Machine ID is required.' });
     }
@@ -295,9 +294,9 @@ function handleEditMachine(req, res) {
 
         const requiredFieldCheck = checkRequiredFields(body, ['machine_type_id', 'customer_id', 'machine_id', 'subscription_fees']);
         if (!requiredFieldCheck.valid) {
-            const missingField = requiredFieldsCheck.missingField;
+            const missingField = requiredFieldCheck.missingField;
             logger.warn(`Missing ${missingField} in handleAddMachine:`, body);
-            return res.status(400).send(`Missing required field: ${missingField}`);
+            return res.status(400).json({success: false, message: `Missing required field: ${missingField}`});
         }
 
         const existingMachine = getMachineByMachineIdOrId(id);

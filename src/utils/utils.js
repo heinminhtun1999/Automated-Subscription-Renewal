@@ -19,7 +19,7 @@ function validateSkey(data) {
 // Ensure required fields are present in a payload.
 function checkRequiredFields(data, requiredFields) {
     for (const field of requiredFields) {
-        if (!data[field]) {
+        if (!data[field] && isNaN(data[field])) {
             return { valid: false, missingField: field };
         }
     }
