@@ -307,7 +307,6 @@ if (machineRegistrationDateInput && endDateInput && machineStatusInput) {
 
     const changeActiveStatusBasedOnDates = (date) => {
         const isActive = date > Date.now();
-        console.log(date, Date.now(), isActive);
         machineStatusInput.value = isActive ? 'active' : 'inactive';
     }
 }

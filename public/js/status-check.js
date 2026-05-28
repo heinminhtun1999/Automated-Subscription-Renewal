@@ -162,7 +162,6 @@ async function parseResponseData(response) {
     
     if (!response.ok) {
         const errorMessage = data?.message || 'An unexpected error occurred. Please try again later.';
-        console.log(data)
         throw new Error(errorMessage);
     } 
     return data;

@@ -37,7 +37,6 @@ function renderHomePage(req, res) {
             amount_label: `RM ${Number(order.amount).toFixed(2)}`
         }));
         const expiringMachines = getMachineByDaysLeft(30, false).slice(0, 6).map(machine => {
-            console.log(machine)
             return {
                 ...machine,
                 end_date_label: formatDate(machine.end_date),

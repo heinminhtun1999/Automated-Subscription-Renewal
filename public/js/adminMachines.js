@@ -40,7 +40,6 @@ const options = {
     },
     createdRow: function (row, data) {
         row.addEventListener('click', (e) => {
-            console.log('Row clicked:', data);
             // ignore clicks on links/buttons
             if (e.target.closest('a, button')) return;
             if (data?.id) {
