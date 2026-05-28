@@ -12,13 +12,14 @@ function renderEmailHistoryPage(req, res) {
                 email_machine_id: email.email_machine_id,
                 first_email_id: email.first_email_id,
                 second_email_id: email.second_email_id,
-                second_email_sent_date: localizedDateTime(email.second_email_sent_date),
+                second_email_sent_date: email.second_email_sent_date ? localizedDateTime(email.second_email_sent_date) : '-',
                 machine_id: email.machine_id,
                 order_id: email.order_id,
                 payment_status: email.payment_status,
                 process_status: email.process_status,
                 machine_type: email.machine_type_name
             }
+            
             const isPaid = email.payment_status === 'paid';
 
             if (map.has(email.id)) {

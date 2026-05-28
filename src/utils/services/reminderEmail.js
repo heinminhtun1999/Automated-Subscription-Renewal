@@ -31,7 +31,6 @@ const reminderEmailJob = async () => {
 
     try {
         const machinesDueForRenewal = getMachineByDaysLeft(45, false, 'active');
-        console.log(machinesDueForRenewal)
         const emailMachines = getAllEmailMachines();
 
         // Add to mapping for efficiency
