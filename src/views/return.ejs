@@ -9,7 +9,6 @@
                 const hasData = !!data;
                 const processStatus = hasData && data.processStatus ? data.processStatus.toLowerCase().trim() : 'error';
                 const paymentStatus = hasData && data.paymentStatus ? data.paymentStatus.toLowerCase().trim() : 'error';
-                console.log(data.transactionDate)
                 const transactionDate = hasData && data.transactionDate ? data.transactionDate : '-';
                 const orderId = hasData ? data.orderId : '-';
                 const message = hasData && data.message ? data.message : "An unexpected error occurred.";
