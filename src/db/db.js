@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS orders (
     customer_id INTEGER NOT NULL,
     process_status TEXT CHECK (process_status IN ('pending', 'processing', 'completed', 'failed')) NOT NULL DEFAULT 'pending',
     process_worker_level INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT (datetime('now', 'localtime')),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE RESTRICT
 )
 `
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS order_items (
     id INTEGER PRIMARY KEY,
     order_id TEXT NOT NULL,
     machine_id TEXT NOT NULL,
-    created_at DATETIME DEFAULT (datetime('now', 'localtime')),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE RESTRICT,
     FOREIGN KEY (machine_id) REFERENCES machines(id) ON DELETE RESTRICT
 )
@@ -72,7 +72,7 @@ db.exec(orderItemsTable);
 const emailsTable = `
 CREATE TABLE IF NOT EXISTS emails (
     id INTEGER PRIMARY KEY,
-    sent_date DATETIME DEFAULT (datetime('now', 'localtime')),
+    sent_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     status TEXT CHECK (status IN ('sent', 'failed', 'pending')) NOT NULL DEFAULT 'sent',
     recipient_email TEXT NOT NULL,
     customer_id INTEGER NOT NULL,
@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS customers (
     bank_name TEXT,
     bank_account_number TEXT,
     beneficiary_name TEXT,
-    created_at DATETIME DEFAULT (datetime('now', 'localtime'))
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
 `
 db.exec(customerTable);
@@ -121,7 +121,7 @@ const machineTypeTable = `
     CREATE TABLE IF NOT EXISTS machine_types (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
-    created_at DATETIME DEFAULT (datetime('now', 'localtime'))
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
 `
 db.exec(machineTypeTable);
@@ -131,7 +131,7 @@ const machineTypeFieldsTable = `
     id INTEGER PRIMARY KEY,
     machine_type_id INTEGER NOT NULL,
     name TEXT NOT NULL,
-    created_at DATETIME DEFAULT (datetime('now', 'localtime')),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (machine_type_id) REFERENCES machine_types(id) ON DELETE CASCADE 
     )
 `
@@ -144,14 +144,14 @@ const machinesTable = `
     customer_id INTEGER NOT NULL,
     machine_id TEXT NOT NULL UNIQUE,
     subscription_fees REAL NOT NULL,
-    registered_date DATETIME DEFAULT (datetime('now', 'localtime')),
+    registered_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     end_date DATETIME,
     status TEXT CHECK (status IN ('active', 'inactive')) NOT NULL DEFAULT 'active',
     renewal_count INTEGER DEFAULT 0,
     last_renewal_date DATETIME,
     data JSON,
     renewal_process_id TEXT,
-    created_at DATETIME DEFAULT (datetime('now', 'localtime')),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (machine_type_id) REFERENCES machine_types(id) ON DELETE CASCADE,
     FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
     )

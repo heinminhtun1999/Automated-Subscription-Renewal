@@ -181,11 +181,7 @@ const options = {
     colResize: colResizeOptions,
     columnControl: ['order', 'spacer', ['orderAsc', 'orderDesc', 'spacer', 'search', 'orderClear', 'searchClear']],
     columnDefs: [
-        { targets: '_all', className: 'dt-head-left' },
-        {
-            targets: '_all',
-            createdCell: function (td, cellData, rowData, row, col) {}
-        }
+        { targets: '_all', className: 'dt-head-left' }
     ],
     // enable ordering and set default sort to Date/Time (second column) desc
     ordering: true,
@@ -220,7 +216,7 @@ const options = {
 
 let emailHistoryDataTable = null;
 
-if (emailHistoryTable) {
+if (emailHistoryTable && emailHistoryTable.querySelector('tbody tr[data-row-id]')) {
     emailHistoryDataTable = new DataTable(emailHistoryTable, options);
 
     const updatePageSizeDisplay = () => {

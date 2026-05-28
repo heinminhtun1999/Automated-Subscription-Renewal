@@ -9,7 +9,7 @@ const { getCustomerById } = require("../repositories/customerRepository");
 const { insertOrderItem, getOrderItemsByOrderId } = require("../repositories/orderItemRepository");
 const { getMachinesByIds, updateMachine } = require("../repositories/machineRepository");
 const { getEmailMachineByRenewalProcessIds, updateMultipleEmailMachinesByOrderIdAndMachineIds, updateEmailMachineByMachineIdAndRenewalProcessId } = require("../repositories/emailMachinesRepository");
-const { validateSkey, checkRequiredFields } = require("../utils/utils");
+const { validateSkey, checkRequiredFields, localizedDateTime } = require("../utils/utils");
 const { sendEmail } = require("../utils/services/nodemailer");
 
 // Build payment request, persist order + items, and redirect to gateway.
@@ -151,7 +151,7 @@ function paymentReturn(req, res, next) {
                     transactionId: body.tranID,
                     paymentStatus: 'error',
                     processStatus: 'error',
-                    transactionDate: body.created_at,
+                    transactionDate: localizedDateTime(body.created_at),
                     message: `Order not found for ${body.orderid}. If you have completed the payment, please contact support with your order information for assistance.`,
                 }
             });
@@ -176,9 +176,10 @@ function paymentReturn(req, res, next) {
             });
         if (result.changes === 0) {
 
-            logger.warn('No order record updated to processing status for payment return. Possible concurrent update or order already processed:', body.orderid);
+            logger.warn('No order record updated to processing status for payment return. Possible concurrent update or order already processed: ', body.orderid);
             let failedRemark = existingOrder.failed_remark;
             failedRemark = failedRemark ? "\n" + failedRemark.split(",").filter(m => m.includes("Error Description")).join("").replace("Error Description: ", "Reason: ") : "";
+            
             return res.render('return', {
                 data: {
                     orderId: existingOrder.order_id,
@@ -187,7 +188,7 @@ function paymentReturn(req, res, next) {
                     processStatus: existingOrder.process_status,
                     message: getUserMessage(existingOrder.payment_status, existingOrder.process_status) + failedRemark,
                     paymentStatus: existingOrder.payment_status,
-                    transactionDate: existingOrder.paid_on,
+                    transactionDate: localizedDateTime(existingOrder.created_at),
                     machines: existingOrder.payment_status === 'paid' && existingOrder.process_status === 'completed' ? machines : null
                 }
             });
@@ -212,7 +213,7 @@ function paymentReturn(req, res, next) {
                     orderId: existingOrder.order_id,
                     transactionId: body.tranID,
                     amount: existingOrder.amount,
-                    transactionDate: existingOrder.created_at,
+                    transactionDate: localizedDateTime(existingOrder.created_at),
                     paymentStatus: 'failed',
                     processStatus: 'pending',
                     message: `${body.error_desc}\nWe are verifying the payment and will update your order status shortly.`
@@ -237,7 +238,7 @@ function paymentReturn(req, res, next) {
                     amount: existingOrder.amount,
                     paymentStatus: 'pending',
                     processStatus: 'pending',
-                    transactionDate: existingOrder.created_at,
+                    transactionDate: localizedDateTime(existingOrder.created_at),
                     message: getUserMessage('pending', 'pending')
                 }
             });
@@ -253,7 +254,7 @@ function paymentReturn(req, res, next) {
             paid_on: body.paydate,
             process_status: 'processing',
         }, { process_status: { operator: '=', value: 'processing' }, process_worker_level: { operator: '<=', value: 1 } });
-
+        
         return res.render('return', {
             data: {
                 orderId: existingOrder.order_id,
@@ -261,7 +262,7 @@ function paymentReturn(req, res, next) {
                 amount: existingOrder.amount,
                 paymentStatus: 'paid',
                 processStatus: 'processing',
-                transactionDate: existingOrder.created_at,
+                transactionDate: localizedDateTime(existingOrder.created_at),
                 message: getUserMessage('paid', 'processing'),
                 machines: null // We will only show machines on the return page if the order is fully completed to avoid confusion, as we are waiting for callback to confirm final status and update machines.
             }

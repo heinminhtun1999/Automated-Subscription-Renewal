@@ -33,7 +33,7 @@ const options = {
     }
 }
 
-if (customerTable) {
+if (customerTable && customerTable.querySelector('tbody tr[data-row-id]')) {
     const customerDataTable = new DataTable(customerTable, options);
 
     const updatePageSizeDisplay = () => {

@@ -8,7 +8,7 @@ const {
     deleteCustomer
 } = require('../repositories/customerRepository');
 const logger = require('../utils/services/winston');
-const { isValidEmail } = require("../utils/utils");
+const { isValidEmail, localizedDateTime, formatDate } = require("../utils/utils");
 
 // Data Processing and Validation functions
 function validateRequiredFields(data, requiredFields) {
@@ -91,7 +91,7 @@ function handleViewCustomer(req, res) {
                         id: curr.m_id,
                         machine_id: curr.machine_id,
                         status: curr.status,
-                        end_date: new Date(curr.end_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+                        end_date: formatDate(curr.end_date),
                         machine_type: curr.machine_type
                     }
                 ]
@@ -107,7 +107,7 @@ function handleViewCustomer(req, res) {
             bank_name: customerInfo.bank_name,
             bank_account_number: customerInfo.bank_account_number,
             beneficiary_name: customerInfo.beneficiary_name,
-            created_at: customerInfo.created_at,
+            created_at: localizedDateTime(customerInfo.created_at),
             machines: []
         })
         return res.status(200).render('admin/customers/view', { data, error: null });

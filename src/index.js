@@ -185,7 +185,7 @@ app.get('/cancel', paymentCancel);
 
 app.get('/status-check', renderPaymentCheckerPage);
 
-app.get('/get-order-info', limiter, getOrderInfo);
+app.get('/get-order-info', getOrderInfo);
 
 app.get('/admin/back', (req, res) => {
     const history = req.session.history || [];

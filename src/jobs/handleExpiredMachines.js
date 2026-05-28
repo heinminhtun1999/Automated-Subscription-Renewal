@@ -6,6 +6,7 @@ async function handleExpiredMachines() {
     try {
         const machines = getMachineByDaysLeft(-1, true);
         const machineIds = machines.filter(machine => machine.renewal_process_id).map(machine => machine.id);
+
         if (machineIds.length > 0) {
             updateMultipleMachines(machineIds, { renewal_process_id: null, status: 'inactive' });
             logger.info(`Removed renewal process ID from ${machineIds.length} expired machines.`);

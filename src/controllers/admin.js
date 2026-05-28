@@ -1,21 +1,7 @@
 const db = require('../db/db');
 const { getAllOrders } = require('../repositories/orderRepository');
 const { getMachineByDaysLeft } = require('../repositories/machineRepository');
-
-function formatDateTime(value) {
-    if (!value) return 'N/A';
-
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-
-    return date.toLocaleString('en-MY', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-}
+const { localizedDateTime, formatDate } = require("../utils/utils");
 
 function renderHomePage(req, res) {
     try {
@@ -47,14 +33,14 @@ function renderHomePage(req, res) {
 
         const recentOrders = Array.from(processedOrders.values()).slice(0, 5).map(order => ({
             ...order,
-            created_at_label: formatDateTime(order.created_at),
+            created_at_label: localizedDateTime(order.created_at),
             amount_label: `RM ${Number(order.amount).toFixed(2)}`
         }));
         const expiringMachines = getMachineByDaysLeft(30, false).slice(0, 6).map(machine => {
             console.log(machine)
             return {
                 ...machine,
-                end_date_label: formatDateTime(machine.end_date),
+                end_date_label: formatDate(machine.end_date),
                 days_left_label: Math.ceil(machine.days_left)
             }
         });

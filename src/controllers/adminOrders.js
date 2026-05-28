@@ -1,4 +1,5 @@
 const { getAllOrders } = require("../repositories/orderRepository");
+const { localizedDateTime } = require("../utils/utils");
 const logger = require("../utils/services/winston");
 
 function renderAdminOrdersPage(req, res) {
@@ -22,7 +23,7 @@ function renderAdminOrdersPage(req, res) {
                     customer_id: order.customer_id,
                     process_status: order.process_status,
                     process_worker_level: order.process_worker_level,
-                    created_at: order.created_at,
+                    created_at: localizedDateTime(order.created_at),
                     company_name: order.company_name,
                     machines: [order.machine_id]
                 }

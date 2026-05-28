@@ -9,7 +9,8 @@
                 const hasData = !!data;
                 const processStatus = hasData && data.processStatus ? data.processStatus.toLowerCase().trim() : 'error';
                 const paymentStatus = hasData && data.paymentStatus ? data.paymentStatus.toLowerCase().trim() : 'error';
-                const transactionDate = hasData && data.transactionDate ? new Date(data.transactionDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase() : '-';
+                console.log(data.transactionDate)
+                const transactionDate = hasData && data.transactionDate ? data.transactionDate : '-';
                 const orderId = hasData ? data.orderId : '-';
                 const message = hasData && data.message ? data.message : "An unexpected error occurred.";
                 const transactionId = hasData ? data.transactionId : '-';

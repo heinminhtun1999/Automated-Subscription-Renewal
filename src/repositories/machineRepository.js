@@ -100,7 +100,18 @@ function updateMachine(id, machineData) {
     return db.prepare(stmt).run(...values, id);
 }
 
-function updateMultipleMachines(ids, machineData) {
+function updateMultipleMachines(ids, updateData) {
+    const fields = Object.keys(updateData).map(key => `${key} = ?`).join(", ");
+    const values = Object.values(updateData);
+
+    const stmt = `
+        UPDATE machines
+        SET ${fields}
+        WHERE id IN (${ids.map(() => "?").join(", ")})
+    `
+}
+
+function updateMultipleMachinesByCases(ids, machineData) {
     const fields = Object.keys(machineData).map(key => {
         return `${key} = CASE
             ${Array.from({ length: machineData[key].length }, _ => `WHEN id = ? THEN ?`).join("\n")}\nEND`
@@ -131,5 +142,6 @@ module.exports = {
     getMachineByDaysLeft,
     getMachineByDaysLeftAndCustomerId,
     getMachinesByIds,
+    updateMultipleMachinesByCases,
     updateMultipleMachines
 }

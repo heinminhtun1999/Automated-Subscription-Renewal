@@ -57,21 +57,12 @@ const options = {
     ],
     layout: {
         topStart: 'buttons'
-    },
-    createdRow: function (row, data) {
-        // row.addEventListener('click', (e) => {
-        //     // ignore clicks on links/buttons
-        //     if (e.target.closest('a, button')) return;
-        //     if (row.dataset.rowId) {
-        //         window.location.href = `/admin/customers/${row.dataset.rowId}`;
-        //     }
-        // });
     }
 }
 
 let orderDataTable = null;
 
-if (orderTable) {
+if (orderTable && orderTable.querySelector('tbody tr[data-row-id]')) {
     orderDataTable = new DataTable(orderTable, options);
 
     const updatePageSizeDisplay = () => {

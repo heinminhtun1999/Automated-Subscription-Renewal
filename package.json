@@ -6,12 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "seed:data": "node scripts/seed-data.js",
-    "test": "jest --coverage",
-    "test:watch": "jest --watch",
-    "lint": "eslint . --ext .js",
-    "lint:fix": "eslint . --ext .js --fix",
-    "audit": "npm audit",
+    "seed:data": "node scripts/seed-dummy.js",
     "initialize-machine-types": "node scripts/initialize-machine-types.js"
   },
   "keywords": [],

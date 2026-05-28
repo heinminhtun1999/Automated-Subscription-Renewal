@@ -66,6 +66,10 @@ function normalizeDate(date) {
     return new Date(date).toISOString().split('T')[0];
 }
 
+function localizedDateTime(date) {
+    return (new Date(date +'z')).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" });
+}
+
 // Basic email format check
 function isValidEmail(email) {
     const emailRegex = /^[A-Za-z0-9._-]+@[A-Za-z]+\.[A-Za-z]{2,3}(?:\.[A-Za-z]{2,3})?$/;
@@ -81,5 +85,6 @@ module.exports = {
     checkRequiredFields,
     formatDate,
     normalizeDate,
-    isValidEmail
+    isValidEmail,
+    localizedDateTime
 };

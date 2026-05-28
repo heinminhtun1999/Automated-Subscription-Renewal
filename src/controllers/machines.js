@@ -19,7 +19,7 @@ const {
     addMachine,
     deleteMachine,
     updateMachine,
-    updateMultipleMachines,
+    updateMultipleMachinesByCases,
     getMachinesByTypeDB
 } = require('../repositories/machineRepository');
 const {
@@ -32,7 +32,7 @@ const {
 } = require('../repositories/emailMachinesRepository');
 const db = require('../db/db');
 const logger = require('../utils/services/winston');
-const { formatDate, normalizeDate, checkRequiredFields } = require('../utils/utils');
+const { formatDate, normalizeDate, checkRequiredFields, localizedDateTime } = require('../utils/utils');
 
 // =============== Data Processing functions ===================
 // =============================================================
@@ -324,7 +324,7 @@ function handleEditMachine(req, res) {
 
         const finalStatus = forceCheckActiveStatusBasedOnEndDate(body.status || existingMachine.status, calculatedEndDate);
 
-        const shouldRemoveRenewalProcessId = existingMachine.customer_id !== existingCustomer.id;
+        const isCustomerChanged = existingMachine.customer_id !== existingCustomer.id;
 
         const machineDataToUpdate = {
             machine_type_id: body.machine_type_id,
@@ -335,7 +335,9 @@ function handleEditMachine(req, res) {
             subscription_fees: body.subscription_fees,
             status: finalStatus,
             data: JSON.stringify(additionalDataObject),
-            renewal_process_id: shouldRemoveRenewalProcessId ? null : finalStatus == 'inactive' ? null : existingMachine.renewal_process_id
+            renewal_process_id: isCustomerChanged ? null : finalStatus == 'inactive' ? null : existingMachine.renewal_process_id,
+            renewal_count: isCustomerChanged ? 0 : existingMachine.renewal_count,
+            last_renewal_date: isCustomerChanged ? null : existingMachine.last_renewal_date
         }
         updateMachine(id, machineDataToUpdate);
         return res.status(200).json({ success: true, message: 'Machine updated successfully.' });
@@ -568,7 +570,7 @@ function handleDeleteMachineTypeField(req, res) {
                     dataToUpdate["data"].push([machine.id, JSON.stringify(d)]);
                 });
 
-                updateMultipleMachines(ids, dataToUpdate);
+                updateMultipleMachinesByCases(ids, dataToUpdate);
             }
         }).immediate();
 
