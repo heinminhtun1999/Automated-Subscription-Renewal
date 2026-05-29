@@ -18,12 +18,16 @@ function validateSkey(data) {
 
 // Ensure required fields are present in a payload.
 function checkRequiredFields(data, requiredFields) {
-    for (const field of requiredFields) {
-        if (!data[field] && isNaN(data[field])) {
-            return { valid: false, missingField: field };
+    try {
+        for (const field of requiredFields) {
+            if (!data[field] && isNaN(data[field])) {
+                return { valid: false, missingField: field };
+            }
         }
+        return { valid: true };
+    } catch (e) {
+        return { valid: false, message: e.message }
     }
-    return { valid: true };
 }
 
 // Generate a 6-digit OTP.
@@ -67,7 +71,7 @@ function normalizeDate(date) {
 }
 
 function localizedDateTime(date) {
-    return (new Date(date +'z')).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" });
+    return (new Date(date + 'z')).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" });
 }
 
 // Basic email format check

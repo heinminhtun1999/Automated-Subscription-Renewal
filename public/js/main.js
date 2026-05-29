@@ -1,13 +1,62 @@
 const adminSidebar = document.getElementById('admin-sidebar');
 const hamburger = document.getElementById('hamburger');
 const hamburger2 = document.getElementById('hamburger2');
-const closeError = document.getElementById('close-error');
 
-closeError.addEventListener('click', () => {
+function setupNotification(containerId, closeButtonId, messageSelector) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const closeButton = document.getElementById(closeButtonId);
+    let timer;
+
+    const hide = () => {
+        container.classList.add('hidden');
+        const messageEl = container.querySelector(messageSelector);
+        if (messageEl) messageEl.textContent = '';
+        clearTimeout(timer);
+    };
+
+    if (closeButton) {
+        closeButton.addEventListener('click', hide);
+    }
+
+    return (message, duration = 5000) => {
+        const messageEl = container.querySelector(messageSelector);
+        if (messageEl) {
+            messageEl.textContent = message;
+        }
+
+        container.classList.remove('hidden');
+        container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        const progressBar = container.querySelector('.progress-bar');
+        if (progressBar) {
+            progressBar.style.width = '100%';
+            progressBar.style.transition = `width ${duration / 1000}s linear`;
+            setTimeout(() => {
+                progressBar.style.width = '0%';
+            }, 100);
+        }
+
+        clearTimeout(timer);
+        timer = setTimeout(hide, duration);
+    };
+}
+
+const renderError = setupNotification('error-container', 'close-error', '[data-error-message]');
+const renderSuccess = setupNotification('success-container', 'close-success', '[data-success-message]');
+
+window.addEventListener('load', () => {
     const errorContainer = document.getElementById('error-container');
-    if (errorContainer) {
-        errorContainer.classList.add('hidden');
-        errorContainer.querySelector('[data-error-message]').textContent = '';
+    const errorMessage = errorContainer?.querySelector('[data-error-message]');
+    if (errorContainer && errorMessage && errorMessage.textContent.trim()) {
+        renderError(errorMessage.textContent.trim());
+    }
+
+    const successContainer = document.getElementById('success-container');
+    const successMessage = successContainer?.querySelector('[data-success-message]');
+    if (successContainer && successMessage && successMessage.textContent.trim()) {
+        renderSuccess(successMessage.textContent.trim());
     }
 });
 
@@ -28,57 +77,14 @@ window.addEventListener('load', () => {
         adminSidebar.classList.add('collapsed');
         adminSidebar.classList.add('w-max');
     }
-
-    const errorContainer = document.getElementById('error-container');
-    if (errorContainer) {
-        setTimeout(() => {
-            errorContainer.classList.add('hidden');
-            errorContainer.querySelector('[data-error-message]').textContent = '';
-        }, 10000);
-    }
 });
-
-function renderError(message) {
-    const errorContainer = document.getElementById('error-container');
-    if (!errorContainer) return;
-
-    const messageEl = errorContainer.querySelector('[data-error-message]');
-    if (messageEl) {
-        messageEl.textContent = message || 'An unexpected error occurred.';
-    }
-
-    errorContainer.classList.remove('hidden');
-    errorContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-    setTimeout(() => {
-        errorContainer.classList.add('hidden');
-        messageEl.textContent = '';
-    }, 10000);
-}
-
-function renderSuccess(message) {
-    const successContainer = document.getElementById('success-container');
-    if (!successContainer) return;
-
-    const messageEl = successContainer.querySelector('[data-success-message]');
-    if (messageEl) {
-        messageEl.textContent = message || 'Operation completed successfully.';
-    }
-    successContainer.classList.remove('hidden');
-    successContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-    setTimeout(() => {
-        successContainer.classList.add('hidden');
-        messageEl.textContent = '';
-    }, 10000);
-
-}
 
 async function parseResponseData(response) {
     let data;
 
     try {
-        data = await response.json();
+        const text = await response.text();
+        data = JSON.parse(text)
     } catch (err) {
         console.error('Failed to parse JSON response:', err);
         data = null;

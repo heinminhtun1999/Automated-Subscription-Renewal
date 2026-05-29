@@ -11,8 +11,6 @@ const selectedCompanyName = document.getElementById('selected-company-name');
 const selectedCustomerId = document.querySelector('[data-selected-customer-id]');
 const machineStatusInput = document.getElementById('machine-status');
 
-let areMachineFieldsValid = true;
-
 function formatData(data) {
     return JSON.parse(data.replace(/&#34;/g, '"').replace(/&#39;/g, "'"));
 }
@@ -52,6 +50,7 @@ function setMachineFieldError(fieldId, message) {
 
     if (errorElement) {
         errorElement.classList.toggle('hidden', !message);
+        errorElement.textContent = message;
     }
 
     if (fieldId === 'company-name') {
@@ -177,7 +176,9 @@ if (window.data) {
     if (saveButton && typeSelector) {
         saveButton.addEventListener('click', async () => {
             clearMachineFieldErrors();
-            areMachineFieldsValid = true;
+
+            let isValid = true;
+
             const machineTypeId = typeSelector.value.trim();
             const customerId = selectedCustomerId?.dataset.selectedCustomerId?.trim() || '';
             const machineIdInput = document.getElementById('machine-id');
@@ -195,20 +196,25 @@ if (window.data) {
 
             if (!customerId) {
                 setMachineFieldError('company-name', "Customer's company name is required.");
-                areMachineFieldsValid = false;
+                isValid = false;
             }
 
             if (!machineId) {
                 setMachineFieldError('machine-id', 'Machine id is required.');
-                areMachineFieldsValid = false;
+                isValid = false;
             }
 
             if (!subscriptionFees || Number.isNaN(Number(subscriptionFees))) {
                 setMachineFieldError('subscription-fees', 'Enter a valid subscription fee.');
-                areMachineFieldsValid = false;
+                isValid = false;
             }
 
-            if (!areMachineFieldsValid) {
+            if (status === 'active' && (new Date(endDateInput.value).getTime() < Date.now())) {
+                setMachineFieldError('machine-status', 'Cannot set status to active if end date is in the past. Please update the end date or change the status to inactive.');
+                isValid = false;
+            }
+
+            if (!isValid) {
                 window.renderError('Please fix the highlighted fields before continuing.');
                 return;
             }
@@ -261,10 +267,10 @@ if (window.data) {
 if (machineRegistrationDateInput && endDateInput && machineStatusInput) {
 
     machineRegistrationDateInput.addEventListener('change', (e) => {
-        
+
         const selectedDate = new Date(e.target.value).getTime();
         const endDate = new Date(endDateInput.value).getTime();
-        
+
         if (selectedDate > endDate) {
             endDateInput.value = formatDate(selectedDate);
             changeActiveStatusBasedOnDates(selectedDate);
@@ -277,7 +283,7 @@ if (machineRegistrationDateInput && endDateInput && machineStatusInput) {
             endDateInput.value = formatDate(calculateEndDate);
             changeActiveStatusBasedOnDates(calculateEndDate);
             return;
-        } 
+        }
     });
 
     endDateInput.addEventListener('change', (e) => {
@@ -285,25 +291,25 @@ if (machineRegistrationDateInput && endDateInput && machineStatusInput) {
         changeActiveStatusBasedOnDates(selectedDate);
     });
 
-    machineStatusInput.addEventListener('change', (e) => {
-        const status = e.target.value;
-        const machineStatusErrorSpan = document.querySelector(`[data-error-for="machine-status"]`);
-        if (status === 'active' && (new Date(endDateInput.value).getTime() < Date.now())) {
-            machineStatusErrorSpan.textContent = 'Cannot set status to active if end date is in the past. Please update the end date or change the status to inactive.';
-            machineStatusErrorSpan.classList.remove('hidden');
-            e.target.value = 'inactive';
-            areMachineFieldsValid = false;
-            setTimeout(() => {
-                machineStatusErrorSpan.classList.add('hidden');
-                machineStatusErrorSpan.textContent = '';
-                areMachineFieldsValid = true
-            }, 5000);
-        } else {
-            machineStatusErrorSpan.classList.add('hidden');
-            machineStatusErrorSpan.textContent = '';
-            areMachineFieldsValid = true;
-        }
-    });
+    // machineStatusInput.addEventListener('change', (e) => {
+    //     const status = e.target.value;
+    //     const machineStatusErrorSpan = document.querySelector(`[data-error-for="machine-status"]`);
+    //     if (status === 'active' && (new Date(endDateInput.value).getTime() < Date.now())) {
+    //         machineStatusErrorSpan.textContent = 'Cannot set status to active if end date is in the past. Please update the end date or change the status to inactive.';
+    //         machineStatusErrorSpan.classList.remove('hidden');
+    //         // e.target.value = 'inactive';
+    //         areMachineFieldsValid = false;
+    //         // setTimeout(() => {
+    //         //     machineStatusErrorSpan.classList.add('hidden');
+    //         //     machineStatusErrorSpan.textContent = '';
+    //         //     areMachineFieldsValid = true
+    //         // }, 5000);
+    //     } else {
+    //         machineStatusErrorSpan.classList.add('hidden');
+    //         machineStatusErrorSpan.textContent = '';
+    //         areMachineFieldsValid = true;
+    //     }
+    // });
 
     const changeActiveStatusBasedOnDates = (date) => {
         const isActive = date > Date.now();

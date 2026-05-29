@@ -292,3 +292,13 @@ select:focus::picker-icon {
   transform: rotate(180deg) !important;
 }
 
+@layer components {
+    .notification-box {
+        @apply fixed top-5 right-5 w-80 p-4 rounded-lg shadow-lg z-50;
+    }
+}
+
+.sidebar-link.active {
+    @apply bg-gradient-to-r from-blue-500 to-blue-600 text-white;
+}
+

@@ -199,11 +199,11 @@ function handleAddMachine(req, res) {
         additional_fields
     } = req.body;
 
-    const requiredFieldCheck = checkRequiredFields(body, ['machine_type_id', 'customer_id', 'end_data', 'subscription_fees', 'machine_id']);
+    const requiredFieldCheck = checkRequiredFields(req.body, ['machine_type_id', 'customer_id', 'end_date', 'subscription_fees', 'machine_id']);
     if (!requiredFieldCheck.valid) {
         const missingField = requiredFieldCheck.missingField;
-        logger.warn(`Missing ${missingField} in handleAddMachine:`, body);
-        return res.status(400).json({success: false, message: `Missing required field: ${missingField}`});
+        logger.warn(`Missing ${missingField} in handleAddMachine:`, req.body);
+        return res.status(400).json({ success: false, message: `Missing required field: ${missingField}` });
     }
 
     try {
@@ -296,7 +296,7 @@ function handleEditMachine(req, res) {
         if (!requiredFieldCheck.valid) {
             const missingField = requiredFieldCheck.missingField;
             logger.warn(`Missing ${missingField} in handleAddMachine:`, body);
-            return res.status(400).json({success: false, message: `Missing required field: ${missingField}`});
+            return res.status(400).json({ success: false, message: `Missing required field: ${missingField}` });
         }
 
         const existingMachine = getMachineByMachineIdOrId(id);
@@ -492,7 +492,7 @@ function handleAddMachineTypeField(req, res) {
         const existingFields = getMachineTypeFields(id);
         const duplicate = existingFields.some(field => field.name.toLowerCase() === name.toLowerCase());
 
-        addMachineTypeFieldDB(id, { name: duplicate ? `${name} (Duplicate)` : name });
+        addMachineTypeFieldDB(id, duplicate ? `${name} (Duplicate)` : name);
         const data = getMachineTypeByIdWithFields(id);
         return res.status(200).json({ success: true, data, message: 'Machine type field added successfully.' });
     } catch (error) {
