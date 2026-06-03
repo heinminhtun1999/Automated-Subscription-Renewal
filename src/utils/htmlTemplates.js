@@ -606,6 +606,62 @@ const reconciliationSuccessTemplate = (orders) => {
 };
 
 
+const machineDeactivationNotificationTemplate = (machines) => {
+    const rows = machines.map(machine => `
+        <tr>
+            <td style="padding: 12px 8px; border-top: 1px solid #dee2e6;">${machine.machine_id}</td>
+            <td style="padding: 12px 8px; border-top: 1px solid #dee2e6;">${machine.machine_type_name}</td>
+            <td style="padding: 12px 8px; border-top: 1px solid #dee2e6;">${machine.company_name}</td>
+        </tr>
+    `).join('');
+
+    return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Machine Deactivation Notification</title>
+        </head>
+        <body style="margin:0; padding:0; background-color:#f4f6f8; font-family: Arial, sans-serif; color:#333333;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="padding:20px 0;">
+                <tr>
+                    <td align="center">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:800px; background:#ffffff; border-radius:8px; overflow:hidden; border:1px solid #e5e5e5; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                            <tr>
+                                <td style="background-color:#ffc107; padding:20px 40px; text-align:center;">
+                                    <h2 style="margin:0; color:#333333; font-weight:600; font-size: 24px;">
+                                        Machine Deactivation Notification
+                                    </h2>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 40px;">
+                                    <p style="font-size: 16px;">The following machines have been automatically set to inactive due to expired subscriptions on ${new Date().toLocaleDateString("en-MY", { timeZone: "Asia/Kuala_Lumpur" })}</p>
+                                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px;">
+                                        <thead>
+                                            <tr>
+                                                <th style="padding: 12px 8px; border-bottom: 2px solid #dee2e6; background-color: #f8f9fa; text-align: left;">Machine ID</th>
+                                                <th style="padding: 12px 8px; border-bottom: 2px solid #dee2e6; background-color: #f8f9fa; text-align: left;">Machine Type</th>
+                                                <th style="padding: 12px 8px; border-bottom: 2px solid #dee2e6; background-color: #f8f9fa; text-align: left;">Company Name</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${rows}
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+    `;
+};
+
+
 module.exports = {
     dueDateTemplate,
     failListTemplate,
@@ -614,5 +670,6 @@ module.exports = {
     subscriptionRenewalSuccessTemplate,
     reconciliationSuccessTemplate,
     failedOrdersNotificationTemplate,
-    developerNotificationTemplate
+    developerNotificationTemplate,
+    machineDeactivationNotificationTemplate
 };

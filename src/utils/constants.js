@@ -87,6 +87,17 @@ const DEFAULT_MACHINE_TYPE_MAPPING = [
             'Remark'
         ]
 
+    },
+    {
+        'name': 'U62',
+        'fields': [
+            'Terminal S/N',
+            'Terminal Bracket S/N',
+            'VM Model',
+            'Protocol Type',
+            'Location',
+            'Remark'
+        ]
     }
 ]
 

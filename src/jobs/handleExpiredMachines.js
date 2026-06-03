@@ -1,18 +1,34 @@
 const db = require('../db/db');
 const logger = require('../utils/services/winston');
 const { getMachineByDaysLeft, updateMultipleMachines } = require('../repositories/machineRepository');
+const { sendEmail } = require("../utils/services/nodemailer");
+const { machineDeactivationNotificationTemplate } = require("../utils/htmlTemplates");
 
 async function handleExpiredMachines() {
     try {
-        const machines = getMachineByDaysLeft(-1, true);
-        const machineIds = machines.filter(machine => machine.renewal_process_id).map(machine => machine.id);
+        const machines = getMachineByDaysLeft(-1, true, true);
 
-        if (machineIds.length > 0) {
-            updateMultipleMachines(machineIds, { renewal_process_id: null, status: 'inactive' });
+        const machineIdsToRemoveProcessId = [];
+        const machineIdsToMarkInactive = [];
+        machines.forEach(m => {
+            if (m.renewal_process_id) machineIdsToRemoveProcessId.push(m.id);
+            machineIdsToMarkInactive.push(m.id);
+        })
+
+        if (machineIdsToRemoveProcessId.length > 0) {
+            updateMultipleMachines(machineIdsToRemoveProcessId, { renewal_process_id: null });
             logger.info(`Removed renewal process ID from ${machineIds.length} expired machines.`);
         }
+
+        if (machineIdsToMarkInactive.length > 0) {
+            updateMultipleMachines(machineIdsToMarkInactive, { status: 'inactive' });
+            logger.info(`${machineIdsToMarkInactive.length} machines have been automatically set to inactive after the expiration.`);
+            
+            const emailBody = machineDeactivationNotificationTemplate(machines);
+            await sendEmail(process.env.CS_EMAIL, '|AR VENDING| Expired machines notices', emailBody)
+        }
     } catch (e) {
-        logger.error(`Error removing renewal process ID: ${e.message}`);
+        logger.error(`Error in handleExpiredMachines cron job: ${e.stack || e.message || e}`);
     }
 }
 
