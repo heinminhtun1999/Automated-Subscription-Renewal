@@ -6,7 +6,7 @@ const { machineDeactivationNotificationTemplate } = require("../utils/htmlTempla
 
 async function handleExpiredMachines() {
     try {
-        const machines = getMachineByDaysLeft(-1, true, 'active');
+        const machines = getMachineByDaysLeft(0, true, 'active');
 
         const machineIdsToRemoveProcessId = [];
         const machineIdsToMarkInactive = [];
