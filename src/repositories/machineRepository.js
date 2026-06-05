@@ -109,6 +109,8 @@ function updateMultipleMachines(ids, updateData) {
         SET ${fields}
         WHERE id IN (${ids.map(() => "?").join(", ")})
     `
+
+    return db.prepare(stmt).run(...values, ...ids)
 }
 
 function updateMultipleMachinesByCases(ids, machineData) {
