@@ -17,7 +17,7 @@ async function handleExpiredMachines() {
 
         if (machineIdsToRemoveProcessId.length > 0) {
             updateMultipleMachines(machineIdsToRemoveProcessId, { renewal_process_id: null });
-            logger.info(`Removed renewal process ID from ${machineIds.length} expired machines.`);
+            logger.info(`Removed renewal process ID from ${machineIdsToRemoveProcessId.length} expired machines.`);
         }
 
         if (machineIdsToMarkInactive.length > 0) {
