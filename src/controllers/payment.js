@@ -403,12 +403,13 @@ async function paymentCallback(req, res) {
                     }
                 });
 
+            const updatedMachines = getMachinesByIds(machineIds);
             emailPayload = {
                 companyName: existingOrder.company_name,
                 amount: existingOrder.amount,
                 transactionDate: existingOrder.created_at,
                 orderId: existingOrder.order_id,
-                machines
+                machines: updatedMachines
             }
         }).immediate();
 

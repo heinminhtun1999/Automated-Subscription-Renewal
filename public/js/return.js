@@ -134,11 +134,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         const machineTable = document.getElementById('machine-table');
 
                         if (!machineTable && machines && machines.length > 0) {
-                            const div = document.createElement('div');
-                            div.classList.add('details');
-                            const h3 = document.createElement('h3');
-                            h3.textContent = 'Renewed Machines:';
-                            div.appendChild(h3);
+                            let div = document.querySelector('.details');
+
+                            if (!div) {
+                                div = document.createElement('div');
+                                div.classList.add('details');
+                                const h3 = document.createElement('h3');
+                                h3.textContent = 'Renewed Machines:';
+                                div.appendChild(h3);
+                            }
 
                             const table = document.createElement('table');
                             table.classList.add('machine-table');
@@ -171,7 +175,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             });
                             table.appendChild(thead);
                             table.appendChild(tbody);
-                            statusCardElement.insertBefore(div, screenShotNoticeElement);
+                            div.appendChild(table)
+                            
+                            if (!div) {
+                                statusCardElement.insertBefore(div, screenShotNoticeElement);
+                            } else {
+                                div.querySelector('table').remove();
+                            }
                         }
                     }
                 }
