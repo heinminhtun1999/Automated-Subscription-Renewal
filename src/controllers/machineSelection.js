@@ -5,7 +5,7 @@ const { getMachineByDaysLeftAndCustomerId } = require("../repositories/machineRe
 const { getCustomerById } = require("../repositories/customerRepository");
 
 // Render terminal selection list for a verified company token.
-const machineSelection = async (req, res) => {
+const machineSelection = async (req, res, next) => {
 
     const { token } = req.query;
 

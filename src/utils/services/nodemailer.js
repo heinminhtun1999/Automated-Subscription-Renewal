@@ -58,7 +58,7 @@ async function prepareAndSendDueDateEmail(combinedData) {
     const failedEmails = [];
 
     // Using company name because data is grouped by company name which 
-    // will be used in the email body and later will be render in the machines selection page. It is assumed that there will not be duplicate company names in the database. If there are duplicate company names, it will not affect the email sending and the email machine upsert process, but it may cause confusion in the email body and the machines selection page. If there are duplicate company names, it is recommended to use unique identifier such as customer ID for grouping data and generating email content.
+    // will be used in the email body and later will be render in the machines selection page. 
     for (const companyName in combinedData) {
 
         const companyData = combinedData[companyName];
