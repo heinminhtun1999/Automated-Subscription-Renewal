@@ -52,7 +52,7 @@
                                         </div>
                                         <div class="detail-col">
                                             <span class="label">Renewal Fee:</span>
-                                            <span class="value amount">RM <%= machine.renewal_fees %></span>
+                                            <span class="value amount">RM <%= machine.renewal_fees.toFixed(2) %></span>
                                         </div>
                                         <% if (machine.days_left==='Expired') { %>
                                             <div class="detail-col">
