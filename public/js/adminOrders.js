@@ -41,6 +41,17 @@ const options = {
                     td.innerHTML = el || cellData;
                 }
             }
+        },
+        {
+            targets: [1, 8],
+            render: (value, type) => {
+                if (type === 'sort' || type === 'type') {
+                    const timestamp = Date.parse(value);
+                    return Number.isNaN(timestamp) ? Number.NEGATIVE_INFINITY : timestamp;
+                }
+
+                return value;
+            }
         }
     ],
     ordering: {

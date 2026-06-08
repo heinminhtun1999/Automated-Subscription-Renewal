@@ -3,7 +3,6 @@ const Database = require("better-sqlite3");
 const dbPath = path.join(__dirname, "..", "src", "db", "database.db");
 const db = new Database(dbPath);
 
-const data = require("./data.json");
 const { register } = require("module");
 
 function seedCustomers(customerData) {
@@ -43,7 +42,10 @@ function seedMachines(machineData) {
     return db.prepare(stmt).run(...values);
 }
 
-function seedData() {
+function seedData(production) {
+
+    const dataPath = production ? "./migration_data.json" : "./data.json";
+    const data = require(dataPath);
 
     try {
         db.transaction(() => {
@@ -64,7 +66,7 @@ function seedData() {
                     contact_number: row["Contact Number"] || "0123456789",
                     pic_name: row["PIC"] || "John Doe",
                     bank_name: row["Bank Name"],
-                    bank_account_number: row["Bank Account"],
+                    bank_account_number: String(row["Bank Account"]),
                     beneficiary_name: row["Beneficiary Name"] 
                 }
                 
@@ -93,11 +95,17 @@ function seedData() {
                 }, {});
 
                 const machineId = String(row["UID"] || row["TERMINAL-ID"] || row["TID"] || row["Machine ID"]).split(".")[0];
+                
                 if (!row["Renewal End Date"] && !row["End Date"] && !row["Arv Renewal End Date"]) {
                     console.warn(`No valid end date found for machine ID ${machineId}. Skipping insertion.`);
                     continue;
                 }
-                
+
+                if (isNaN(Date.parse(row["Renewal End Date"])) && isNaN(Date.parse(row["End Date"])) && isNaN(Date.parse(row["Arv Renewal End Date"]))) {
+                    console.warn("Invalid Dates. Skipping insertion.");
+                    continue;
+                }
+
                 const actualEndDate = isNaN(Date.parse(row["Renewal End Date"])) ? new Date(row["End Date"] || row["Arv Renewal End Date"]).toISOString() : new Date(row["Renewal End Date"]).toISOString();
 
                 const isMachineExists = db.prepare(`SELECT id FROM machines WHERE machine_id = ?`).get(machineId);
@@ -128,6 +136,15 @@ function seedData() {
     }
 }
 
-require("./initialize-machine-types");
+// require("./initialize-machine-types");
 
-seedData();
+// seedData();
+
+const myArgs = process.argv.splice(2)
+
+let isProduction = false
+
+if (myArgs[0]?.toLowerCase() === '--production') isProduction = true;
+
+require("./initialize-machine-types")
+seedData(isProduction)
