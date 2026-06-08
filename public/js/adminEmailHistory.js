@@ -181,7 +181,33 @@ const options = {
     colResize: colResizeOptions,
     columnControl: ['order', 'spacer', ['orderAsc', 'orderDesc', 'spacer', 'search', 'orderClear', 'searchClear']],
     columnDefs: [
-        { targets: '_all', className: 'dt-head-left' }
+        { targets: '_all', className: 'dt-head-left' },
+        {
+            targets: 1,
+            render: (value, type) => {
+                if (!value || typeof value !== 'string' || value.trim() === '') {
+                    return Number.MIN_SAFE_INTEGER; // Places empty cells at the bottom
+                }
+
+                if (type === 'sort' || type === 'type') {
+                    // Standardize AM/PM format for JS native parser
+                    let cleanValue = value.replace(/am/i, 'AM').replace(/pm/i, 'PM').trim();
+
+                    // Handle DD/MM/YYYY vs YYYY-MM-DD
+                    if (cleanValue.includes('/')) {
+                        // Convert "DD/MM/YYYY, HH:mm:ss AM" to "YYYY-MM-DD HH:mm:ss AM"
+                        const [datePart, timePart] = cleanValue.split(', ');
+                        const [day, month, year] = datePart.split('/');
+                        cleanValue = `${year}-${month}-${day} ${timePart}`;
+                    }
+
+                    const timestamp = Date.parse(cleanValue);
+                    return Number.isNaN(timestamp) ? Number.MIN_SAFE_INTEGER : timestamp;
+                }
+
+                return value;
+            }
+        }
     ],
     ordering: true,
     scrollX: true,
