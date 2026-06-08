@@ -186,7 +186,7 @@ const options = {
             targets: 1,
             render: (value, type) => {
                 if (!value || typeof value !== 'string' || value.trim() === '') {
-                    return Number.MIN_SAFE_INTEGER; // Places empty cells at the bottom
+                    return ""; // Places empty cells at the bottom
                 }
 
                 if (type === 'sort' || type === 'type') {
