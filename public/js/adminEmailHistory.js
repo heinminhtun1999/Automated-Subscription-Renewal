@@ -181,18 +181,7 @@ const options = {
     colResize: colResizeOptions,
     columnControl: ['order', 'spacer', ['orderAsc', 'orderDesc', 'spacer', 'search', 'orderClear', 'searchClear']],
     columnDefs: [
-        { targets: '_all', className: 'dt-head-left' },
-        {
-            targets: 1,
-            render: (value, type) => {
-                if (type === 'sort' || type === 'type') {
-                    const timestamp = Date.parse(value);
-                    return Number.isNaN(timestamp) ? Number.NEGATIVE_INFINITY : timestamp;
-                }
-
-                return value;
-            }
-        }
+        { targets: '_all', className: 'dt-head-left' }
     ],
     ordering: true,
     scrollX: true,

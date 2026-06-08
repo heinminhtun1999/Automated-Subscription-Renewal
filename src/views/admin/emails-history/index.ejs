@@ -26,7 +26,7 @@
                         <% emails.forEach((email, i) => { %>
                             <tr data-row-id="<%= email.id %>" data-email-data="<%= JSON.stringify(email) %>">
                                 <td><%= email.id %></td>
-                                <td><%= email.sent_date %></td>
+                                <td data-order="<%= Date.parse(email.sent_date) %>"><%= email.sent_date %></td>
                                 <td title="<%= email.company_name %>" id="company_name">
                                     <a href="/admin/customers/<%= email.customer_id %>" target="_blank" class="text-emerald-600 underline decoration-emerald-300 decoration-2 underline-offset-2"><%= email.company_name %></a>
                                 </td>
