@@ -46,7 +46,7 @@ const options = {
             targets: [1, 8],
             render: (value, type) => {
                 if (!value || typeof value !== 'string' || value.trim() === '') {
-                    return ""; // Places empty cells at the bottom
+                    return ""; 
                 }
 
                 if (type === 'sort' || type === 'type') {

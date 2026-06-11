@@ -149,10 +149,9 @@ const openEmailHistoryDetailsModal = (emailData) => {
     if (titleElement) {
         titleElement.textContent = `Email ${rowId || ''} machine details`;
     }
-
     if (subtitleElement) {
-        const recipient = emailData?.recipient_email ? `Recipient: ${emailData.recipient_email}` : 'Recipient unavailable';
-        const sentDate = emailData?.sent_date ? ` | Sent: ${emailData.sent_date}` : '';
+        const recipient = data?.recipient_email ? `Recipient: ${data.recipient_email}` : 'Recipient unavailable';
+        const sentDate = data?.sent_date ? ` | Sent: ${data.sent_date}` : '';
         subtitleElement.textContent = `${recipient}${sentDate}`;
     }
 
@@ -186,7 +185,7 @@ const options = {
             targets: 1,
             render: (value, type) => {
                 if (!value || typeof value !== 'string' || value.trim() === '') {
-                    return ""; // Places empty cells at the bottom
+                    return "";
                 }
 
                 if (type === 'sort' || type === 'type') {
@@ -389,3 +388,4 @@ if (emailHistoryTable && emailHistoryTable.querySelector('tbody tr[data-row-id]'
         }
     }
 }
+
