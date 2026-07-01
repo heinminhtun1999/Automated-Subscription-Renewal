@@ -703,11 +703,6 @@ Defined in `.github/workflows/deploy.yml`. Triggers on push to `development` or 
 
 ## 16. Known Limitations & Future Work
 
-### Security
-- [ ] Input validation and sanitization on all API endpoints (currently missing)
-- [ ] Admin panel has a single shared password — no individual accounts or audit trail
-- [ ] `verifyOrigin` is origin-based only — a proper CSRF token would be more robust
-
 ### Features
 - [ ] Customer self-service portal — customers log in and manage their own machines
 - [ ] Retry logic for failed reminder emails
