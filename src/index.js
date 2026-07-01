@@ -102,12 +102,12 @@ app.use((req, res, next) => {
 
 
 // ================== Reconciliation in development environment ==================
-if (process.env.NODE_ENV === 'development') {
-    const runCronJobs = require('./jobs/generalJobsRunner');
-    setInterval(() => {
-        runCronJobs();
-    }, 5 * 60 * 1000); // Run every 5 minutes
-}
+// if (process.env.NODE_ENV === 'development') {
+//     const runCronJobs = require('./jobs/generalJobsRunner');
+//     setInterval(() => {
+//         runCronJobs();
+//     }, 5 * 60 * 1000); // Run every 5 minutes
+// }
 // ===============================================================================
 
 app.get('/', (req, res) => {

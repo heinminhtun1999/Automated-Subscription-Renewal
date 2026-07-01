@@ -101,10 +101,10 @@ function seedData(production) {
                     continue;
                 }
 
-                // if (isNaN(Date.parse(row["Renewal End Date"])) && isNaN(Date.parse(row["End Date"])) && isNaN(Date.parse(row["Arv Renewal End Date"]))) {
-                //     console.warn("Invalid Dates. Skipping insertion.");
-                //     continue;
-                // }
+                if (isNaN(Date.parse(row["Renewal End Date"])) && isNaN(Date.parse(row["End Date"])) && isNaN(Date.parse(row["Arv Renewal End Date"]))) {
+                    console.warn("Invalid Dates. Skipping insertion.");
+                    continue;
+                }
 
                 const actualEndDate = isNaN(Date.parse(row["Renewal End Date"])) ? new Date(row["End Date"] || row["Arv Renewal End Date"]).toISOString() : new Date(row["Renewal End Date"]).toISOString();
 

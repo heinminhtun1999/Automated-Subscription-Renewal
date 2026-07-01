@@ -149,9 +149,10 @@ const openEmailHistoryDetailsModal = (emailData) => {
     if (titleElement) {
         titleElement.textContent = `Email ${rowId || ''} machine details`;
     }
+
     if (subtitleElement) {
-        const recipient = data?.recipient_email ? `Recipient: ${data.recipient_email}` : 'Recipient unavailable';
-        const sentDate = data?.sent_date ? ` | Sent: ${data.sent_date}` : '';
+        const recipient = emailData?.recipient_email ? `Recipient: ${emailData.recipient_email}` : 'Recipient unavailable';
+        const sentDate = emailData?.sent_date ? ` | Sent: ${emailData.sent_date}` : '';
         subtitleElement.textContent = `${recipient}${sentDate}`;
     }
 
@@ -182,33 +183,13 @@ const options = {
     columnDefs: [
         { targets: '_all', className: 'dt-head-left' },
         {
-            targets: 1,
-            render: (value, type) => {
-                if (!value || typeof value !== 'string' || value.trim() === '') {
-                    return "";
-                }
-
-                if (type === 'sort' || type === 'type') {
-                    // Standardize AM/PM format for JS native parser
-                    let cleanValue = value.replace(/am/i, 'AM').replace(/pm/i, 'PM').trim();
-
-                    // Handle DD/MM/YYYY vs YYYY-MM-DD
-                    if (cleanValue.includes('/')) {
-                        // Convert "DD/MM/YYYY, HH:mm:ss AM" to "YYYY-MM-DD HH:mm:ss AM"
-                        const [datePart, timePart] = cleanValue.split(', ');
-                        const [day, month, year] = datePart.split('/');
-                        cleanValue = `${year}-${month}-${day} ${timePart}`;
-                    }
-
-                    const timestamp = Date.parse(cleanValue);
-                    return Number.isNaN(timestamp) ? Number.MIN_SAFE_INTEGER : timestamp;
-                }
-
-                return value;
-            }
+            targets: '_all',
+            createdCell: function (td, cellData, rowData, row, col) {}
         }
     ],
+    // enable ordering and set default sort to Date/Time (second column) desc
     ordering: true,
+    order: [[1, 'desc']],
     scrollX: true,
     fixedHeader: true,
     buttons: [
@@ -239,7 +220,7 @@ const options = {
 
 let emailHistoryDataTable = null;
 
-if (emailHistoryTable && emailHistoryTable.querySelector('tbody tr[data-row-id]')) {
+if (emailHistoryTable) {
     emailHistoryDataTable = new DataTable(emailHistoryTable, options);
 
     const updatePageSizeDisplay = () => {
@@ -388,4 +369,3 @@ if (emailHistoryTable && emailHistoryTable.querySelector('tbody tr[data-row-id]'
         }
     }
 }
-
