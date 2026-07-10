@@ -715,7 +715,6 @@ Defined in `.github/workflows/deploy.yml`. Triggers on push to `development` or 
 
 ### Operations
 - [ ] No tests — payment flow and reconciliation logic especially need unit tests
-- [ ] `console.log` statements in `reconcilePayment.js` should be converted to `logger.info`
 - [ ] `getAllOrderItems()` in reconciliation fetches all records — should be scoped to reconciled orders only
 - [ ] Database path should use `__dirname`-based absolute path rather than relative `cwd`
 - [ ] Duplicate email addresses in customers — protection commented out in schema

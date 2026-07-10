@@ -36,7 +36,7 @@ function renderHomePage(req, res) {
             created_at_label: localizedDateTime(order.created_at),
             amount_label: `RM ${Number(order.amount).toFixed(2)}`
         }));
-        const expiringMachines = getMachineByDaysLeft(30, false).slice(0, 6).map(machine => {
+        const expiringMachines = getMachineByDaysLeft(45, false).slice(0, 6).map(machine => {
             return {
                 ...machine,
                 end_date_label: formatDate(machine.end_date),
