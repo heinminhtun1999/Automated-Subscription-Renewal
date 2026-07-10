@@ -17,7 +17,7 @@
         { label: 'Orders', value: summary.totalOrders, icon: 'fa-receipt', tone: 'from-slate-700 to-slate-900', note: 'All time order records' },
         { label: 'Pending', value: summary.pendingOrders, icon: 'fa-clock', tone: 'from-amber-400 to-orange-500', note: 'Processing and pending' },
         { label: 'Completed', value: summary.successfulOrders, icon: 'fa-circle-check', tone: 'from-green-500 to-emerald-600', note: 'Paid and finalized' },
-        { label: 'Expiring Soon', value: summary.expiringSoon, icon: 'fa-triangle-exclamation', tone: 'from-rose-500 to-red-600', note: 'Within 30 days' }
+        { label: 'Expiring Soon', value: summary.expiringSoon, icon: 'fa-triangle-exclamation', tone: 'from-rose-500 to-red-600', note: 'Within 45 days' }
     ];
 
     function formatStatus(status) {
@@ -133,7 +133,7 @@
             <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
                 <div>
                     <h3 class="text-xl font-bold text-gray-900">Expiring soon</h3>
-                    <p class="mt-1 text-sm text-gray-500">Machines that need attention within 30 days.</p>
+                    <p class="mt-1 text-sm text-gray-500">Machines that need attention within 45 days.</p>
                 </div>
                 <span class="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700"><%= summary.expiringSoon %></span>
             </div>
