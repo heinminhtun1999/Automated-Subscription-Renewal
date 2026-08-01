@@ -135,6 +135,11 @@ function deleteMachine(id) {
     return stmt.run(id);
 }
 
+function deleteMachinesByMachineType(machineTypeId) {
+    const stmt = db.prepare(`DELETE FROM machines WHERE machine_type_id = ?`);
+    return stmt.run(machineTypeId);
+}
+
 module.exports = {
     getMachinesByTypeDB,
     getMachineByMachineIdOrId,
@@ -145,5 +150,6 @@ module.exports = {
     getMachineByDaysLeftAndCustomerId,
     getMachinesByIds,
     updateMultipleMachinesByCases,
-    updateMultipleMachines
+    updateMultipleMachines,
+    deleteMachinesByMachineType
 }

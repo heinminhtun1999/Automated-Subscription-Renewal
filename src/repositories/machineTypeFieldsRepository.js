@@ -43,9 +43,15 @@ function deleteMachineTypeField(machineTypeId, fieldId) {
     return stmt.run(machineTypeId, fieldId);
 }
 
+function deleteMachineTypeFieldByMachineType(machineTypeId) {
+    const stmt = db.prepare(`DELETE FROM machine_type_fields WHERE machine_type_id = ?`);
+    return stmt.run(machineTypeId);
+}
+
 module.exports = {
     addMachineTypeFieldDB,
     getMachineTypeFields,
     updateMachineTypeFields,
-    deleteMachineTypeField
+    deleteMachineTypeField,
+    deleteMachineTypeFieldByMachineType
 }

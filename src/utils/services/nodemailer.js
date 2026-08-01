@@ -79,7 +79,7 @@ async function prepareAndSendDueDateEmail(combinedData) {
             const insertedEmail = insertEmail(emailAddress, companyData[0].customer_id, 'pending');
 
             // Send email
-            const { ok, error, messageId } = await sendEmail(emailAddress, 'Terminal Renewal Reminder', emailBody, 'Due Date Reminder');
+            const { ok, error, messageId } = await sendEmail(emailAddress, 'Terminal Renewal Reminder', emailBody, 'Due Date Reminder', [process.env.CS_EMAIL]);
 
             updateEmail(insertedEmail.lastInsertRowid, { status: ok ? 'sent' : 'failed', nodemailer_message_id: messageId, failed_reason: error ? (error.message || 'Unknown error') : null });
 

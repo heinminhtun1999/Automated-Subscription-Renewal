@@ -12,7 +12,8 @@ const {
     getMachineTypeFields,
     addMachineTypeFieldDB,
     updateMachineTypeFields,
-    deleteMachineTypeField
+    deleteMachineTypeField,
+    deleteMachineTypeFieldByMachineType
 } = require('../repositories/machineTypeFieldsRepository');
 const {
     getMachineByMachineIdOrId,
@@ -20,7 +21,8 @@ const {
     deleteMachine,
     updateMachine,
     updateMultipleMachinesByCases,
-    getMachinesByTypeDB
+    getMachinesByTypeDB,
+    deleteMachinesByMachineType
 } = require('../repositories/machineRepository');
 const {
     getAllCustomers,
@@ -462,8 +464,11 @@ function handleDeleteMachineType(req, res) {
         if (!existingType) {
             return res.status(404).json({ success: false, message: 'Machine type not found.' });
         }
-
-        deleteMachineType(id);
+        db.transaction(() => {
+            deleteMachineType(id);
+            deleteMachinesByMachineType(id);
+            deleteMachineTypeFieldByMachineType(id)
+        }).immediate();
         return res.status(200).json({ success: true, message: 'Machine type deleted successfully.' });
     } catch (error) {
         logger.error('Error deleting machine type:', error);
@@ -581,8 +586,6 @@ function handleDeleteMachineTypeField(req, res) {
         return res.status(500).json({ success: false, message: `Failed to delete machine type field. Please try again later. Error: ${error.message}` });
     }
 }
-
-
 
 module.exports = {
     renderMachinesPage,
