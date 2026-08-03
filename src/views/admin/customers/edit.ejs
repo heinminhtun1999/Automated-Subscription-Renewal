@@ -1,0 +1,78 @@
+<%- include('../../partials/adminMainSection', { pageTitle: 'AR Vending | Admin Panel' , activePage: 'customers' ,
+    subTitle: 'Edit Customer' , error: typeof error !=='undefined' ? error : null }) %>
+    <div class="py-6 px-4 sm:px-8 lg:px-14">
+        <div class="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/70">
+            <% if (typeof data !== 'undefined') { %>
+                <div class="flex flex-col gap-4 border-b border-slate-100 pb-5 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <p class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700 ring-1 ring-emerald-100">Customer setup</p>
+                        <h2 class="mt-2 text-2xl font-bold text-slate-800">Edit customer</h2>
+                        <p class="mt-1 text-sm text-slate-500">Update customer contact and banking details.</p>
+                    </div>
+                    <a href="/admin/back"
+                        class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700">
+                        <i class="fa-solid fa-arrow-left"></i> Back
+                    </a>
+                </div>
+
+                <div class="grid grid-cols-1 gap-5 md:grid-cols-2 mt-6">
+                    <input type="hidden" id="customer-id" value="<%= data.id %>">
+                    <div class="flex flex-col">
+                        <label for="company-name" class="text-sm font-semibold text-gray-600">Company Name<span class="text-emerald-600"> *</span></label>
+                        <input id="company-name" name="company_name" type="text"  class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="AR Vending" value="<%= data['company_name'] %>">
+                        <span class="mt-1 hidden text-xs text-red-500" data-error-for="company-name">Company name is required.</span>
+                    </div>
+                    
+                    <div class="flex flex-col">
+                        <label for="company-short-name" class="text-sm font-semibold text-gray-600">Company Short Name</label>
+                        <input id="company-short-name" name="company_short_name" type="text"  class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="Short name" value="<%= data['company_short_name'] %>">
+                    </div>
+
+                    <div class="flex flex-col">
+                        <label for="email" class="text-sm font-semibold text-gray-600">Email<span class="text-emerald-600"> *</span></label>
+                        <input id="email" name="email" type="email"  class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="Email" value="<%= data['email'] %>">
+                        <span class="mt-1 hidden text-xs text-red-500" data-error-for="email">Valid email is required.</span>
+                    </div>
+                    
+                    <div class="flex flex-col">
+                        <label for="contact-number" class="text-sm font-semibold text-gray-600">Contact Number<span class="text-emerald-600"> *</span></label>
+                        <input id="contact-number" name="contact_number" type="tel"  class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="Contact Number" value="<%= data['contact_number'] %>">
+                        <span class="mt-1 hidden text-xs text-red-500" data-error-for="contact-number">Valid contact number is required.</span>
+                    </div>
+                    
+                    <div class="flex flex-col">
+                        <label for="pic-name" class="text-sm font-semibold text-gray-600">PIC Name<span class="text-emerald-600"> *</span></label>
+                        <input id="pic-name" name="pic_name" type="text"  class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="PIC Name" value="<%= data['pic_name'] %>">
+                        <span class="mt-1 hidden text-xs text-red-500" data-error-for="pic-name">PIC name is required.</span>
+                    </div>
+                    
+                    <div class="flex flex-col">
+                        <label for="bank-name" class="text-sm font-semibold text-gray-600">Bank Name</label>
+                        <input id="bank-name" name="bank_name" type="text"  class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="Bank Name" value="<%= data['bank_name'] %>">
+                    </div>
+                    
+                    <div class="flex flex-col">
+                        <label for="bank-account-number" class="text-sm font-semibold text-gray-600">Bank Account Number</label>
+                        <input id="bank-account-number" name="bank_account_number" type="text"  class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="Bank Account Number" value="<%= data['bank_account_number'] %>">
+                    </div>
+                    
+                    <div class="flex flex-col">
+                        <label for="beneficiary-name" class="text-sm font-semibold text-gray-600">Beneficiary Name</label>
+                        <input id="beneficiary-name" name="beneficiary_name" type="text"  class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="Beneficiary Name" value="<%= data['beneficiary_name'] %>">
+                    </div>
+                </div>
+
+                <div class="mt-8 flex flex-col gap-3 md:flex-row md:items-center md:justify-end">
+                    <a href="/admin/customers/<%= data.id %>" class="inline-flex items-center justify-center rounded-full border border-gray-200 px-5 py-2 text-sm font-semibold text-gray-500 hover:border-gray-300 hover:text-gray-700">Cancel</a>
+                    <button id="save-customer-submit" type="button" class="inline-flex items-center justify-center rounded-full bg-emerald-500 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600">Save Changes</button>                    
+                </div>
+                
+            <% } else { %>
+                <div class="mt-6 rounded-2xl border border-red-100 bg-red-50 px-5 py-4 text-sm font-medium text-red-600 shadow-sm">
+                    Failed to load customer details. Please refresh the page.
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+<%- include('../../partials/adminFooter', { scripts: ['/js/adminEditCustomer.js'] }) %>

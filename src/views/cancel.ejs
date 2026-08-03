@@ -1,0 +1,35 @@
+<%- include('partials/header', { pageTitle: 'AR Vending | Payment Cancelled', cssFile: '/css/cancel.css', headContent: '' }) %>
+
+        <div class="container">
+            <div class="status-card cancelled">
+                <div class="icon">!</div>
+
+                <h1>Payment Cancelled</h1>
+                <p class="status-message">Your payment was cancelled and no charges were made.</p>
+
+                <div class="details">
+                    <div class="detail-row">
+                        <span class="detail-label">Status</span>
+                        <strong class="detail-value">Cancelled</strong>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="contact-section">
+                <h4 class="contact-title">Need Help?</h4>
+                <p class="contact-text">If any error occurs or you need assistance, please contact us:</p>
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <span class="contact-icon">📧</span>
+                        <a href="mailto:customerservice@arvending.com.my">customerservice@arvending.com.my</a>
+                    </div>
+                    <div class="contact-item">
+                        <span class="contact-icon">📞</span>
+                        <a href="tel:+60123456789">+60 12-253 1334</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+<%- include('partials/footer') %>

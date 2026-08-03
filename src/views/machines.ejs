@@ -1,0 +1,125 @@
+<%- include('partials/header', { pageTitle: 'AR Vending | Select Machines for Renewal' , cssFile: '/css/machinesSelection.css'
+    , headContent: '' }) %>
+
+    <div class="container">
+
+        <% if (typeof data !=='undefined') { %>
+
+            <!-- Customer Info Section -->
+            <div class="customer-info">
+                <h2 class="company-name" id="company-name" data-customer-id="<%= data.customer.id %>">
+                    <%= data.customer.company_name %>
+                </h2>
+            </div>
+
+
+            <% if (data.machines.length === 0) { %>
+                <div class="no-data">
+                    <p>No machines available for renewal at this time.</p>
+                </div>
+            <% } else { %>
+                <!-- Machines Selection Section -->
+                <div class="machines-section">
+                    <h3 class="section-title">Select Machines for Renewal</h3>
+                    <h4 class="section-subtitle">Please note that the machines listed below only include those were in the reminder email or expired. If any machines are missing, please wait 24 hours for the next reminder email. If they are still not listed, please contact customer service.</h4>
+                    <div class="machines-list" id="machines-list">
+                        <!-- Machine items will be inserted here -->
+                        <% data.machines.forEach(machine=> { %>
+                            <div class="machine-item <%= machine.days_left === 'Expired' ? 'disabled' : '' %>"
+                                onclick="toggleMachine(this)" data-machine-id="<%= machine.id %>"
+                                data-machine-disabled="<%= machine.days_left === 'Expired' %>">
+                                <div class="item-checkbox">
+                                    <span class="checkbox"></span>
+                                </div>
+                                <div class="item-content">
+                                    <div class="machine-header">
+                                        <h4 class="machine-id">Device ID: <%= machine.machine_id %>
+                                        </h4>
+                                    </div>
+                                    <div class="machine-details">
+                                        <div class="detail-col">
+                                            <span class="label">Device Type:</span>
+                                            <span class="value">
+                                                <%= machine.machine_type_name %>
+                                            </span>
+                                        </div>
+                                        <div class="detail-col">
+                                            <span class="label">Days Left to Expire:</span>
+                                            <span
+                                                class="value <%= machine.days_left === 'Expired' ? 'expired' : machine.days_left == 'Expires Today' ? 'expires-today' : '' %>">
+                                                <%= machine.days_left %>
+                                            </span>
+                                        </div>
+                                        <div class="detail-col">
+                                            <span class="label">Renewal Fee:</span>
+                                            <span class="value amount">RM <%= machine.renewal_fees.toFixed(2) %></span>
+                                        </div>
+                                        <% if (machine.days_left==='Expired') { %>
+                                            <div class="detail-col">
+                                                <span class="label">Remark:</span>
+                                                <span class="value">Subscription for this device has expired. Please
+                                                    contact support.</span>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }) %>
+
+                    </div>
+                </div>
+
+                <!-- Summary Section -->
+                <div class="summary-section">
+                    <div class="summary-item">
+                        <span class="summary-label">Machines Selected:</span>
+                        <span class="summary-value" id="selected-count">0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Renewal Fee:</span>
+                        <span class="summary-value amount" id="total-fee">RM 0.00</span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="clearSelected()">Clear Selected</button>
+                    <button class="btn btn-primary" onclick="proceedToPayment()" id="proceed-btn">Proceed to
+                        Payment</button>
+                </div>
+
+                <!-- Notice Section -->
+                <div class="notice-box">
+                    <span class="notice-icon">ℹ️</span>
+                    <p class="notice-text">You will be redirected to the secure payment page after clicking "Proceed
+                        to
+                        Payment".</p>
+                </div>
+            <% } %>
+        <% } else { %>
+            <div class="error-section">
+                <h2 class="error-title">Error Loading Data</h2>
+                <p class="error-message">Sorry, we encountered an issue while loading your requested data. Please try
+                    again later.</p>
+            </div>
+        <% } %>
+
+        <!-- Error Contact Section -->
+        <div class="contact-section">
+            <h4 class="contact-title">Need Help?</h4>
+            <p class="contact-text">If any error occurs or you need assistance, please contact us:</p>
+            <div class="contact-info">
+                <div class="contact-item">
+                    <span class="contact-icon">📧</span>
+                    <a
+                        href="mailto:customerservice@arvending.com.my">customerservice@arvending.com.my</a>
+                </div>
+                <div class="contact-item">
+                    <span class="contact-icon">📞</span>
+                    <a href="tel:+60123456789">+60 12-253 1334</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<%- include('partials/footer', { scripts: ['/js/machinesSelection.js'] }) %>

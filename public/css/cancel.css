@@ -1,0 +1,259 @@
+* {
+    box-sizing: border-box;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #eef2f7, #d9e2ec);
+    padding: 20px;
+}
+
+.wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.header {
+    background: #ffffff;
+    border-radius: 16px 16px 0 0;
+    padding: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 0;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
+.header-text h1 {
+    margin: 0;
+    font-size: 28px;
+    color: #1a1a1a;
+}
+
+.header-text .subtitle {
+    margin: 4px 0 0 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.container {
+    background: #ffffff;
+    padding: 32px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.status-card {
+    text-align: center;
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 32px;
+    background: #f8f9fa;
+}
+
+.status-card.cancelled {
+    border-left: 5px solid #f0ad4e;
+}
+
+.icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    color: #fff;
+}
+
+.status-card.cancelled .icon {
+    background: #f0ad4e;
+}
+
+h1 {
+    margin: 12px 0;
+    font-size: 28px;
+    color: #1a1a1a;
+}
+
+.status-message {
+    color: #666;
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.details {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 24px;
+    border: 1px solid #e0e0e0;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+    color: #444;
+    font-size: 14px;
+    gap: 16px;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    color: #999;
+    font-weight: 500;
+}
+
+.detail-value {
+    color: #1a1a1a;
+    font-weight: 700;
+    text-align: right;
+}
+
+.actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.btn {
+    padding: 14px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: 100%;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #0056b3, #004085);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
+}
+
+.btn-secondary {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.btn-secondary:hover {
+    background: #d0d0d0;
+    transform: translateY(-2px);
+}
+
+.contact-section {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.contact-title {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+.contact-text {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.contact-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.contact-label {
+    font-weight: 600;
+    color: #333;
+    min-width: 48px;
+}
+
+.contact-item a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.contact-item a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+.footer {
+    background: #ffffff;
+    border-radius: 0 0 16px 16px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-top: auto;
+}
+
+.footer p {
+    margin: 0;
+    font-size: 13px;
+    color: #999;
+}
+
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .container {
+        padding: 20px;
+    }
+
+    .contact-info {
+        grid-template-columns: 1fr;
+    }
+
+    .status-card {
+        padding: 20px;
+    }
+}

@@ -1,0 +1,166 @@
+<%- include('partials/header', {
+    pageTitle: 'AR Vending | Payment Status',
+    cssFile: '/css/return.css',
+    headContent: '<script>\n    const data = ' + JSON.stringify(JSON.stringify(data || {})) + ';\n</script>'
+}) %>
+
+        <div class="container">
+            <%
+                const hasData = !!data;
+                const processStatus = hasData && data.processStatus ? data.processStatus.toLowerCase().trim() : 'error';
+                const paymentStatus = hasData && data.paymentStatus ? data.paymentStatus.toLowerCase().trim() : 'error';
+                const transactionDate = hasData && data.transactionDate ? data.transactionDate : '-';
+                const orderId = hasData ? data.orderId : '-';
+                const message = hasData && data.message ? data.message : "An unexpected error occurred.";
+                const transactionId = hasData ? data.transactionId : '-';
+                const amountValue = hasData ? parseFloat(data.amount).toFixed(2) : '0.00';
+
+                const processStatusConfig = {
+                    pending: {
+                        className: 'pending',
+                        accentColor: '#f0ad4e',
+                        icon: '...',
+                        title: 'Order Pending'
+                    },
+                    processing: {
+                        className: 'processing',
+                        accentColor: '#17a2b8',
+                        icon: '⏳',
+                        title: 'Order Processing'
+                    },
+                    completed: {
+                        className: 'success',
+                        accentColor: '#28a745',
+                        icon: '✔',
+                        title: 'Order Completed'
+                    },
+                    failed: {
+                        className: 'failed',
+                        accentColor: '#dc3545',
+                        icon: 'X',
+                        title: 'Order Failed'
+                    },
+                    error: {
+                        className: 'error',
+                        accentColor: '#dc3545',
+                        icon: '!',
+                        title: 'Processing Error'
+                    }
+                };
+
+                const paymentStatusConfig = {
+                    pending: {
+                        className: 'pending',
+                        text: 'Payment Pending'
+                    },
+                    paid: {
+                        className: 'success',
+                        text: 'Payment Successful'
+                    },
+                    failed: {
+                        className: 'failed',
+                        text: 'Payment Failed'
+                    },
+                    error: {
+                        className: 'error',
+                        text: 'Payment Error'
+                    }
+                };
+
+                const selectedProcessStatus = processStatusConfig[processStatus] || processStatusConfig.error;
+                const selectedPaymentStatus = paymentStatusConfig[paymentStatus] || paymentStatusConfig.error;
+            %>
+
+            <% if (hasData) { %>
+                <div class="status-card <%= selectedProcessStatus.className %>" style="border-left: 5px solid <%= selectedProcessStatus.accentColor %>;" id="status-card">
+                    <div class="icon" style="background: <%= selectedProcessStatus.accentColor %>;"><%= selectedProcessStatus.icon %></div>
+
+                    <h1 id="status-title"><%= selectedProcessStatus.title %></h1>
+                    <h2 class="payment-status <%= selectedPaymentStatus.className %>" id="payment-status"><%= selectedPaymentStatus.text %></h2>
+                    <div class="status-message" id="status-message"><%- message %></div>
+
+                    <div class="details">
+                        <div class="detail-row">
+                            <span class="detail-label">Order ID</span>
+                            <strong class="detail-value" id="order-id"><%= orderId %></strong>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Amount</span>
+                            <strong class="detail-value" id="amount-value">RM <%= amountValue %></strong>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Transaction ID</span>
+                            <strong class="detail-value" id="transaction-id"><%= transactionId %></strong>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Transaction Date</span>
+                            <strong class="detail-value" id="transaction-date"><%= transactionDate %></strong>
+                        </div>
+                    </div>
+
+                    <% if (data.machines && data.machines.length > 0) { %>
+                        <div class="details">
+                            <h3 class="machine-table-title">Renewed Machines</h3>
+                            <table class="machine-table">
+                                <thead>
+                                    <tr>
+                                        <th>Machine ID</th>
+                                        <th>Machine Type</th>
+                                        <th>Renewal Fees</th>
+                                        <th>Renewed Until</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% data.machines.forEach(machine => { %>
+                                        <tr>
+                                            <td><%= machine.machine_id %></td>
+                                            <td><%= machine.machine_type_name %></td>
+                                            <td>RM <%= parseFloat(machine.subscription_fees).toFixed(2) %></td>
+                                            <td><%= new Date(machine.end_date).toLocaleDateString('en-GB') %></td>
+                                        </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                    <% } %>
+
+                    <p class="screenshot-notice">For your records, you may want to take a screenshot of this page.</p>
+                    <div class="actions">
+                        <button class="btn btn-secondary" onclick="window.location.href='/support'">Contact
+                            Support</button>
+                        <button class="btn btn-primary" onclick="window.location.href='/status-check'">Check Status Later</button>
+                    </div>
+                </div>
+            <% } else { %>
+                <div class="status-card failed" id="status-card">
+                    <div class="icon">X</div>
+                    <h1>Payment Status Unknown</h1>
+                    <p class="status-message" id="status-message">We could not determine the status of your payment. Please contact
+                        support with your order information for assistance.</p>
+                    <div class="actions">
+                        <button class="btn btn-secondary" onclick="window.location.href='/support'">Contact
+                            Support</button>
+                        <button class="btn btn-primary" onclick="window.location.href='/status-check'">Check Status Later</button>
+                    </div>
+                </div>
+            <% } %>
+            <!-- Contact Section -->
+            <div class="contact-section">
+                <h4 class="contact-title">Need Help?</h4>
+                <p class="contact-text">If any error occurs or you need assistance, please
+                    contact us:</p>
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <span class="contact-icon">📧</span>
+                        <a
+                            href="mailto:customerservice@arvending.com.my">customerservice@arvending.com.my</a>
+                    </div>
+                    <div class="contact-item">
+                        <span class="contact-icon">📞</span>
+                        <a href="tel:+60123456789">+60 (123) 456-789</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+<%- include('partials/footer', { scripts: ['/js/return.js'] }) %>

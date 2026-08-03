@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= pageTitle %>
+    </title>
+    <link rel="icon" href="/images/ARV NEW LOGO.png">
+    <script src="https://kit.fontawesome.com/f2eac0dbd1.js" crossorigin="anonymous"></script>
+    <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/datatables.min.css" rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/datatables.net-colresize-unofficial@latest/jquery.dataTables.colResize.css">
+</head>
+
+<body class="selection:text-white selection:bg-emerald-500">
+    <div id="error-container"
+        class="notification-box hidden fixed top-5 right-5 w-80 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-lg z-50"
+        role="alert" aria-live="assertive">
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-circle text-red-500"></i>
+            </div>
+            <div class="ml-3 flex-1">
+                <p class="font-bold">Error!</p>
+                <p class="text-sm" data-error-message><%= typeof error !=='undefined' && error ? error : '' %></p>
+            </div>
+            <div class="ml-4 flex-shrink-0">
+                <button id="close-error" class="text-red-500 hover:text-red-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <div class="absolute bottom-0 left-0 h-1 bg-red-500/50 progress-bar"></div>
+    </div>
+
+    <div id="success-container"
+        class="notification-box hidden fixed top-5 right-5 w-80 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-lg shadow-lg z-50"
+        role="alert" aria-live="assertive">
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <i class="fas fa-check-circle text-green-500"></i>
+            </div>
+            <div class="ml-3 flex-1">
+                <p class="font-bold">Success!</p>
+                <p class="text-sm" data-success-message><%= typeof success !=='undefined' && success ? message ?? success : '' %></p>
+            </div>
+            <div class="ml-4 flex-shrink-0">
+                <button id="close-success" class="text-green-500 hover:text-green-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <div class="absolute bottom-0 left-0 h-1 bg-green-500/50 progress-bar"></div>
+    </div>
+
+    <div class="min-h-screen md:grid md:grid-cols-[auto_1fr] bg-gradient-to-br from-emerald-50 via-slate-50 to-cyan-50">
+<%- include('./adminSidebar', { activePage: activePage }) %>

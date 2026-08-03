@@ -1,0 +1,17 @@
+        <!-- <div class="footer">
+            <p>&copy; 2026 AR Vending Solutions. All rights reserved.</p>
+        </div> -->
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="/js/datatables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/datatables.net-colresize-unofficial@latest/jquery.dataTables.colResize.js"></script>
+    <script src="/js/main.js"></script>
+    <% if (typeof scripts !== 'undefined' && scripts && scripts.length) { %>
+        <% scripts.forEach(function (src) { %>
+            <script src="<%= src %>"></script>
+        <% }) %>
+    <% } %>
+</body>
+
+</html>

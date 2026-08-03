@@ -1,0 +1,13 @@
+        <div class="footer">
+            <p>&copy; 2026 AR Vending Solutions. All rights reserved.</p>
+        </div>
+    </div>
+
+    <% if (typeof scripts !== 'undefined' && scripts && scripts.length) { %>
+        <% scripts.forEach(function (src) { %>
+            <script src="<%= src %>"></script>
+        <% }) %>
+    <% } %>
+</body>
+
+</html>

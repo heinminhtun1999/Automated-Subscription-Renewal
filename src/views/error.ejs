@@ -1,0 +1,33 @@
+<%- include('partials/header', { pageTitle: 'AR Vending | ' + title, cssFile: '/css/error.css', headContent: '' }) %>
+
+        <div class="container">
+            <main class="error-card">
+                <div class="status-block">
+                    <span class="status-code"><%= statusCode %></span>
+                    <span class="status-title"><%= title %></span>
+                </div>
+
+                <p class="message"><%= message %></p>
+
+                <% if (details) { %>
+                    <pre class="details"><%= details %></pre>
+                <% } %>
+            </main>
+
+            <div class="contact-section">
+                <h4 class="contact-title">Need Help?</h4>
+                <p class="contact-text">If any error occurs or you need assistance, please contact us:</p>
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <span class="contact-icon">📧</span>
+                        <a href="mailto:customerservice@arvending.com.my">customerservice@arvending.com.my</a>
+                    </div>
+                    <div class="contact-item">
+                        <span class="contact-icon">📞</span>
+                        <a href="tel:+60123456789">+60 12-253 1334</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+<%- include('partials/footer') %>

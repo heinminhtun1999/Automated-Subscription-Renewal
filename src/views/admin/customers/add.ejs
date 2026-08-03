@@ -1,0 +1,69 @@
+<%- include('../../partials/adminMainSection', { pageTitle: 'AR Vending | Admin Panel', activePage: 'customers', subTitle: 'Add Customer', error: typeof error !== 'undefined' ? error : null }) %>
+
+<div class="py-6 px-4 sm:px-8 lg:px-14">
+    <div class="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/70">
+        <div class="flex flex-col gap-4 border-b border-slate-100 pb-5 md:flex-row md:items-center md:justify-between">
+            <a href="/admin/back" class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700">
+                <i class="fa-solid fa-arrow-left"></i> Back 
+            </a>
+        </div>
+
+        <div id="add-customer-alert" class="hidden mt-6 mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></div>
+
+        <div id="add-customer-form" class="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
+            <div class="flex flex-col">
+                <label for="company-name" class="text-sm font-semibold text-gray-600">Company Name<span class="text-emerald-600"> *</span></label>
+                <input id="company-name" name="company_name" type="text" data-required="true" class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="AR Vending Solutions">
+                <span class="mt-1 hidden text-xs text-red-500" data-error-for="company-name">Company name is required.</span>
+            </div>
+
+            <div class="flex flex-col">
+                <label for="company-short-name" class="text-sm font-semibold text-gray-600">Company Short Name<span class="text-emerald-600"> *</span></label>
+                <input id="company-short-name" name="company_short_name" type="text" data-required="false" class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="AR Vending">
+            </div>
+
+            <div class="flex flex-col">
+                <label for="pic-name" class="text-sm font-semibold text-gray-600">PIC Name<span class="text-emerald-600"> *</span></label>
+                <input id="pic-name" name="pic_name" type="text" data-required="true" class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="Person in Charge">
+                <span class="mt-1 hidden text-xs text-red-500" data-error-for="pic-name">PIC name is required.</span>
+            </div>
+
+            <div class="flex flex-col">
+                <label for="email" class="text-sm font-semibold text-gray-600">Email<span class="text-emerald-600"> *</span></label>
+                <input id="email" name="email" type="email" data-required="true" data-type="email" class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="name@company.com">
+                <span class="mt-1 hidden text-xs text-red-500" data-error-for="email">Enter a valid email.</span>
+            </div>
+
+            <div class="flex flex-col">
+                <label for="contact-number" class="text-sm font-semibold text-gray-600">Contact Number<span class="text-emerald-600"> *</span></label>
+                <input id="contact-number" name="contact_number" type="tel" data-required="true" data-type="phone" class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="+60 12-345 6789">
+                <span class="mt-1 hidden text-xs text-red-500" data-error-for="contact-number">Enter a valid contact number.</span>
+            </div>
+
+            <div class="flex flex-col">
+                <label for="bank-name" class="text-sm font-semibold text-gray-600">Bank Name</label>
+                <input id="bank-name" name="bank_name" type="text" class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="Maybank">
+                <span class="mt-1 text-xs text-gray-400">Optional</span>
+            </div>
+
+            <div class="flex flex-col">
+                <label for="bank-account-number" class="text-sm font-semibold text-gray-600">Bank Account Number</label>
+                <input id="bank-account-number" name="bank_account_number" type="text" class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="1234567890">
+                <span class="mt-1 text-xs text-gray-400">Optional</span>
+            </div>
+
+            <div class="flex flex-col md:col-span-2">
+                <label for="beneficary-name" class="text-sm font-semibold text-gray-600">Beneficary Name</label>
+                <input id="beneficary-name" name="beneficiary_name" type="text" class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="Account holder name">
+                <span class="mt-1 text-xs text-gray-400">Optional</span>
+            </div>
+        </div>
+
+        <div class="mt-8 flex flex-col gap-3 md:flex-row md:items-center md:justify-end">
+            <a href="/admin/customers" class="inline-flex items-center justify-center rounded-full border border-gray-200 px-5 py-2 text-sm font-semibold text-gray-500 hover:border-gray-300 hover:text-gray-700">Cancel</a>
+            <button id="add-customer-submit" type="button" class="inline-flex items-center justify-center rounded-full bg-emerald-500 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600">Add</button>
+        </div>
+    </div>
+</div>
+
+<%- include('../../partials/adminFooter', { scripts: ['/js/admincustomers.js'] }) %>

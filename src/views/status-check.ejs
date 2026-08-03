@@ -1,0 +1,89 @@
+<%- include('partials/header', { pageTitle: 'AR Vending | Check Payment Status' , cssFile: '/css/status-check.css' ,
+    headContent: '' }) %>
+
+    <div class="container">
+        <div class="status-card pending" id="status-card">
+            <div class="icon" id="status-icon">?</div>
+            <h1 id="status-title">Check Payment Status</h1>
+            <p class="status-message">Enter your order ID to check the latest payment status.</p>
+
+            <div class="status-form">
+                <label class="input-label" for="order-id">Order ID</label>
+                <div class="input-row">
+                    <input class="text-input" id="order-id" name="orderId" type="text" placeholder="e.g. 10293"
+                        required>
+                    <button class="btn btn-primary" type="button" onClick="getPaymentStatus()">Check Status</button>
+                </div>
+            </div>
+
+            <div class="status-result hidden" id="status-result">
+                <div class="result-row">
+                    <span class="result-label">Customer</span>
+                    <strong class="result-value" id="result-customer"></strong>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Order ID</span>
+                    <strong class="result-value" id="result-order-id"></strong>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Transaction ID</span>
+                    <strong class="result-value" id="result-transaction-id"></strong>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Amount</span>
+                    <strong class="result-value" id="result-amount"></strong>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Payment Status</span>
+                    <strong class="result-value" id="result-payment-status"></strong>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Process Status</span>
+                    <strong class="result-value" id="result-process-status"></strong>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Failure Reason</span>
+                    <strong class="result-value" id="result-failure-reason"></strong>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Transaction Date</span>
+                    <strong class="result-value" id="result-transaction-date"></strong>
+                </div>
+            </div>
+
+            <div class="machines-table-container hidden" id="machines-table-container">
+                <h3 class="machine-table-title">Machines</h3>
+                <table class="machine-table">
+                    <thead>
+                        <tr>
+                            <th>Machine ID</th>
+                            <th>Machine Type</th>
+                            <th>Renewal Fees</th>
+                            <th>Renewed Until</th>
+                        </tr>
+                    </thead>
+                    <tbody id="machines-tbody">
+                    </tbody>
+                </table>
+            </div>
+            <p class="error-message hidden" id="error-message"></p>
+            <p class="result-placeholder" id="result-placeholder">Status details will appear here.</p>
+        </div>
+
+        <div class="contact-section">
+            <h4 class="contact-title">Need Help?</h4>
+            <p class="contact-text">If any error occurs or you need assistance, please contact us:</p>
+            <div class="contact-info">
+                <div class="contact-item">
+                    <span class="contact-icon">📧</span>
+                    <a href="mailto:customerservice@arvending.com.my">customerservice@arvending.com.my</a>
+                </div>
+                <div class="contact-item">
+                    <span class="contact-icon">📞</span>
+                    <a href="tel:+60123456789">+60 12-253 1334</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('partials/footer', { scripts: ['/js/status-check.js'] }) %>

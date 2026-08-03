@@ -1,0 +1,58 @@
+<%- include('../../partials/adminMainSection', { pageTitle: 'AR Vending | Admin Panel', activePage: 'orders', error: typeof error !== 'undefined' ? error : null, subTitle: 'Orders' }) %>
+<%
+    const orders = Array.isArray(data) ? data : [];
+%>
+<div class="py-6 px-4 sm:px-8 lg:px-14 space-y-6">
+
+    <section class="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/70">
+        <div class="overflow-hidden">
+            <div class="overflow-x-auto">
+                <table id="orderTable" class="display nowrap !-z-1 min-w-full">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Date/Time</th>
+                        <th>Order ID</th>
+                        <th>Transaction ID</th>
+                        <th>Amount</th>
+                        <th>Payment Status</th>
+                        <th>Fulfillment Status</th>
+                        <th>Error Remarks</th>
+                        <th>Paid On</th>
+                        <th>Channel</th>
+                        <th>Customer</th>
+                        <th>Machines</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (orders.length) { %>
+                        <% orders.forEach((order, i) => { %>
+                            <tr data-row-id="<%= order.id %>">
+                                <td><%= i + 1 %></td>
+                                <td><%= order.created_at %></td>
+                                <td><%= order.order_id %></td>
+                                <td><%= order.transaction_id %></td>
+                                <td>RM <%= order.amount.toFixed(2) %></td>
+                                <td><%= order.payment_status %></td>
+                                <td><%= order.process_status %></td>
+                                <td><%= order.failed_remark %></td>
+                                <td><%= order.paid_on %></td>
+                                <td><%= order.channel %></td>
+                                <td title="<%= order.company_name %>">
+                                    <a href="/admin/customers/<%= order.customer_id %>" target="_blank" class="text-emerald-600 underline decoration-emerald-300 decoration-2 underline-offset-2"><%= order.company_name %></a>
+                                </td>
+                                <td><%= order.machines.join(", ") %></td>
+                            </tr>
+                       <% }); %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="11" class="py-8 text-center text-sm text-gray-500">No orders found.</td>
+                        </tr>
+                    <% } %>
+                </tbody> 
+                </table>
+            </div>
+        </div>
+    </section>
+</div>
+<%- include('../../partials/adminFooter', { scripts: ['/js/adminOrders.js'] }) %>
