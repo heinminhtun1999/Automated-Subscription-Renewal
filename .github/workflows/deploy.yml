@@ -1,0 +1,78 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [development, production]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+        continue-on-error: true
+
+  deploy:
+    needs: lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --only=production
+
+      - name: Determine deployment target
+        run: |
+          if [[ "${GITHUB_REF}" == "refs/heads/development" ]]; then
+            echo "DEPLOY_PATH=/home/subscription-renewal-dev" >> $GITHUB_ENV
+            echo "PM2_ENV=development" >> $GITHUB_ENV
+            echo "PM2_NAME=asr-dev" >> $GITHUB_ENV
+          else
+            echo "DEPLOY_PATH=/homWe/subscription-renewal-prod" >> $GITHUB_ENV
+            echo "PM2_ENV=production" >> $GITHUB_ENV
+            echo "PM2_NAME=asr" >> $GITHUB_ENV
+          fi
+
+      - name: Deploy to VPS
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
+          PM2_ENV: ${{ env.PM2_ENV }}
+          PM2_NAME: ${{ env.PM2_NAME }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts
+
+          rsync -az --delete \
+          --exclude="node_modules" \
+          --exclude=".git" \
+          --exclude="credentials.json" \
+          --exclude=".env" \
+          --exclude="src/db/database.db*" \
+          ./ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH
+
+          ssh $DEPLOY_USER@$DEPLOY_HOST << EOF
+            cd $DEPLOY_PATH
+            npm ci --only=production
+            pm2 reload "$PM2_NAME" --update-env > /dev/null 2>&1 || \
+              NODE_ENV=$PM2_ENV PORT=4000 pm2 start src/index.js --name "$PM2_NAME"
+          EOF
