@@ -197,7 +197,7 @@ async function reconcilePayments() {
                         const machines = getMachinesByIds(orderRelatedMachineIds);
                         for (const machine of machines) {
                             const newEndDate = new Date(machine.end_date);
-                            newEndDate.setFullYear(newEndDate.getFullYear() + 1)
+                            newEndDate.setFullYear(newEndDate.getFullYear() + Number(machine.subscription_period || 1));
                             updateMachine(machine.id, {
                                 end_date: newEndDate.toISOString(),
                                 renewal_process_id: null,

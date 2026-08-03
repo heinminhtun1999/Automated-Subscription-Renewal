@@ -80,13 +80,19 @@
                     <div class="flex flex-col">
                         <label for="end-date" class="text-sm font-semibold text-gray-600">End Date</label>
                         <input id="end-date" name="end_date" type="date" data-required="false" class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="End Date" value="<%= formatDate(data.machine['End Date']) %>">
-                        <span class="mt-1 text-xs text-gray-400">If left unset, End Date will be set to one year from the registration date.</span>
+                        <span class="mt-1 text-xs text-gray-400">If left unset, End Date will be set to the registration date + subscription period or registration date + one year.</span>
                     </div>
                     
                     <div class="flex flex-col">
                         <label for="subscription-fees" class="text-sm font-semibold text-gray-600">Subscription Fees (MYR)<span class="text-emerald-600"> *</span></label>
                         <input id="subscription-fees" name="subscription_fees" type="number" step="0.01" min="0.00" data-required="true" class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="0.00" value="<%= data.machine['Subscription Fees'].replace('RM ', '') %>">
                         <span class="mt-1 hidden text-xs text-red-500" data-error-for="subscription-fees">Enter a valid subscription fee.</span>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <label for="subscription-period" class="text-sm font-semibold text-gray-600">Subscription Period (Year)<span class="text-emerald-600"> *</span></label>
+                        <input id="subscription-period" name="subscription_period" type="number" step="1" min="1" data-required="true" class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="1" value="<%= data.machine['Subscription Period (Year)'] %>">
+                        <span class="mt-1 hidden text-xs text-red-500" data-error-for="subscription-period">Enter a valid subscription period.</span>
                     </div>
                     
                     <div class="flex flex-col">

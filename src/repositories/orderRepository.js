@@ -19,7 +19,7 @@ function getAllOrders() {
 
 function getOrder(orderId) {
     const stmt = db.prepare(`
-        SELECT o.*, c.company_name FROM orders AS o
+        SELECT o.*, c.company_name, c.email FROM orders AS o
         LEFT JOIN customers AS c ON o.customer_id = c.id
         WHERE order_id = ?
     `

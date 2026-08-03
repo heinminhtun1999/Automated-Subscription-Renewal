@@ -59,6 +59,7 @@ function prepareMachineData(machine) {
         "Registered Date": formatDate(machine.registered_date),
         "End Date": formatDate(machine.end_date),
         "Subscription Fees": "RM " + machine.subscription_fees.toFixed(2),
+        "Subscription Period (Year)": machine.subscription_period,
         "Status": machine.status,
         "Last Renewal Date": machine.last_renewal_date ? formatDate(machine.last_renewal_date) : 'N/A',
         "Renewal Count": machine.renewal_count,
@@ -197,11 +198,12 @@ function handleAddMachine(req, res) {
         registered_date,
         end_date,
         subscription_fees,
+        subscription_period,
         status,
         additional_fields
     } = req.body;
 
-    const requiredFieldCheck = checkRequiredFields(req.body, ['machine_type_id', 'customer_id', 'end_date', 'subscription_fees', 'machine_id']);
+    const requiredFieldCheck = checkRequiredFields(req.body, ['machine_type_id', 'customer_id', 'end_date', 'subscription_fees', 'machine_id', 'subscription_period']);
     if (!requiredFieldCheck.valid) {
         const missingField = requiredFieldCheck.missingField;
         logger.warn(`Missing ${missingField} in handleAddMachine:`, req.body);
@@ -224,11 +226,28 @@ function handleAddMachine(req, res) {
             return res.status(400).json({ success: false, message: 'Selected company does not exist.' });
         }
 
+        const subscriptionPeriod = Number(subscription_period);
+        if (!Number.isInteger(subscriptionPeriod) || subscriptionPeriod < 1) {
+            return res.status(400).json({ success: false, message: 'Subscription period must be a positive integer.' });
+        }
+
+
         const additionalDataObject = filterAdditionalFields(machine_type_id, additional_fields);
 
         const isRegisteredDateValid = !registered_date || isNaN(new Date(registered_date).getTime());
         const registeredDate = isRegisteredDateValid ? new Date() : new Date(registered_date);
-        const calculatedEndDate = end_date ? end_date : new Date(registeredDate.getTime() + (1000 * 60 * 60 * 24 * 365));
+
+        const isEndDateValid = end_date && !isNaN(new Date(end_date).getTime());
+        let calculatedEndDate;
+        if (isEndDateValid) {
+            calculatedEndDate = new Date(end_date)
+        } else {
+            const endDate = new Date(registeredDate);
+            endDate.setFullYear(
+                endDate.getFullYear() + subscriptionPeriod
+            );
+            calculatedEndDate = endDate
+        }
 
         const finalStatus = forceCheckActiveStatusBasedOnEndDate(status, calculatedEndDate);
 
@@ -236,9 +255,10 @@ function handleAddMachine(req, res) {
             machine_type_id,
             customer_id,
             machine_id,
-            registered_date: new Date(registeredDate).toISOString(),
-            end_date: new Date(calculatedEndDate).toISOString(),
+            registered_date: registeredDate.toISOString(),
+            end_date: calculatedEndDate.toISOString(),
             subscription_fees,
+            subscription_period: subscriptionPeriod,
             status: finalStatus,
             data: JSON.stringify(additionalDataObject)
         }
@@ -288,13 +308,14 @@ function renderEditMachinePage(req, res) {
 function handleEditMachine(req, res) {
     const { id } = req.params;
     const body = req.body;
+    
     if (!id) {
         return res.status(400).json({ success: false, message: 'Machine ID is required.' });
     }
 
     try {
 
-        const requiredFieldCheck = checkRequiredFields(body, ['machine_type_id', 'customer_id', 'machine_id', 'subscription_fees']);
+        const requiredFieldCheck = checkRequiredFields(body, ['machine_type_id', 'customer_id', 'machine_id', 'subscription_fees', 'subscription_period']);
         if (!requiredFieldCheck.valid) {
             const missingField = requiredFieldCheck.missingField;
             logger.warn(`Missing ${missingField} in handleAddMachine:`, body);
@@ -316,25 +337,31 @@ function handleEditMachine(req, res) {
             return res.status(400).json({ success: false, message: 'Selected machine type does not exist.' });
         }
 
+        const subscriptionPeriod = Number(body.subscription_period);
+        if (!Number.isInteger(subscriptionPeriod) || subscriptionPeriod < 1) {
+            return res.status(400).json({ success: false, message: 'Subscription period must be a positive integer.' });
+        }
+
         const additionalDataObject = filterAdditionalFields(body.machine_type_id, body.additional_fields);
 
         const isEditingRegisteredDateValid = body.registered_date && !isNaN(new Date(body.registered_date).getTime());
-        const registeredDate = isEditingRegisteredDateValid ? new Date(body.registered_date) : existingMachine.registered_date;
+        const registeredDate = isEditingRegisteredDateValid ? new Date(body.registered_date) : new Date(existingMachine.registered_date);
 
         const isEditingEndDateValid = body.end_date && !isNaN(new Date(body.end_date).getTime());
-        const calculatedEndDate = isEditingEndDateValid ? new Date(body.end_date) : existingMachine.end_date;
+        const calculatedEndDate = isEditingEndDateValid ? new Date(body.end_date) : new Date(existingMachine.end_date);
 
         const finalStatus = forceCheckActiveStatusBasedOnEndDate(body.status || existingMachine.status, calculatedEndDate);
 
-        const isCustomerChanged = existingMachine.customer_id !== existingCustomer.id;
+        const isCustomerChanged = String(existingMachine.customer_id) !== String(existingCustomer.id);
 
         const machineDataToUpdate = {
             machine_type_id: body.machine_type_id,
             customer_id: body.customer_id,
             machine_id: body.machine_id,
-            registered_date: new Date(registeredDate).toISOString(),
-            end_date: new Date(calculatedEndDate).toISOString(),
+            registered_date: registeredDate.toISOString(),
+            end_date: calculatedEndDate.toISOString(),
             subscription_fees: body.subscription_fees,
+            subscription_period: subscriptionPeriod,
             status: finalStatus,
             data: JSON.stringify(additionalDataObject),
             renewal_process_id: isCustomerChanged ? null : finalStatus == 'inactive' ? null : existingMachine.renewal_process_id,

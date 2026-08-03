@@ -12,6 +12,7 @@ const machineRegistrationDateInput = document.getElementById('machine-registrati
 const endDateInput = document.getElementById('end-date');
 const feesInput = document.getElementById('subscription-fees');
 const machineStatusInput = document.getElementById('machine-status');
+const subscrptionPeriodInput = document.getElementById('subscription-period');
 
 function formatDateInputValue(date) {
     const d = new Date(date);
@@ -176,16 +177,17 @@ if (window.customersData) {
 // Handle machine regestration date and end date inputs with default values and error handling.
 if (machineRegistrationDateInput && endDateInput) {
 
+    let userManuallyEnteredEndDate = false;
+
     const today = new Date();
-    const oneYear = 1000 * 60 * 60 * 24 * 365;
 
     machineRegistrationDateInput.value = formatDateInputValue(today);
-    endDateInput.value = formatDateInputValue(new Date(today.getTime() + oneYear));
 
+    // Auto update on active status and end date (if the end date is not selected or empty)
     machineRegistrationDateInput.addEventListener('change', (e) => {
 
-        const selectedDate = new Date(e.target.value).getTime();
-        const endDate = new Date(endDateInput.value).getTime();
+        const selectedDate = new Date(e.target.value);
+        const endDate = new Date(endDateInput.value);
 
         if (selectedDate > endDate) {
             endDateInput.value = formatDateInputValue(selectedDate);
@@ -193,19 +195,25 @@ if (machineRegistrationDateInput && endDateInput) {
             return;
         }
 
-        if (isNaN(endDate)) {
-            const oneYear = 1000 * 60 * 60 * 24 * 365;
-            const calculateEndDate = new Date(selectedDate + oneYear);
-            endDateInput.value = formatDateInputValue(calculateEndDate);
-            changeActiveStatusBasedOnDates(calculateEndDate);
-            return;
-        }
-
+        updateEndDate(endDate, selectedDate);
     });
 
     endDateInput.addEventListener('change', (e) => {
         const selectedDate = new Date(e.target.value).getTime();
+        if (isNaN(selectedDate)) {
+            userManuallyEnteredEndDate = false;
+        } else {
+            userManuallyEnteredEndDate = true;
+        }
         changeActiveStatusBasedOnDates(selectedDate);
+    });
+
+    // Auto update on active status and end date (if the end date is not selected or empty)
+    subscrptionPeriodInput.addEventListener('change', (e) => {
+        const selectedDate = new Date(machineRegistrationDateInput.value);
+        const endDate = new Date(endDateInput.value);
+        updateEndDate(endDate, selectedDate);
+        e.target.value = parseInt(e.target.value);
     });
 
     machineStatusInput.addEventListener('change', (e) => {
@@ -225,6 +233,18 @@ if (machineRegistrationDateInput && endDateInput) {
         const isActive = date > Date.now();
         machineStatusInput.value = isActive ? 'active' : 'inactive';
     }
+
+    const updateEndDate = (endDate, selectedDate) => {
+        if (isNaN(endDate.getTime()) && !userManuallyEnteredEndDate) {
+            const subscriptionPeriod = Number(subscrptionPeriodInput.value) || 1;
+            const n_endDate = new Date(selectedDate)
+            n_endDate.setFullYear(
+                n_endDate.getFullYear() + subscriptionPeriod
+            );
+            endDateInput.value = formatDateInputValue(n_endDate);
+            changeActiveStatusBasedOnDates(n_endDate);
+        }
+    }
 }
 
 
@@ -237,11 +257,13 @@ if (addMachineSubmitButton && typeSelector) {
         const customerId = selectedCustomerId?.dataset.selectedCustomerId?.trim() || '';
         const machineIdInput = document.getElementById('machine-id');
         const subscriptionFeesInput = document.getElementById('subscription-fees');
+        const subscriptionPeriodInput = document.getElementById('subscription-period');
         const registrationDateInput = document.getElementById('machine-registration-date');
         const endDateInput = document.getElementById('end-date');
 
         const machineId = machineIdInput?.value.trim() || '';
         const subscriptionFees = subscriptionFeesInput?.value.trim() || '';
+        const subscriptionPeriod = subscriptionPeriodInput?.value.trim() || '';
         const status = machineStatusInput?.value.trim() || 'active';
         const registeredDate = registrationDateInput?.value || formatDateInputValue(new Date());
         const endDate = endDateInput?.value || formatDateInputValue(new Date(new Date(registeredDate).getTime() + (1000 * 60 * 60 * 24 * 365)));
@@ -268,6 +290,11 @@ if (addMachineSubmitButton && typeSelector) {
             isValid = false;
         }
 
+        if (!subscriptionPeriod || Number.isNaN(Number(subscriptionPeriod))) {
+            setMachineFieldError('subscription-period', 'Enter a valid subscription period.')
+            isValid = false;
+        }
+
         if (!isValid) {
             window?.renderError('Please fix the highlighted fields before continuing.');
             return;
@@ -278,6 +305,7 @@ if (addMachineSubmitButton && typeSelector) {
             customer_id: Number(customerId),
             machine_id: machineId,
             subscription_fees: Number(subscriptionFees),
+            subscription_period: Number(subscriptionPeriod),
             status,
             registered_date: registeredDate,
             end_date: endDate,

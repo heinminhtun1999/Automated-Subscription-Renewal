@@ -144,6 +144,7 @@ const machinesTable = `
     customer_id INTEGER NOT NULL,
     machine_id TEXT NOT NULL UNIQUE,
     subscription_fees REAL NOT NULL,
+    subscription_period INTEGER NOT NULL DEFAULT 1 CHECK (subscription_period >= 1),
     registered_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     end_date DATETIME,
     status TEXT CHECK (status IN ('active', 'inactive')) NOT NULL DEFAULT 'active',

@@ -120,6 +120,7 @@ function seedData(production) {
                     machine_type_id: machineType.id,
                     customer_id: customer.lastInsertRowid || customer.id,
                     subscription_fees: row["Renewal Fee (RM)"] || 0,
+                    subscription_period: 1,
                     registered_date: (new Date(row["Register Date"])).toISOString(),
                     end_date: (new Date(actualEndDate)).toISOString(),
                     status: new Date(actualEndDate) > new Date() ? "active" : "inactive",

@@ -3,7 +3,7 @@ const db = require("../db/db");
 const { SHEET_CONFIGS, PAYMENT_STATUS, PAYMENT_REQUIRED_FIELDS } = require("../utils/constants");
 const { uid, getUserMessage } = require("../utils/dataProcessors");
 const { preparePaymentBody } = require("../utils/services/fiuu");
-const { redirectTemplate, subscriptionRenewalSuccessTemplate } = require("../utils/htmlTemplates");
+const { redirectTemplate, customerSubscriptionRenewalSuccessTemplate, subscriptionRenewalSuccessTemplate } = require("../utils/htmlTemplates");
 const { insertOrder, updateOrder, getOrder } = require("../repositories/orderRepository");
 const { getCustomerById } = require("../repositories/customerRepository");
 const { insertOrderItem, getOrderItemsByOrderId } = require("../repositories/orderItemRepository");
@@ -198,7 +198,7 @@ function paymentReturn(req, res, next) {
 
         // Failed payment - mark order as failed with failure remark to prevent retries, and show failure message. 
         // Process status remains pending as we are waiting for callback to confirm final status; 
-        // if callback is not received within expected timeframe, we can set up a cron job to mark it as 
+        // if callback is not received within expected timeframe, we have a cron job to mark it as 
         // completed with failed status to prevent indefinite pending state.
         if (body.status === "11") {
             updateOrder(existingOrder.order_id, {
@@ -221,7 +221,7 @@ function paymentReturn(req, res, next) {
             });
         }
 
-        // Pending payment - show pending message but do not update process status to completed as we are waiting for the callback to confirm the final status. 
+        // Pending payment - show pending message, and waiting for the callback to confirm the final status. 
         // Setting process_status back to pending to allow the callback handler to get the order entry and update the status.
         if (body.status === "22") {
             updateOrder(existingOrder.order_id, {
@@ -245,7 +245,7 @@ function paymentReturn(req, res, next) {
         }
 
         // For successful payment, we will show processing status as we are waiting for the callback to update the final status. 
-        // This is to handle the case where user completes payment but does not return to the site or callback is delayed for some reason. 
+        // This is to handle the case when user completes payment but does not return to the site or callback is delayed for some reason. 
         // We will set it to completed in callback once we update the machines.
         updateOrder(existingOrder.order_id, {
             transaction_id: body.tranID,
@@ -370,7 +370,7 @@ async function paymentCallback(req, res) {
             const machines = getMachinesByIds(machineIds);
             for (const machine of machines) {
                 const newEndDate = new Date(machine.end_date);
-                newEndDate.setFullYear(newEndDate.getFullYear() + 1)
+                newEndDate.setFullYear(newEndDate.getFullYear() + (machine.subscription_period || 1))
                 updateMachine(machine.id, {
                     end_date: newEndDate.toISOString(),
                     renewal_process_id: null,
@@ -382,6 +382,7 @@ async function paymentCallback(req, res) {
             // Cleaning up renewal_process_id
             updateMultipleEmailMachinesByOrderIdAndMachineIds(existingOrder.order_id, machineIds, { renewal_process_id: null });
 
+            // Mark order process_status as completed
             updateOrder(existingOrder.order_id,
                 {
                     transaction_id: body.tranID,
@@ -415,6 +416,11 @@ async function paymentCallback(req, res) {
 
         // Send the email notification to customer support after the payment and the process is successfully completed
         if (emailPayload) {
+            if (existingOrder.email) {
+                const customerEmailBody = customerSubscriptionRenewalSuccessTemplate(emailPayload);
+                await sendEmail(existingOrder.email, "Subscription Renewal Confirmation", customerEmailBody);
+            }
+
             const emailBody = subscriptionRenewalSuccessTemplate(emailPayload);
             await sendEmail(process.env.CS_EMAIL, "Machines Subscription Renewal", emailBody)
         }

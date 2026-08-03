@@ -322,9 +322,113 @@ const redirectTemplate = (hiddenInputs) => `<!DOCTYPE html>
 </script>
 </html>`;
 
+// Email template for customers after a successful payment and machine renewal.
+const customerSubscriptionRenewalSuccessTemplate = ({ companyName, amount, transactionDate, orderId, machines = [] }) => {
+    const formatMoney = (value) => Number(value || 0).toFixed(2);
+    const formatDateTime = (value) => {
+        const date = new Date(value);
+        return Number.isNaN(date.getTime())
+            ? 'N/A'
+            : date.toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" });
+    };
+    const formatDate = (value) => {
+        const date = new Date(value);
+        return Number.isNaN(date.getTime())
+            ? 'N/A'
+            : date.toLocaleDateString("en-MY", { timeZone: "Asia/Kuala_Lumpur" });
+    };
+
+    const rows = machines && machines.length ? machines.map(m => `
+                        <tr>
+                                <td style="padding:12px 8px;border-top:1px solid #dee2e6;">${m.machine_id ?? 'N/A'}</td>
+                                <td style="padding:12px 8px;border-top:1px solid #dee2e6;">${m.machine_type_name ?? 'N/A'}</td>
+                                <td style="padding:12px 8px;border-top:1px solid #dee2e6;">RM ${formatMoney(m.subscription_fees)}</td>
+                                <td style="padding:12px 8px;border-top:1px solid #dee2e6;">${formatDate(m.end_date)}</td>
+                        </tr>`).join('') : `
+                        <tr>
+                                <td colspan="4" style="padding:16px; text-align:center; color:#64748b; border-top:1px solid #dee2e6;">No renewed machines listed.</td>
+                        </tr>`;
+
+    return `<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Subscription Renewal Confirmation</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f6f8; font-family: Arial, sans-serif; color:#333333;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="padding:20px 0;">
+        <tr>
+            <td align="center">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; background:#ffffff; border-radius:8px; overflow:hidden; border:1px solid #e5e5e5; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                    <tr>
+                        <td style="background-color:#198754; padding:20px 40px; text-align:center;">
+                            <h2 style="margin:0; color:#ffffff; font-weight:600; font-size: 24px;">
+                                Subscription Renewal Confirmation
+                            </h2>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 40px;">
+                            <p style="font-size: 16px; margin-top:0;">Dear ${companyName || 'Valued Customer'},</p>
+
+                            <p style="font-size: 16px;">
+                                Your payment has been received and your selected machines have been renewed successfully.
+                            </p>
+
+                            <div style="margin:24px 0; padding: 20px; background-color: #f8f9fa; border-radius: 6px;">
+                                <p style="margin:6px 0; font-size: 16px;"><strong>Company Name:</strong> ${companyName || 'N/A'}</p>
+                                <p style="margin:6px 0; font-size: 16px;"><strong>Total Amount:</strong> RM ${formatMoney(amount)}</p>
+                                <p style="margin:6px 0; font-size: 16px;"><strong>Transaction Date:</strong> ${formatDateTime(transactionDate)}</p>
+                                <p style="margin:6px 0; font-size: 16px;"><strong>Order ID:</strong> ${orderId || 'N/A'}</p>
+                            </div>
+
+                            <h3 style="margin-top: 30px; font-size: 20px;">Renewed Machines</h3>
+
+                            <table role="table" aria-label="Renewed machines" style="width:100%; border-collapse:collapse; margin-top:12px; font-size: 14px;">
+                                <thead>
+                                    <tr>
+                                        <th style="padding:12px 8px;border-bottom:2px solid #dee2e6; background-color: #f8f9fa; text-align: left;">Machine ID</th>
+                                        <th style="padding:12px 8px;border-bottom:2px solid #dee2e6; background-color: #f8f9fa; text-align: left;">Machine Type</th>
+                                        <th style="padding:12px 8px;border-bottom:2px solid #dee2e6; background-color: #f8f9fa; text-align: left;">Machine Subscription Fee</th>
+                                        <th style="padding:12px 8px;border-bottom:2px solid #dee2e6; background-color: #f8f9fa; text-align: left;">New End Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rows}
+                                </tbody>
+                            </table>
+
+                            <p style="margin-top:24px; font-size: 16px;">
+                                If you need any assistance, please contact our support team at
+                                <a href="mailto:customerservice@arvending.com.my" style="color:#0d6efd; text-decoration:none;">customerservice@arvending.com.my</a>.
+                            </p>
+
+                            <hr style="border:none; border-top:1px solid #eeeeee; margin:30px 0;">
+
+                            <p style="font-size:13px; color:#888888; line-height:1.5; margin:0;">
+                                Best regards,<br>
+                                <strong style="color:#333333;">AR VENDING Team</strong><br>
+                                No.31, Jalan Metro 1/1,<br>
+                                Bandar Metro Puchong,<br>
+                                47160 Puchong, Selangor, Malaysia<br>
+                                <a href="mailto:customerservice@arvending.com.my" style="color:#888888; text-decoration:none;">
+                                    customerservice@arvending.com.my
+                                </a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
+};
+
 // Email template to notify Customer Support about successful subscription renewals.
 const subscriptionRenewalSuccessTemplate = ({ companyName, amount, transactionDate, orderId, machines = [] }) => {
-        const rows = machines && machines.length ? machines.map(m => `
+    const rows = machines && machines.length ? machines.map(m => `
                         <tr>
                                 <td style="padding:12px 8px;border-top:1px solid #dee2e6;">${m.machine_id}</td>
                                 <td style="padding:12px 8px;border-top:1px solid #dee2e6;">${m.machine_type_name}</td>
@@ -335,7 +439,7 @@ const subscriptionRenewalSuccessTemplate = ({ companyName, amount, transactionDa
                                 <td colspan="4" style="padding:16px; text-align:center; color:#64748b; border-top:1px solid #dee2e6;">No machines listed.</td>
                         </tr>`;
 
-        return `<!doctype html>
+    return `<!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
@@ -667,6 +771,7 @@ module.exports = {
     failListTemplate,
     otpTemplate,
     redirectTemplate,
+    customerSubscriptionRenewalSuccessTemplate,
     subscriptionRenewalSuccessTemplate,
     reconciliationSuccessTemplate,
     failedOrdersNotificationTemplate,

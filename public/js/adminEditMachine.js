@@ -10,6 +10,7 @@ const companySuggestions = document.getElementById('company-name-search');
 const selectedCompanyName = document.getElementById('selected-company-name');
 const selectedCustomerId = document.querySelector('[data-selected-customer-id]');
 const machineStatusInput = document.getElementById('machine-status');
+const subscrptionPeriodInput = document.getElementById('subscription-period');
 
 function formatData(data) {
     return JSON.parse(data.replace(/&#34;/g, '"').replace(/&#39;/g, "'"));
@@ -183,11 +184,13 @@ if (window.data) {
             const customerId = selectedCustomerId?.dataset.selectedCustomerId?.trim() || '';
             const machineIdInput = document.getElementById('machine-id');
             const subscriptionFeesInput = document.getElementById('subscription-fees');
+            const subscriptionPeriodInput = document.getElementById('subscription-period');
             const registrationDateInput = document.getElementById('machine-registration-date');
             const endDateInput = document.getElementById('end-date');
 
             const machineId = machineIdInput?.value.trim() || '';
             const subscriptionFees = subscriptionFeesInput?.value.trim() || '';
+            const subscriptionPeriod = subscriptionPeriodInput?.value.trim() || '';
             const status = machineStatusInput?.value.trim() || 'active';
             const registeredDate = registrationDateInput?.value || formatDateInputValue(new Date());
             const endDate = endDateInput?.value || formatDateInputValue(new Date(new Date(registeredDate).getTime() + (1000 * 60 * 60 * 24 * 365)));
@@ -209,6 +212,11 @@ if (window.data) {
                 isValid = false;
             }
 
+            if (!subscriptionPeriod || Number.isNaN(Number(subscriptionPeriod))) {
+                setMachineFieldError('subscription-period', 'Enter a valid subscription period.')
+                isValid = false;
+            }
+
             if (status === 'active' && (new Date(endDateInput.value).getTime() < Date.now())) {
                 setMachineFieldError('machine-status', 'Cannot set status to active if end date is in the past. Please update the end date or change the status to inactive.');
                 isValid = false;
@@ -224,6 +232,7 @@ if (window.data) {
                 customer_id: Number(customerId),
                 machine_id: machineId,
                 subscription_fees: Number(subscriptionFees),
+                subscription_period: Number(subscriptionPeriod),
                 status,
                 registered_date: registeredDate,
                 end_date: endDate,
@@ -263,13 +272,15 @@ if (window.data) {
     }
 }
 
+
 // Handle machine regestration date and end date inputs with default values and error handling.
 if (machineRegistrationDateInput && endDateInput && machineStatusInput) {
-
+    let userManuallyEnteredEndDate = false;
+    // Auto update on active status and end date (if the end date is not selected or empty)
     machineRegistrationDateInput.addEventListener('change', (e) => {
 
-        const selectedDate = new Date(e.target.value).getTime();
-        const endDate = new Date(endDateInput.value).getTime();
+        const selectedDate = new Date(e.target.value);
+        const endDate = new Date(endDateInput.value);
 
         if (selectedDate > endDate) {
             endDateInput.value = formatDate(selectedDate);
@@ -277,43 +288,56 @@ if (machineRegistrationDateInput && endDateInput && machineStatusInput) {
             return;
         }
 
-        if (isNaN(endDate)) {
-            const oneYear = 1000 * 60 * 60 * 24 * 365;
-            const calculateEndDate = new Date(selectedDate + oneYear);
-            endDateInput.value = formatDate(calculateEndDate);
-            changeActiveStatusBasedOnDates(calculateEndDate);
-            return;
-        }
+        updateEndDate(endDate, selectedDate);
     });
 
     endDateInput.addEventListener('change', (e) => {
         const selectedDate = new Date(e.target.value).getTime();
+        if (isNaN(selectedDate)) {
+            userManuallyEnteredEndDate = false;
+        } else {
+            userManuallyEnteredEndDate = true;
+        }
         changeActiveStatusBasedOnDates(selectedDate);
     });
 
-    // machineStatusInput.addEventListener('change', (e) => {
-    //     const status = e.target.value;
-    //     const machineStatusErrorSpan = document.querySelector(`[data-error-for="machine-status"]`);
-    //     if (status === 'active' && (new Date(endDateInput.value).getTime() < Date.now())) {
-    //         machineStatusErrorSpan.textContent = 'Cannot set status to active if end date is in the past. Please update the end date or change the status to inactive.';
-    //         machineStatusErrorSpan.classList.remove('hidden');
-    //         // e.target.value = 'inactive';
-    //         areMachineFieldsValid = false;
-    //         // setTimeout(() => {
-    //         //     machineStatusErrorSpan.classList.add('hidden');
-    //         //     machineStatusErrorSpan.textContent = '';
-    //         //     areMachineFieldsValid = true
-    //         // }, 5000);
-    //     } else {
-    //         machineStatusErrorSpan.classList.add('hidden');
-    //         machineStatusErrorSpan.textContent = '';
-    //         areMachineFieldsValid = true;
-    //     }
-    // });
+    // Auto update on active status and end date (if the end date is not selected or empty)
+    subscrptionPeriodInput.addEventListener('change', (e) => {
+        const selectedDate = new Date(machineRegistrationDateInput.value);
+        const endDate = new Date(endDateInput.value);
+        updateEndDate(endDate, selectedDate);
+        e.target.value = parseInt(e.target.value);
+    });
+
+    machineStatusInput.addEventListener('change', (e) => {
+        const status = e.target.value;
+        const machineStatusErrorSpan = document.querySelector(`[data-error-for="machine-status"]`);
+        if (status === 'active' && (new Date(endDateInput.value).getTime() < Date.now())) {
+            machineStatusErrorSpan.textContent = 'Cannot set status to active if end date is in the past. Please update the end date or change the status to inactive.';
+            machineStatusErrorSpan.classList.remove('hidden');
+            areMachineFieldsValid = false;
+        } else {
+            machineStatusErrorSpan.classList.add('hidden');
+            machineStatusErrorSpan.textContent = '';
+            areMachineFieldsValid = true;
+        }
+    });
 
     const changeActiveStatusBasedOnDates = (date) => {
         const isActive = date > Date.now();
         machineStatusInput.value = isActive ? 'active' : 'inactive';
+    }
+
+    const updateEndDate = (endDate, selectedDate) => {
+        if (isNaN(endDate.getTime()) && !userManuallyEnteredEndDate) {
+            const subscriptionPeriod = Number(subscrptionPeriodInput.value) || 1;
+            const n_endDate = new Date(selectedDate)
+            n_endDate.setFullYear(
+                n_endDate.getFullYear() + subscriptionPeriod
+            );
+            endDateInput.value = formatDate(n_endDate);
+            changeActiveStatusBasedOnDates(n_endDate);
+        }
     }
 }
 
