@@ -124,8 +124,8 @@ app.get('/admin/login', renderLoginPage);
 app.post('/admin/login', limiter, handleAuth);
 
 // Middleware to check if the user is authorized to access admin routes
-// app.use('/admin', isAuthenticated);
-// app.use('/api', isAuthenticated);
+app.use('/admin', isAuthenticated);
+app.use('/api', isAuthenticated);
 
 app.get('/admin', renderHomePage);
 
