@@ -34,16 +34,16 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci --only=production
+        run: npm ci --omit=dev
 
       - name: Determine deployment target
         run: |
-          if [[ "${GITHUB_REF}" == "refs/heads/development" ]]; then
-            echo "DEPLOY_PATH=/home/subscription-renewal-dev" >> $GITHUB_ENV
+          if [[ "${GITHUB_REF_NAME}" == "development" ]]; then
+            echo "DEPLOY_PATH=/home/subscription-renewal-dev/app" >> $GITHUB_ENV
             echo "PM2_ENV=development" >> $GITHUB_ENV
             echo "PM2_NAME=asr-dev" >> $GITHUB_ENV
           else
-            echo "DEPLOY_PATH=/homWe/subscription-renewal-prod" >> $GITHUB_ENV
+            echo "DEPLOY_PATH=/home/subscription-renewal-prod/app" >> $GITHUB_ENV
             echo "PM2_ENV=production" >> $GITHUB_ENV
             echo "PM2_NAME=asr" >> $GITHUB_ENV
           fi
@@ -63,16 +63,49 @@ jobs:
           ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts
 
           rsync -az --delete \
-          --exclude="node_modules" \
-          --exclude=".git" \
-          --exclude="credentials.json" \
-          --exclude=".env" \
-          --exclude="src/db/database.db*" \
-          ./ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH
+            --exclude="node_modules" \
+            --exclude=".git" \
+            --exclude=".env" \
+            --exclude="src/db/database.db*" \
+            ./ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH
 
           ssh $DEPLOY_USER@$DEPLOY_HOST << EOF
-            cd $DEPLOY_PATH
-            npm ci --only=production
-            pm2 reload "$PM2_NAME" --update-env > /dev/null 2>&1 || \
-              NODE_ENV=$PM2_ENV PORT=4000 pm2 start src/index.js --name "$PM2_NAME"
+            export NVM_DIR="\$HOME/.nvm"
+            [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
+
+            nvm install 20
+            nvm use 20
+
+            echo "=============================="
+            echo "USING NODE: \$(node -v)"
+            echo "NODE PATH: \$(which node)"
+            echo "NPM PATH: \$(which npm)"
+            echo "=============================="
+
+            cd $DEPLOY_PATH || exit 1
+
+            if [ ! -f package-lock.json ]; then
+              echo "❌ package-lock.json missing"
+              exit 1
+            fi
+
+            # Remove old native binaries compiled against wrong ABI
+            rm -rf node_modules
+
+
+            # Fresh install using Node 20 ABI
+            \$(which npm) ci --omit=dev
+
+            # Rebuild native modules for Node 20
+            \$(which npm) rebuild
+
+            # Stop existing processes safely before recreating them from the ecosystem file
+            pm2 delete "$PM2_NAME" 2>/dev/null || true
+            pm2 delete "Automated Subscription Renewal" 2>/dev/null || true
+            pm2 delete "Automated Subscription Renewal Cron" 2>/dev/null || true
+
+            # Start both the web app and cron worker from the PM2 ecosystem config
+            NODE_ENV=$PM2_ENV pm2 start ecosystem.config.js --env $PM2_ENV
+
+            pm2 save
           EOF
