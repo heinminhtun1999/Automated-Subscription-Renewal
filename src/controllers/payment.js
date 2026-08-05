@@ -370,7 +370,7 @@ async function paymentCallback(req, res) {
             const machines = getMachinesByIds(machineIds);
             for (const machine of machines) {
                 const newEndDate = new Date(machine.end_date);
-                newEndDate.setFullYear(newEndDate.getFullYear() + (machine.subscription_period || 1))
+                newEndDate.setFullYear(newEndDate.getFullYear() + (machine.subscription_period))
                 updateMachine(machine.id, {
                     end_date: newEndDate.toISOString(),
                     renewal_process_id: null,

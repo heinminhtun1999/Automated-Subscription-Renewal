@@ -3,7 +3,7 @@ const uuid = require('uuid');
 const logger = require('./winston');
 const db = require('../../db/db');
 const { convert } = require('html-to-text');
-const { dueDateTemplate, failListTemplate } = require('../htmlTemplates');
+const { dueDateTemplate, failListTemplate, renewalProcessUpsertFailureTemplate } = require('../htmlTemplates');
 const { generateJWT } = require('../utils');
 const { insertEmailMachine, updateEmailMachine } = require('../../repositories/emailMachinesRepository');
 const { updateMachine } = require('../../repositories/machineRepository');
@@ -66,16 +66,18 @@ async function prepareAndSendDueDateEmail(combinedData) {
         // Get the email address from the first element of the array. It is certain that there is at least one element in the array.
         const emailAddress = companyData[0].email;
 
-        // Generate the URL for the terminals selection list for subscription renewal.
-        const body = {
-            customer_id: companyData[0].customer_id
-        }
-        const token = generateJWT(body);
-        const URL = process.env.PUBLIC_BASE_URL + "/machines?token=" + token;
-
-        const emailBody = dueDateTemplate(URL);
 
         try {
+
+            // Generate the URL for the terminals selection list for subscription renewal.
+            const body = {
+                customer_id: companyData[0].customer_id
+            }
+            const token = generateJWT(body);
+            const URL = process.env.PUBLIC_BASE_URL + "/machines?token=" + token;
+
+            const emailBody = dueDateTemplate(URL);
+
             const insertedEmail = insertEmail(emailAddress, companyData[0].customer_id, 'pending');
 
             // Send email
@@ -113,7 +115,8 @@ async function prepareAndSendDueDateEmail(combinedData) {
             } else {
 
                 // If the email is sent successfully, perform upsert. 
-                // If there is any failure in updating the sheet, log the error and continue with the next email sending without stopping the whole process.
+                // If there is any failure in updating the database, log the error for particular machine and continue without stopping the whole process.
+                const errorMachines = [];
                 for (const row of companyData) {
                     const isFirstEmailExist = row.emailMachine && row.renewal_process_id && row.emailMachine.first_email_id;
 
@@ -128,8 +131,15 @@ async function prepareAndSendDueDateEmail(combinedData) {
                             }).immediate();
                         }
                     } catch (error) {
-                        logger.error(`Failed to upsert email machine for ${emailAddress}:`, error);
-
+                        logger.error(`Failed to upsert email machine for machine id: ${row.id} of customer id: ${companyData[0].customer_id}. Error: `, error);
+                        errorMachines.push({ machine_id: row.id, error: error.message || 'Unknown Error' });
+                    }
+                }
+                if (errorMachines.length > 0) {
+                    const emailBody2 = renewalProcessUpsertFailureTemplate(companyName, errorMachines);
+                    const { ok, error } = await sendEmail(process.env.DEV_EMAIL, '|AR VENDING| Error occured in upserting after sending email', emailBody2);
+                    if (!ok) {
+                        logger.error(`Failed to notify to developer on renewal process id insertion failure in manual email reminder.`)
                     }
                 }
             }

@@ -17,6 +17,7 @@ function getCustomerById(customerId) {
 }
 
 function getCustomerByIdWithMachines(customerId) {
+
     const stmt = `
         SELECT c.*, m.id AS m_id, m.machine_id, m.status, m.end_date, mt.name AS machine_type
         FROM customers c

@@ -29,7 +29,6 @@ const machineSelection = async (req, res, next) => {
     }
 
     const { customer_id } = decoded;
-
     const customer = getCustomerById(customer_id);
     const machinesData = getMachineByDaysLeftAndCustomerId(45, customer_id, true);
 

@@ -47,7 +47,7 @@ function getMachinesByIds(ids) {
     return db.prepare(stmt).all(...ids);
 }
 
-function getMachineByDaysLeft(daysLeft, includeExpired = false, active) {
+function getMachineByDaysLeft(daysLeft, includeExpired = false, active, customer) {
     const stmt = `
         SELECT m.*, c.id AS customer_id, c.company_name, c.pic_name, c.email, mt.name AS machine_type_name, 
         julianday(m.end_date) - julianday('now') AS days_left

@@ -557,7 +557,6 @@ const failedOrdersNotificationTemplate = (orders) => {
     `;
 };
 
-
 const developerNotificationTemplate = (failedOrders, updateFailedOrders) => {
     const failedOrdersRows = failedOrders.map(order => `
         <tr>
@@ -653,6 +652,70 @@ const developerNotificationTemplate = (failedOrders, updateFailedOrders) => {
     `;
 };
 
+const renewalProcessUpsertFailureTemplate = (customer, failures = []) => {
+    const rows = failures.map(failure => {
+        const machineId = failure.machineId ||  'N/A';
+        const errorMessage = failure.errorMessage || 'N/A';
+
+        return `
+        <tr>
+            <td style="padding: 12px 8px; border-top: 1px solid #dee2e6;">${machineId}</td>
+            <td style="padding: 12px 8px; border-top: 1px solid #dee2e6;">${errorMessage}</td>
+        </tr>
+    `;
+    }).join('');
+
+    return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Automated Subscription Renewal - Renewal Process Upsert Failure</title>
+        </head>
+        <body style="margin:0; padding:0; background-color:#f4f6f8; font-family: Arial, sans-serif; color:#333333;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="padding:20px 0;">
+                <tr>
+                    <td align="center">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:800px; background:#ffffff; border-radius:8px; overflow:hidden; border:1px solid #e5e5e5; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                            <tr>
+                                <td style="background-color:#dc3545; padding:20px 40px; text-align:center;">
+                                    <h2 style="margin:0; color:#ffffff; font-weight:600; font-size: 24px;">
+                                        Renewal Process Upsert Failure
+                                    </h2>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 40px;">
+                                    <p style="font-size: 16px; margin-top:0;">The reminder email was sent successfully, but the renewal process ID upsert failed for the following machine(s). Please review the database update issue.</p>
+                                    <div style="margin: 0 0 12px; padding: 12px 16px; background-color: #f8f9fa; border-radius: 6px; border: 1px solid #dee2e6;">
+                                        <p style="margin:0 0 6px; font-size: 14px;"><strong>Date/Time:</strong> ${new Date().toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" })}</p>
+                                        <p style="margin:0; font-size: 14px;"><strong>Customer Name:</strong> ${customer}</p>
+                                    </div>
+                                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px;">
+                                        <thead>
+                                            <tr>
+                                                <th style="padding: 12px 8px; border-bottom: 2px solid #dee2e6; background-color: #f8f9fa; text-align: left;">Machine ID</th>
+                                                <th style="padding: 12px 8px; border-bottom: 2px solid #dee2e6; background-color: #f8f9fa; text-align: left;">Error Message</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${rows || `
+                                            <tr>
+                                                <td colspan="2" style="padding:16px; text-align:center; color:#64748b; border-top:1px solid #dee2e6;">No failure records available.</td>
+                                            </tr>`}
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+    `;
+};
 
 const reconciliationSuccessTemplate = (orders) => {
     const rows = orders.map(order => `
@@ -708,7 +771,6 @@ const reconciliationSuccessTemplate = (orders) => {
         </html>
     `;
 };
-
 
 const machineDeactivationNotificationTemplate = (machines) => {
     const rows = machines.map(machine => `
@@ -776,5 +838,6 @@ module.exports = {
     reconciliationSuccessTemplate,
     failedOrdersNotificationTemplate,
     developerNotificationTemplate,
+    renewalProcessUpsertFailureTemplate,
     machineDeactivationNotificationTemplate
 };

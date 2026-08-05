@@ -40,3 +40,38 @@ document.querySelectorAll('[data-machine-row]').forEach((row) => {
         window.location.href = `/admin/machines/${machineId}`;
     });
 });
+
+// Manual Email Sending Handler
+const sendEmailBtn = document.querySelector('#send-reminder-btn');
+sendEmailBtn.addEventListener('click', (async e => {
+    const customerId = sendEmailBtn.dataset.customerId;
+
+    const readyLabel = document.querySelector('#send-reminder-ready');
+    const sendingLabel = document.querySelector('#send-reminder-sending');
+
+    sendEmailBtn.disabled = true;
+    readyLabel.classList.add('hidden');
+    sendingLabel.classList.remove('hidden');
+    try {
+
+        const response = await fetch("/api/admin/send-email", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                customer_id: customerId
+            })
+        });
+
+        const result = await window?.parseResponseData(response);
+
+        window?.renderSuccess(result.message);
+
+    } catch (err) {
+        window?.renderError(err.message)
+    }
+    readyLabel.classList.remove('hidden');
+    sendingLabel.classList.add('hidden');
+    sendEmailBtn.disabled = false;
+}));

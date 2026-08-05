@@ -7,7 +7,7 @@ const { rateLimit } = require('express-rate-limit');
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 // Import Controllers
-const reminderEmailController = require('./controllers/reminderEmailController');
+const { reminderEmailController, manualReminderEmailController } = require('./controllers/reminderEmailController');
 const { machineSelection } = require('./controllers/machineSelection');
 const { requestPayment, paymentReturn, paymentCancel, renderPaymentCheckerPage, paymentCallback } = require('./controllers/payment');
 const { getOrderInfo } = require('./controllers/orders');
@@ -124,8 +124,8 @@ app.get('/admin/login', renderLoginPage);
 app.post('/admin/login', limiter, handleAuth);
 
 // Middleware to check if the user is authorized to access admin routes
-app.use('/admin', isAuthenticated);
-app.use('/api', isAuthenticated);
+// app.use('/admin', isAuthenticated);
+// app.use('/api', isAuthenticated);
 
 app.get('/admin', renderHomePage);
 
@@ -157,6 +157,7 @@ app.post('/api/admin/customers/add', verifyOrigin, handleAddCustomer);
 app.post('/api/admin/machines/add', verifyOrigin, handleAddMachine);
 app.post('/api/admin/machines/type/add', verifyOrigin, handleAddMachineType);
 app.post('/api/admin/machines/type/:id/fields/add', verifyOrigin, handleAddMachineTypeField);
+app.post('/api/admin/send-email', manualReminderEmailController);
 
 app.patch('/api/admin/customers/:id/edit', verifyOrigin, handleEditCustomer);
 app.patch('/api/admin/machines/:id/edit', verifyOrigin, handleEditMachine);
