@@ -47,9 +47,11 @@
                                     <div class="rounded-2xl border border-slate-200/70 bg-slate-50 px-5 py-4 transition-colors hover:border-emerald-200 hover:bg-emerald-50/40">
                                         <p class="text-xs font-bold uppercase tracking-[0.18em] text-gray-500"><%= key %></p>
                                         <% if (key.toLowerCase() === 'company name') { %>
-                                            <a href="/admin/customers/<%= data.customer_id %>" class="mt-2 block break-words text-sm text-emerald-600 underline decoration-emerald-300 decoration-2 underline-offset-2"><%= value || '-' %></a>
+                                            <a href="/admin/customers/<%= data.customer_id %>" class="mt-2 block break-words text-sm text-emerald-600 underline decoration-emerald-300 decoration-2 underline-offset-2"><%= value ?? '-' %></a>
+                                        <% } else if (key.toLowerCase() === 'allow renewal after subscription expiration') { %>
+                                            <p class="mt-2 break-words text-sm text-gray-800"><%= value == 0 ? 'Not Allowed' : 'Allowed' %></p>
                                         <% } else { %>
-                                            <p class="mt-2 break-words text-sm text-gray-800 <%= key.toLowerCase() == 'status' ? value == 'active' ? 'text-emerald-600' : 'text-red-500' : '' %>"><%= value || '-' %></p>
+                                            <p class="mt-2 break-words text-sm <%= key.toLowerCase() == 'status' ? (value == 'active' ? 'text-emerald-600' : 'text-red-500') : '' %>"><%= value ?? '-' %></p>
                                         <% } %>
                                     </div>
                                 <% } %>

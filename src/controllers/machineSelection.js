@@ -56,6 +56,7 @@ const machineSelection = async (req, res, next) => {
             machine_type_name: machine.machine_type_name,
             days_left: daysLeftText,
             renewal_fees: machine.subscription_fees,
+            allow_renew_after_expiration: machine.allow_after_expired
         }
     })
     .sort((a, b) => a.days_left === 'Expired' ? 1 : b.days_left === 'Expired' ? -1 : a.days_left == 'Expires Today' ? -1 : parseInt(a.days_left) - parseInt(b.days_left)); // Sort by days left, with expired terminals at the end

@@ -25,9 +25,9 @@
                     <div class="machines-list" id="machines-list">
                         <!-- Machine items will be inserted here -->
                         <% data.machines.forEach(machine=> { %>
-                            <div class="machine-item <%= machine.days_left === 'Expired' ? 'disabled' : '' %>"
+                            <div class="machine-item <%= machine.days_left === 'Expired' && !machine.allow_renew_after_expiration ? 'disabled' : '' %>"
                                 onclick="toggleMachine(this)" data-machine-id="<%= machine.id %>"
-                                data-machine-disabled="<%= machine.days_left === 'Expired' %>">
+                                data-machine-disabled="<%= machine.days_left === 'Expired' && !machine.allow_renew_after_expiration %>">
                                 <div class="item-checkbox">
                                     <span class="checkbox"></span>
                                 </div>
@@ -55,11 +55,18 @@
                                             <span class="value amount">RM <%= machine.renewal_fees.toFixed(2) %></span>
                                         </div>
                                         <% if (machine.days_left==='Expired') { %>
-                                            <div class="detail-col">
-                                                <span class="label">Remark:</span>
-                                                <span class="value">Subscription for this device has expired. Please
-                                                    contact support.</span>
-                                            </div>
+                                            <% if (machine.allow_renew_after_expiration) { %>
+                                                <div class="detail-col">
+                                                    <span class="label">Remark:</span>
+                                                    <span class="value">This device has expired. However, you are allowed to renew subscription for this device.</span>
+                                                </div>
+                                            <% } else { %>
+                                                <div class="detail-col">
+                                                    <span class="label">Remark:</span>
+                                                    <span class="value">Subscription for this device has expired. Please
+                                                        contact support.</span>
+                                                </div>
+                                            <% } %>
                                         <% } %>
                                     </div>
                                 </div>

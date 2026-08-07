@@ -174,6 +174,11 @@ const colResizeOptions = {
     }
 }
 
+const getDateSortValue = (value) => {
+    const timestamp = value ? Date.parse(value) : NaN;
+    return Number.isNaN(timestamp) ? 0 : timestamp;
+};
+
 const options = {
     autoWidth: false,
     responsive: false,
@@ -183,8 +188,8 @@ const options = {
     columnDefs: [
         { targets: '_all', className: 'dt-head-left' },
         {
-            targets: '_all',
-            createdCell: function (td, cellData, rowData, row, col) {}
+            targets: 1,
+            type: 'num'
         }
     ],
     // enable ordering and set default sort to Date/Time (second column) desc
@@ -221,6 +226,21 @@ const options = {
 let emailHistoryDataTable = null;
 
 if (emailHistoryTable) {
+    const tbody = emailHistoryTable.querySelector('tbody');
+    if (tbody) {
+        const rows = Array.from(tbody.querySelectorAll('tr')).filter((row) => row.cells?.length > 1);
+
+        rows.sort((leftRow, rightRow) => {
+            const leftCell = leftRow.cells?.[1];
+            const rightCell = rightRow.cells?.[1];
+            const leftValue = leftCell ? getDateSortValue(leftCell.dataset.sort || leftCell.dataset.order || leftCell.textContent) : 0;
+            const rightValue = rightCell ? getDateSortValue(rightCell.dataset.sort || rightCell.dataset.order || rightCell.textContent) : 0;
+            return rightValue - leftValue;
+        });
+
+        rows.forEach((row) => tbody.appendChild(row));
+    }
+
     emailHistoryDataTable = new DataTable(emailHistoryTable, options);
 
     const updatePageSizeDisplay = () => {

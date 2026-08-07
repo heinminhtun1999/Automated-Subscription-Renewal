@@ -7,28 +7,34 @@ const { machineDeactivationNotificationTemplate } = require("../utils/htmlTempla
 async function handleExpiredMachines() {
     try {
         const machines = getMachineByDaysLeft(0, true, 'active');
-
-        const machineIdsToRemoveProcessId = [];
-        const machineIdsToMarkInactive = [];
+        
+        const machineIdsToRemoveProcessId = new Map();
+        const machineIdsToMarkInactive = new Map();
         machines.forEach(m => {
-            if (m.renewal_process_id) machineIdsToRemoveProcessId.push(m.id);
-            machineIdsToMarkInactive.push(m.id);
+            if (!m.allow_after_expired) {
+                
+                if (m.renewal_process_id) {
+                    machineIdsToRemoveProcessId.set(m.id, m)
+                };
+                machineIdsToMarkInactive.set(m.id,m );
+            }
         })
-
-        if (machineIdsToRemoveProcessId.length > 0) {
-            updateMultipleMachines(machineIdsToRemoveProcessId, { renewal_process_id: null });
-            logger.info(`Removed renewal process ID from ${machineIdsToRemoveProcessId.length} expired machines.`);
+        
+        
+        if (machineIdsToRemoveProcessId.size > 0) {
+            updateMultipleMachines([...machineIdsToRemoveProcessId.keys()], { renewal_process_id: null });
+            logger.info(`Removed renewal process ID from ${machineIdsToRemoveProcessId.size} expired machines.`);
         }
 
-        if (machineIdsToMarkInactive.length > 0) {
-            updateMultipleMachines(machineIdsToMarkInactive, { status: 'inactive' });
-            logger.info(`${machineIdsToMarkInactive.length} machines have been automatically set to inactive after the expiration.`);
-            
-            const emailBody = machineDeactivationNotificationTemplate(machines);
-            await sendEmail(process.env.CS_EMAIL, '|AR VENDING| Expired machines notices', emailBody)
+        if (machineIdsToMarkInactive.size > 0) {
+            updateMultipleMachines([...machineIdsToMarkInactive.keys()], { status: 'inactive' });
+            logger.info(`${machineIdsToMarkInactive.size} machines have been automatically set to inactive after the expiration.`);
+
+            const emailBody = machineDeactivationNotificationTemplate([...machineIdsToMarkInactive.values()]);
+            await sendEmail(process.env.CS_EMAIL, 'Expired machines notices', emailBody, "Machine Deativation Email", ['chiew@arvending.com.my', 'shirly@arvending.com.my']);
         }
     } catch (e) {
-        logger.error(`Error in handleExpiredMachines cron job: ${e.stack || e.message || e}`);
+        throw new Error(`\nError in handleExpiredMachines cron job: ${e.stack || e.message || e}`)
     }
 }
 

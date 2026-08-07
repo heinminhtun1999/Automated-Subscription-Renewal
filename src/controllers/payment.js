@@ -45,7 +45,9 @@ async function requestPayment(req, res, next) {
     const emailMachines = getEmailMachineByRenewalProcessIds(renewalProcessIds);
     const emailMachineRenewalProcessIds = emailMachines.map(em => em.renewal_process_id);
     const areAllMachineIdsValid = machineIdsFromPayload.every(id => emailMachines.some(emailMachine => emailMachine.machine_id === parseInt(id)));
+
     if (emailMachines.length === 0 || renewalProcessIds.length !== emailMachines.length || !areAllMachineIdsValid) {
+        console.log("This one has error? ")
         const err = new Error('We have encountered an issue while processing your request.\nIf the issue persists, contact support.');
         err.title = "Server Error";
         err.status = 500;
@@ -79,7 +81,7 @@ async function requestPayment(req, res, next) {
             customerId: customer.id,
             amount: parseFloat(bodyData.total).toFixed(2),
         }
-        
+
         // Atomically insert order and items.
         db.transaction(() => {
             insertOrder(orderInfo);
@@ -131,8 +133,8 @@ function paymentReturn(req, res, next) {
 
     // Fail closed if signature validation fails.
     if (!validateSkey(body)) {
-        logger.warn('Hash verification failed for payment return:', body, 'Computed Skey:', computeSkey(body), 'Provided Skey:', body.skey);
-        const err = new Error('Invalid data signature in payment return.');
+        logger.warn('Hash verification failed for payment return:', body, 'Provided Skey:', body.skey);
+        const err = new Error('Cannot verify payment.');
         err.title = 'Order Processing Error';
         err.status = 400;
         return next(err);
@@ -179,7 +181,7 @@ function paymentReturn(req, res, next) {
             logger.warn('No order record updated to processing status for payment return. Possible concurrent update or order already processed: ', body.orderid);
             let failedRemark = existingOrder.failed_remark;
             failedRemark = failedRemark ? "\n" + failedRemark.split(",").filter(m => m.includes("Error Description")).join("").replace("Error Description: ", "Reason: ") : "";
-            
+
             return res.render('return', {
                 data: {
                     orderId: existingOrder.order_id,
@@ -254,7 +256,7 @@ function paymentReturn(req, res, next) {
             paid_on: body.paydate,
             process_status: 'processing',
         }, { process_status: { operator: '=', value: 'processing' }, process_worker_level: { operator: '<=', value: 1 } });
-        
+
         return res.render('return', {
             data: {
                 orderId: existingOrder.order_id,
@@ -296,7 +298,7 @@ async function paymentCallback(req, res) {
 
     // Fail closed if signature validation fails.
     if (!validateSkey(body)) {
-        logger.warn('Hash verification failed for payment return:', body, 'Computed Skey:', computeSkey(body), 'Provided Skey:', body.skey);
+        logger.warn('Hash verification failed for payment return:', body, 'Provided Skey:', body.skey);
         return res.status(400).send('Invalid data signature.');
     }
 
@@ -370,10 +372,11 @@ async function paymentCallback(req, res) {
             const machines = getMachinesByIds(machineIds);
             for (const machine of machines) {
                 const newEndDate = new Date(machine.end_date);
-                newEndDate.setFullYear(newEndDate.getFullYear() + (machine.subscription_period))
+                newEndDate.setFullYear(newEndDate.getFullYear() + Number(machine.subscription_period))
                 updateMachine(machine.id, {
                     end_date: newEndDate.toISOString(),
                     renewal_process_id: null,
+                    status: 'active',
                     renewal_count: machine.renewal_count + 1,
                     last_renewal_date: new Date().toISOString()
                 });
@@ -416,10 +419,9 @@ async function paymentCallback(req, res) {
 
         // Send the email notification to customer support after the payment and the process is successfully completed
         if (emailPayload) {
-            if (existingOrder.email) {
-                const customerEmailBody = customerSubscriptionRenewalSuccessTemplate(emailPayload);
-                await sendEmail(existingOrder.email, "Subscription Renewal Confirmation", customerEmailBody);
-            }
+            const customerEmailBody = customerSubscriptionRenewalSuccessTemplate(emailPayload);
+            await sendEmail(existingOrder.email, "Subscription Renewal Confirmation", customerEmailBody);
+
 
             const emailBody = subscriptionRenewalSuccessTemplate(emailPayload);
             await sendEmail(process.env.CS_EMAIL, "Machines Subscription Renewal", emailBody)

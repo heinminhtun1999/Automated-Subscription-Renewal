@@ -11,6 +11,8 @@ const selectedCompanyName = document.getElementById('selected-company-name');
 const selectedCustomerId = document.querySelector('[data-selected-customer-id]');
 const machineStatusInput = document.getElementById('machine-status');
 const subscrptionPeriodInput = document.getElementById('subscription-period');
+const allowRenewBtn = document.getElementById('allow-renew-after-expiration-checkbox');
+const machineStatusErrorSpan = document.querySelector(`[data-error-for="machine-status"]`);
 
 function formatData(data) {
     return JSON.parse(data.replace(/&#34;/g, '"').replace(/&#39;/g, "'"));
@@ -187,6 +189,7 @@ if (window.data) {
             const subscriptionPeriodInput = document.getElementById('subscription-period');
             const registrationDateInput = document.getElementById('machine-registration-date');
             const endDateInput = document.getElementById('end-date');
+            const allowRenewalBtn = document.getElementById('allow-renew-after-expiration-checkbox');
 
             const machineId = machineIdInput?.value.trim() || '';
             const subscriptionFees = subscriptionFeesInput?.value.trim() || '';
@@ -194,6 +197,7 @@ if (window.data) {
             const status = machineStatusInput?.value.trim() || 'active';
             const registeredDate = registrationDateInput?.value || formatDateInputValue(new Date());
             const endDate = endDateInput?.value || formatDateInputValue(new Date(new Date(registeredDate).getTime() + (1000 * 60 * 60 * 24 * 365)));
+            const allowRenewalValue = allowRenewalBtn.checked;
 
             if (!machineTypeId) return;
 
@@ -217,7 +221,7 @@ if (window.data) {
                 isValid = false;
             }
 
-            if (status === 'active' && (new Date(endDateInput.value).getTime() < Date.now())) {
+            if (status === 'active' && (new Date(endDateInput.value).getTime() < Date.now()) && !allowRenewBtn.checked) {
                 setMachineFieldError('machine-status', 'Cannot set status to active if end date is in the past. Please update the end date or change the status to inactive.');
                 isValid = false;
             }
@@ -233,6 +237,7 @@ if (window.data) {
                 machine_id: machineId,
                 subscription_fees: Number(subscriptionFees),
                 subscription_period: Number(subscriptionPeriod),
+                allow_renew_after_expiration: allowRenewalValue,
                 status,
                 registered_date: registeredDate,
                 end_date: endDate,
@@ -282,21 +287,20 @@ if (machineRegistrationDateInput && endDateInput && machineStatusInput) {
         const selectedDate = new Date(e.target.value);
         const endDate = new Date(endDateInput.value);
 
-        if (selectedDate > endDate) {
-            endDateInput.value = formatDate(selectedDate);
-            changeActiveStatusBasedOnDates(selectedDate);
-            return;
-        }
-
         updateEndDate(endDate, selectedDate);
+
     });
 
     endDateInput.addEventListener('change', (e) => {
-        const selectedDate = new Date(e.target.value).getTime();
-        if (isNaN(selectedDate)) {
+        const selectedDate = new Date(e.target.value);
+        if (isNaN(selectedDate.getTime())) {
             userManuallyEnteredEndDate = false;
         } else {
             userManuallyEnteredEndDate = true;
+            if (selectedDate < new Date(machineRegistrationDateInput.value)) {
+                machineRegistrationDateInput.value = formatDateInputValue(selectedDate)
+            }
+            machineRegistrationDateInput.max = formatDateInputValue(selectedDate);
         }
         changeActiveStatusBasedOnDates(selectedDate);
     });
@@ -309,9 +313,13 @@ if (machineRegistrationDateInput && endDateInput && machineStatusInput) {
         e.target.value = parseInt(e.target.value);
     });
 
+
     machineStatusInput.addEventListener('change', (e) => {
+        if (allowRenewBtn.checked) {
+            machineStatusErrorSpan.classList.add('hidden');
+            return;
+        };
         const status = e.target.value;
-        const machineStatusErrorSpan = document.querySelector(`[data-error-for="machine-status"]`);
         if (status === 'active' && (new Date(endDateInput.value).getTime() < Date.now())) {
             machineStatusErrorSpan.textContent = 'Cannot set status to active if end date is in the past. Please update the end date or change the status to inactive.';
             machineStatusErrorSpan.classList.remove('hidden');
@@ -323,21 +331,33 @@ if (machineRegistrationDateInput && endDateInput && machineStatusInput) {
         }
     });
 
+    allowRenewBtn.addEventListener('change', (e) => {
+        const isChecked = (e.target.checked);
+        const endDate = new Date(endDateInput.value)
+        if (!isChecked) {
+            changeActiveStatusBasedOnDates(endDate)
+        } else {
+            machineStatusErrorSpan.classList.add('hidden');
+        };
+    })
+
     const changeActiveStatusBasedOnDates = (date) => {
-        const isActive = date > Date.now();
+        if (allowRenewBtn.checked) return;
+        const today = new Date(Date.now());
+        const isActive = date > today;
         machineStatusInput.value = isActive ? 'active' : 'inactive';
     }
 
     const updateEndDate = (endDate, selectedDate) => {
-        if (isNaN(endDate.getTime()) && !userManuallyEnteredEndDate) {
+        if (!userManuallyEnteredEndDate && !endDateInput.value) {
             const subscriptionPeriod = Number(subscrptionPeriodInput.value) || 1;
             const n_endDate = new Date(selectedDate)
             n_endDate.setFullYear(
                 n_endDate.getFullYear() + subscriptionPeriod
             );
-            endDateInput.value = formatDate(n_endDate);
-            changeActiveStatusBasedOnDates(n_endDate);
+            endDateInput.value = formatDateInputValue(n_endDate);
         }
+        changeActiveStatusBasedOnDates(n_endDate);
     }
 }
 

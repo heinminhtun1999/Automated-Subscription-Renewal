@@ -47,31 +47,45 @@ function getMachinesByIds(ids) {
     return db.prepare(stmt).all(...ids);
 }
 
-function getMachineByDaysLeft(daysLeft, includeExpired = false, active, customer) {
+function getMachineByDaysLeft(daysLeft, includeExpired = false, active) {
     const stmt = `
-        SELECT m.*, c.id AS customer_id, c.company_name, c.pic_name, c.email, mt.name AS machine_type_name, 
+        SELECT * FROM  
+        (SELECT m.*, c.id AS customer_id, c.company_name, c.pic_name, c.email, mt.name AS machine_type_name, 
         julianday(m.end_date) - julianday('now') AS days_left
         FROM machines AS m
         JOIN machine_types AS mt ON m.machine_type_id = mt.id
-        JOIN customers AS c ON m.customer_id = c.id
-        WHERE ${includeExpired ? "" : "days_left > 0 AND"} days_left <= ? ${active ? 'AND m.status = ?' : ''}
+        JOIN customers AS c ON m.customer_id = c.id)
+        WHERE ${includeExpired ? "" : "days_left > 0 AND"} days_left <= ? ${active ? 'AND status = ?' : ''}
     `
+
+    const params = [daysLeft]
+
     if (active) {
-        return db.prepare(stmt).all(daysLeft, active);
-    } else {
-        return db.prepare(stmt).all(daysLeft);
+        params.push(active);
     }
+    
+    return db.prepare(stmt).all(...params);
 }
 
-function getMachineByDaysLeftAndCustomerId(daysLeft, customerId, includeExpired = false) {
-    const stmt = `
-        SELECT m.*, c.id AS customer_id, c.company_name, c.pic_name, c.email, mt.name AS machine_type_name,
+function getMachineByDaysLeftAndCustomerId(daysLeft, customerId, includeExpired = false, allowRenewalAfterExpiration = false) {
+    let stmt = `
+        SELECT * FROM
+        (SELECT m.*, c.company_name, c.pic_name, c.email, mt.name AS machine_type_name,
         julianday(m.end_date) - julianday('now') AS days_left
         FROM machines AS m
         JOIN machine_types AS mt ON m.machine_type_id = mt.id
-        JOIN customers AS c ON m.customer_id = c.id
-        WHERE c.id = ? AND ${includeExpired ? "" : "days_left > 0 AND"} julianday(m.end_date) - julianday('now') <= ?
+        JOIN customers AS c ON m.customer_id = c.id)
+        WHERE customer_id = ? AND days_left <= ?
     `
+
+    if (!includeExpired) {
+        stmt += "AND days_left > 0"
+    }
+
+    if (includeExpired && allowRenewalAfterExpiration) {
+        stmt += ` AND (days_left > 0 or allow_after_expired = 1)`
+    }
+    
     return db.prepare(stmt).all(customerId, daysLeft);
 }
 

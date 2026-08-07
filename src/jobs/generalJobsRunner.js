@@ -12,6 +12,6 @@ async function runCronJobs() {
         logger.error(`Error running cron jobs: ${e.message}`);
     }
 }
-
+runCronJobs()
 
 module.exports = runCronJobs;

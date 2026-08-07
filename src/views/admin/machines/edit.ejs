@@ -73,7 +73,7 @@
 
                     <div class="flex flex-col">
                         <label for="machine-registration-date" class="text-sm font-semibold text-gray-600">Machine Registration Date</label>
-                        <input id="machine-registration-date" name="machine_registration_date" type="date" data-required="false" class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="Machine Registration Date" value="<%= formatDate(data.machine['Registered Date']) %>">
+                        <input id="machine-registration-date" name="machine_registration_date" type="date" data-required="false" class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="Machine Registration Date" value="<%= formatDate(data.machine['Registered Date']) %>" max="<%= formatDate(data.machine['End Date']) %>">
                         <span class="mt-1 text-xs text-gray-400">If left unset, the current date will be used.</span>
                     </div>
 
@@ -103,6 +103,51 @@
                         </select>
                         <span class="mt-1 text-xs text-gray-400">If end date is in the past, status will be set to inactive.</span>
                         <span class="mt-1 hidden text-xs text-red-500" data-error-for="machine-status"></span>
+                    </div>
+
+                    <div class="flex flex-col justify-start gap-2">
+                        <label class="text-sm font-semibold text-gray-600">
+                            Allow Renewal After Subscription Expiration
+                        </label>
+
+                        <label class="relative inline-flex items-center cursor-pointer w-fit mt-2">
+                            <input 
+                                type="checkbox" 
+                                name="allow_renew_after_expiration" 
+                                id="allow-renew-after-expiration-checkbox"
+                                class="sr-only peer"
+                                <%= data.machine['Allow Renewal After Subscription Expiration'] == 1 ? 'checked' : '' %>
+                            >
+                            <div class="
+                                w-11 h-6 
+                                bg-gray-200 
+                                rounded-full 
+                                peer 
+                                peer-focus:ring-4 
+                                peer-focus:ring-emerald-100
+                                peer-checked:bg-emerald-500
+                                transition-colors
+                                duration-200
+                                after:content-['']
+                                after:absolute
+                                after:top-[9.2px]
+                                after:sm:top-[2px]
+                                after:left-[2px]
+                                after:bg-white
+                                after:border-gray-300
+                                after:border
+                                after:rounded-full
+                                after:h-5
+                                after:w-5
+                                after:transition-transform
+                                after:duration-200
+                                peer-checked:after:translate-x-5
+                            "></div>
+
+                            <span class="ml-3 text-sm text-gray-600">
+                                Customer can renew expired subscription
+                            </span>
+                        </label>
                     </div>
                 </div>
 

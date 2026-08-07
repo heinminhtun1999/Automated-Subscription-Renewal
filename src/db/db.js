@@ -147,6 +147,7 @@ const machinesTable = `
     subscription_period INTEGER NOT NULL DEFAULT 1 CHECK (subscription_period >= 1),
     registered_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     end_date DATETIME,
+    allow_after_expired BOOLEAN DEFAULT 0,
     status TEXT CHECK (status IN ('active', 'inactive')) NOT NULL DEFAULT 'active',
     renewal_count INTEGER DEFAULT 0,
     last_renewal_date DATETIME,

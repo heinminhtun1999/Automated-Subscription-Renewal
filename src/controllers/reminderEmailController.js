@@ -46,8 +46,7 @@ async function manualReminderEmailController(req, res) {
             return res.status(404).json({ success: false, message: "Customer with this id does not exist." });
         }
 
-        const machines = getMachineByDaysLeftAndCustomerId(45, customer_id);
-
+        const machines = getMachineByDaysLeftAndCustomerId(45, customer_id, true, true);
         if (machines.length == 0) {
             return res.status(404).json({ success: false, message: "No machines are due for renewal within the next 45 days." });
         }
@@ -61,6 +60,8 @@ async function manualReminderEmailController(req, res) {
             }
             return acc
         }, { remindedMachines: [], notRemindedMachines: [] });
+
+        console.log(remindedMachines, notRemindedMachines)
 
         // ========== Send email for the machines which are within 45 days of subscription expiration ============
         const emailAddress = customer.email;

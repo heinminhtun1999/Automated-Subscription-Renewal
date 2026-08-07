@@ -8,6 +8,8 @@ function renderEmailHistoryPage(req, res) {
         const map = new Map();
 
         for (const email of emails) {
+            const sentDateValue = email.sent_date;
+            const sentDateTimestamp = sentDateValue ? new Date(sentDateValue).getTime() : 0;
             const machineData = {
                 email_machine_id: email.email_machine_id,
                 first_email_id: email.first_email_id,
@@ -28,7 +30,8 @@ function renderEmailHistoryPage(req, res) {
             } else {
                 const data = {
                     id: email.id,
-                    sent_date: localizedDateTime(email.sent_date),
+                    sent_date: localizedDateTime(sentDateValue),
+                    sent_date_sort: Number.isNaN(sentDateTimestamp) ? 0 : sentDateTimestamp,
                     status: email.status,
                     failed_reason: email.failed_reason,
                     recipient_email: email.recipient_email,

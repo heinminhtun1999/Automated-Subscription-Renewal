@@ -61,6 +61,7 @@ function prepareMachineData(machine) {
         "Subscription Fees": "RM " + machine.subscription_fees.toFixed(2),
         "Subscription Period (Year)": machine.subscription_period,
         "Status": machine.status,
+        "Allow Renewal After Subscription Expiration": machine.allow_after_expired,
         "Last Renewal Date": machine.last_renewal_date ? formatDate(machine.last_renewal_date) : 'N/A',
         "Renewal Count": machine.renewal_count,
         "type_id": machine.machine_type_id,
@@ -85,8 +86,8 @@ function filterAdditionalFields(machineTypeId, additional_fields) {
 }
 
 // To prevent setting active status to the expired machines
-function forceCheckActiveStatusBasedOnEndDate(status, endDate) {
-    const isExpired = new Date(endDate).getTime() < Date.now();
+function forceCheckActiveStatusBasedOnEndDate(status, endDate, allowRenewAfterExpiration) {
+    const isExpired = (new Date(endDate).getTime() < Date.now()) && !allowRenewAfterExpiration;
 
     if (isExpired) return 'inactive';
 
@@ -199,6 +200,7 @@ function handleAddMachine(req, res) {
         end_date,
         subscription_fees,
         subscription_period,
+        allow_renew_after_expiration,
         status,
         additional_fields
     } = req.body;
@@ -237,7 +239,12 @@ function handleAddMachine(req, res) {
         const isRegisteredDateValid = !registered_date || isNaN(new Date(registered_date).getTime());
         const registeredDate = isRegisteredDateValid ? new Date() : new Date(registered_date);
 
-        const isEndDateValid = end_date && !isNaN(new Date(end_date).getTime());
+
+        // Validate End Date
+        const today = new Date(Date.now());
+        const parsedEndDate = new Date(end_date);
+        const isEndDateValid = !isNaN(parsedEndDate.getTime()) && (parsedEndDate > today || allow_renew_after_expiration);
+        
         let calculatedEndDate;
         if (isEndDateValid) {
             calculatedEndDate = new Date(end_date)
@@ -249,7 +256,7 @@ function handleAddMachine(req, res) {
             calculatedEndDate = endDate
         }
 
-        const finalStatus = forceCheckActiveStatusBasedOnEndDate(status, calculatedEndDate);
+        const finalStatus = forceCheckActiveStatusBasedOnEndDate(status, calculatedEndDate, allow_renew_after_expiration);
 
         const dataToInsert = {
             machine_type_id,
@@ -260,6 +267,7 @@ function handleAddMachine(req, res) {
             subscription_fees,
             subscription_period: subscriptionPeriod,
             status: finalStatus,
+            allow_after_expired: allow_renew_after_expiration ? 1 : 0,
             data: JSON.stringify(additionalDataObject)
         }
         addMachine(dataToInsert);
@@ -308,7 +316,7 @@ function renderEditMachinePage(req, res) {
 function handleEditMachine(req, res) {
     const { id } = req.params;
     const body = req.body;
-    
+
     if (!id) {
         return res.status(400).json({ success: false, message: 'Machine ID is required.' });
     }
@@ -347,10 +355,13 @@ function handleEditMachine(req, res) {
         const isEditingRegisteredDateValid = body.registered_date && !isNaN(new Date(body.registered_date).getTime());
         const registeredDate = isEditingRegisteredDateValid ? new Date(body.registered_date) : new Date(existingMachine.registered_date);
 
-        const isEditingEndDateValid = body.end_date && !isNaN(new Date(body.end_date).getTime());
+        // Validate End Date. Allow rules
+        const today = new Date(Date.now());
+        const parsedEndDate = new Date(body.end_date);
+        const isEditingEndDateValid = !isNaN(parsedEndDate.getTime()) && (parsedEndDate > today || body.allow_renew_after_expiration);
         const calculatedEndDate = isEditingEndDateValid ? new Date(body.end_date) : new Date(existingMachine.end_date);
 
-        const finalStatus = forceCheckActiveStatusBasedOnEndDate(body.status || existingMachine.status, calculatedEndDate);
+        const finalStatus = forceCheckActiveStatusBasedOnEndDate(body.status || existingMachine.status, calculatedEndDate, body.allow_renew_after_expiration);
 
         const isCustomerChanged = String(existingMachine.customer_id) !== String(existingCustomer.id);
 
@@ -360,8 +371,9 @@ function handleEditMachine(req, res) {
             machine_id: body.machine_id,
             registered_date: registeredDate.toISOString(),
             end_date: calculatedEndDate.toISOString(),
-            subscription_fees: body.subscription_fees,
+            subscription_fees: body.subscription_fees ?? existingMachine.subscription_fees,
             subscription_period: subscriptionPeriod,
+            allow_after_expired: body.allow_renew_after_expiration ? 1 : 0,
             status: finalStatus,
             data: JSON.stringify(additionalDataObject),
             renewal_process_id: isCustomerChanged ? null : finalStatus == 'inactive' ? null : existingMachine.renewal_process_id,
@@ -492,9 +504,9 @@ function handleDeleteMachineType(req, res) {
             return res.status(404).json({ success: false, message: 'Machine type not found.' });
         }
         db.transaction(() => {
-            deleteMachineType(id);
             deleteMachinesByMachineType(id);
             deleteMachineTypeFieldByMachineType(id)
+            deleteMachineType(id);
         }).immediate();
         return res.status(200).json({ success: true, message: 'Machine type deleted successfully.' });
     } catch (error) {
