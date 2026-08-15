@@ -811,7 +811,7 @@ const machineDeactivationNotificationTemplate = (renewalNotAllowedMachines, rene
                             </tr>
                             <tr>
                                 <td style="padding: 40px;">
-                                    <h3 style="margin:0; color:#333333; font-weight:600; font-size: 20px;">Deactived Machines</h3>
+                                    <h3 style="margin:0; color:#333333; font-weight:600; font-size: 20px;">Deactivated Machines</h3>
                                     <p style="font-size: 16px;">The following machines have been automatically set to inactive due to expired subscriptions on ${new Date().toLocaleDateString("en-MY", { timeZone: "Asia/Kuala_Lumpur" })}</p>
                                     <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px;">
                                         <thead>
@@ -830,7 +830,7 @@ const machineDeactivationNotificationTemplate = (renewalNotAllowedMachines, rene
                             <tr>
                                 <td style="padding: 40px;">
                                     <h3 style="margin:0; color:#333333; font-weight:600; font-size: 20px;">Active Machines</h3>
-                                    <p style="font-size: 16px;">The following machines have reached the expiration date. However, they are allowed to remain active and renew beyond the expiration date. If they are not renewed, they will remain active forever.</p>
+                                    <p style="font-size: 16px;">The following machines have reached the expiration date. However, they are allowed to remain active and renew beyond the expiration date. If no action is taken, they will remain active forever.</p>
                                     <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px;">
                                         <thead>
                                             <tr>

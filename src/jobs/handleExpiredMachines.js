@@ -4,6 +4,14 @@ const { sendEmail } = require('../utils/services/nodemailer');
 const { machineDeactivationNotificationTemplate } = require('../utils/htmlTemplates');
 
 async function handleExpiredMachines() {
+
+    const time = new Date().toLocaleString('en-MY', {
+        timeZone: 'Asia/Kuala_Lumpur',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: false
+    });
+
     try {
         const machines = getMachineByDaysLeft(-1, true, 'active');
 
@@ -23,7 +31,9 @@ async function handleExpiredMachines() {
                 machineIdsToMarkInactive.push(m.id);
                 machinesToMarkInactive.push(m);
             } else {
-                machinesAllowedForRenewalAfterExpire.push(m);
+                if (time === '00:05' || time === '12:05') {
+                    machinesAllowedForRenewalAfterExpire.push(m);
+                }
             }
         });
 
@@ -33,12 +43,17 @@ async function handleExpiredMachines() {
         }
 
         if (machineIdsToMarkInactive.length > 0 || machinesAllowedForRenewalAfterExpire.length > 0) {
-            updateMultipleMachines(machineIdsToMarkInactive, { status: 'inactive' });
-            logger.info(`${machineIdsToMarkInactive.length} machines have been automatically set to inactive after the expiration.`);
+
+            if (machineIdsToMarkInactive.length > 0) {
+                updateMultipleMachines(machineIdsToMarkInactive, { status: 'inactive' });
+                logger.info(`${machineIdsToMarkInactive.length} machines have been automatically set to inactive after the expiration.`);
+            }
 
             const emailBody = machineDeactivationNotificationTemplate(machinesToMarkInactive, machinesAllowedForRenewalAfterExpire);
-            await sendEmail(process.env.CS_EMAIL, 'Expired machines notices', emailBody, 'Machine Deactivation Email', [ 'chiew@arvending.com.my', 'shirly@arvending.com.my' ]);
+            // await sendEmail(process.env.CS_EMAIL, 'Expired machines notices', emailBody, 'Machine Deactivation Email', [ 'chiew@arvending.com.my', 'shirly@arvending.com.my' ]);
+            await sendEmail(process.env.CS_EMAIL, 'Expired machines notices', emailBody, 'Machine Deactivation Email');
         }
+
     } catch (e) {
         throw new Error(`\nError in handleExpiredMachines cron job: ${e.stack || e.message || e}`);
     }

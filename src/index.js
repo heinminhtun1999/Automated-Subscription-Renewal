@@ -1,4 +1,3 @@
-console.log(new Date().getHours())
 // Import Libraries
 const express = require('express');
 const path = require('path');
@@ -103,12 +102,12 @@ app.use((req, res, next) => {
 
 
 // ================== Reconciliation in development environment ==================
-// if (process.env.NODE_ENV === 'development') {
-//     const runCronJobs = require('./jobs/generalJobsRunner');
-//     setInterval(() => {
-//         runCronJobs();
-//     }, 5 * 60 * 1000); // Run every 5 minutes
-// }
+if (process.env.NODE_ENV === 'development') {
+    const runCronJobs = require('./jobs/generalJobsRunner');
+    setInterval(() => {
+        runCronJobs();
+    }, 5 * 60 * 1000); // Run every 5 minutes
+}
 // ===============================================================================
 
 app.get('/', (req, res) => {
@@ -239,5 +238,3 @@ app.use((err, req, res, next) => {
 app.listen(port, () => {
     console.log(`Development Server is running on ${port}: ${process.env.NODE_ENV}`);
 });
-
-console.log(new Date().getHours())
