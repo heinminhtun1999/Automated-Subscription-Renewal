@@ -4,6 +4,17 @@ const generalJobsRunner = require("./generalJobsRunner");
 const reminderEmailRunner = require("./runReminderEmail");
 const dbBackup = require("./backupDB");
 
-cron.schedule("*/5 * * * *", generalJobsRunner); // Evert 5 mins
-cron.schedule("0 */12 * * *", reminderEmailRunner); // Every 12 hours
-cron.schedule("0 0 * * *", dbBackup); // Everyday at 00:00:00 AM
+// Machine expiration checking and payment reconciliation cron
+cron.schedule("*/5 * * * *", generalJobsRunner, {
+    timezone: 'Asia/Kuala_Lumpur'
+}); // Every 5 mins
+
+// Reminder Email Cron
+cron.schedule("0 */12 * * *", reminderEmailRunner, {
+    timezone: 'Asia/Kuala_Lumpur'
+}); // Every 12 hours
+
+// Database Backup Cron
+cron.schedule("0 0 * * *", dbBackup, {
+    timezone: 'Asia/Kuala_Lumpur'
+}); // Every day at 00:00:00 AM

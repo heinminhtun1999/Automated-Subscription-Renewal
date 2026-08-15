@@ -772,8 +772,16 @@ const reconciliationSuccessTemplate = (orders) => {
     `;
 };
 
-const machineDeactivationNotificationTemplate = (machines) => {
-    const rows = machines.map(machine => `
+const machineDeactivationNotificationTemplate = (renewalNotAllowedMachines, renewalAllowMachines) => {
+    const rows1 = renewalNotAllowedMachines.map(machine => `
+        <tr>
+            <td style="padding: 12px 8px; border-top: 1px solid #dee2e6;">${machine.machine_id}</td>
+            <td style="padding: 12px 8px; border-top: 1px solid #dee2e6;">${machine.machine_type_name}</td>
+            <td style="padding: 12px 8px; border-top: 1px solid #dee2e6;">${machine.company_name}</td>
+        </tr>
+    `).join('');
+
+    const rows2 = renewalAllowMachines.map(machine => `
         <tr>
             <td style="padding: 12px 8px; border-top: 1px solid #dee2e6;">${machine.machine_id}</td>
             <td style="padding: 12px 8px; border-top: 1px solid #dee2e6;">${machine.machine_type_name}</td>
@@ -803,6 +811,7 @@ const machineDeactivationNotificationTemplate = (machines) => {
                             </tr>
                             <tr>
                                 <td style="padding: 40px;">
+                                    <h3 style="margin:0; color:#333333; font-weight:600; font-size: 20px;">Deactived Machines</h3>
                                     <p style="font-size: 16px;">The following machines have been automatically set to inactive due to expired subscriptions on ${new Date().toLocaleDateString("en-MY", { timeZone: "Asia/Kuala_Lumpur" })}</p>
                                     <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px;">
                                         <thead>
@@ -813,7 +822,25 @@ const machineDeactivationNotificationTemplate = (machines) => {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            ${rows}
+                                            ${rows1}
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 40px;">
+                                    <h3 style="margin:0; color:#333333; font-weight:600; font-size: 20px;">Active Machines</h3>
+                                    <p style="font-size: 16px;">The following machines have reached the expiration date. However, they are allowed to remain active and renew beyond the expiration date. If they are not renewed, they will remain active forever.</p>
+                                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px;">
+                                        <thead>
+                                            <tr>
+                                                <th style="padding: 12px 8px; border-bottom: 2px solid #dee2e6; background-color: #f8f9fa; text-align: left;">Machine ID</th>
+                                                <th style="padding: 12px 8px; border-bottom: 2px solid #dee2e6; background-color: #f8f9fa; text-align: left;">Machine Type</th>
+                                                <th style="padding: 12px 8px; border-bottom: 2px solid #dee2e6; background-color: #f8f9fa; text-align: left;">Company Name</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${rows2}
                                         </tbody>
                                     </table>
                                 </td>

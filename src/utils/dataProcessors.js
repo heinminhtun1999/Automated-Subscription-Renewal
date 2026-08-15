@@ -1,5 +1,3 @@
-const { ALPHABET, FIRST_EMAIL_DUE_DAYS, SECOND_EMAIL_DUE_DAYS, SHEET_CONFIGS } = require('./constants');
-
 // Group rows by company name.
 function groupByCompany(data) {
     const groupedData = {};

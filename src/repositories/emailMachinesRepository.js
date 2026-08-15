@@ -19,7 +19,7 @@ function getEmailMachineByRenewalProcessIds(renewalProcessIds) {
 function getEmailMachineByMachineId(machineId) {
     const stmt = `
         SELECT * FROM email_machines
-        WHERE machine_id = ? AND status = 'active'
+        WHERE machine_id = ?
     `;
     return db.prepare(stmt).get(machineId);
 }

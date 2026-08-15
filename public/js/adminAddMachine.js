@@ -12,11 +12,14 @@ const machineRegistrationDateInput = document.getElementById('machine-registrati
 const endDateInput = document.getElementById('end-date');
 const feesInput = document.getElementById('subscription-fees');
 const machineStatusInput = document.getElementById('machine-status');
-const subscrptionPeriodInput = document.getElementById('subscription-period');
+const subscriptionPeriodInput = document.getElementById('subscription-period');
 const allowRenewBtn = document.getElementById('allow-renew-after-expiration-checkbox');
 const machineStatusErrorSpan = document.querySelector(`[data-error-for="machine-status"]`);
 
 function formatDateInputValue(date) {
+    if (!date) {
+        return;
+    }
     const d = new Date(date);
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -25,7 +28,7 @@ function formatDateInputValue(date) {
 }
 
 function formatCustomerData(data) {
-    return JSON.parse(data.replace(/&#34;/g, '"').replace(/&#39;/g, "'"));
+    return JSON.parse(data.replace(/&#34;/g, '"').replace(/&#39;/g, '\''));
 }
 
 function setMachineFieldError(fieldId, message) {
@@ -43,7 +46,9 @@ function setMachineFieldError(fieldId, message) {
     }
 
     const inputElement = document.getElementById(fieldId);
-    if (!inputElement) return;
+    if (!inputElement) {
+        return;
+    }
 
     inputElement.classList.toggle('border-red-400', Boolean(message));
     inputElement.classList.toggle('focus:border-red-400', Boolean(message));
@@ -57,7 +62,9 @@ function clearMachineFieldErrors() {
 }
 
 function getAdditionalMachineFields() {
-    if (!additionalFieldsListContainer) return {};
+    if (!additionalFieldsListContainer) {
+        return {};
+    }
 
     return Array.from(additionalFieldsListContainer.querySelectorAll('input')).reduce((accumulator, input) => {
         const fieldId = input.dataset.fieldId;
@@ -101,7 +108,7 @@ if (window.customersData) {
         const els = companies.map(company => {
             const isSelected = selectedCustomerId.dataset.selectedCustomerId === String(company.id);
             return `<p class="px-3 py-2 my-1 cursor-pointer hover:bg-emerald-300 hover:text-white rounded-md font-semibold text-sm ${isSelected ? 'bg-emerald-300 text-white' : ''}" data-customer-id="${company.id}" onClick="selectCompany(this)">${company.company_name}</p>`;
-        })
+        });
         companySuggestionListContainer.innerHTML = els.join('');
     }
 
@@ -138,15 +145,15 @@ if (window.customersData) {
 
         const renderFieldsInput = (fields) => {
             const inputEls = fields.map(field => {
-                const parseName = field.name.toLowerCase().replaceAll(/[^a-zA-Z0-9 ]/g, "").split(" ").join("-");
+                const parseName = field.name.toLowerCase().replaceAll(/[^a-zA-Z0-9 ]/g, '').split(' ').join('-');
                 return `<div class="flex flex-col">
                         <label for="${parseName}" class="text-sm font-semibold text-gray-600">${field.name}</label>
-                        <input type="text" name="${parseName.replaceAll("-", "_")}" id="${parseName}" data-field-id="${field.id}" class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="Enter ${field.name.toLowerCase()}">
+                        <input type="text" name="${parseName.replaceAll('-', '_')}" id="${parseName}" data-field-id="${field.id}" class="mt-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="Enter ${field.name.toLowerCase()}">
                     </div>
             `;
-            })
+            });
             additionalFieldsListContainer.innerHTML = inputEls.join('');
-        }
+        };
 
         const typeId = typeSelector.value;
         try {
@@ -156,7 +163,7 @@ if (window.customersData) {
             renderFieldsInput(data);
         } catch (error) {
             console.error('Error fetching machine type fields:', error);
-            const errorToRender = "Failed to load fields for the selected machine type. You can still add the machine with default fields, but the additional fields for the machine type won't be available. Please refresh the page or try again later.";
+            const errorToRender = 'Failed to load fields for the selected machine type. You can still add the machine with default fields, but the additional fields for the machine type won\'t be available. Please refresh the page or try again later.';
             typeSelector.insertAdjacentHTML('afterend', `<p class="text-red-500 p-1 text-sm">${errorToRender}</p>`);
         }
 
@@ -169,14 +176,14 @@ if (window.customersData) {
                 renderFieldsInput(data);
             } catch (error) {
                 console.error('Error fetching machine type fields:', error);
-                const errorToRender = "Failed to load fields for the selected machine type.\nYou can still add the machine with default fields, but the additional fields for the machine type won't be available. Please refresh the page or try again later.";
+                const errorToRender = 'Failed to load fields for the selected machine type.\nYou can still add the machine with default fields, but the additional fields for the machine type won\'t be available. Please refresh the page or try again later.';
                 typeSelector.insertAdjacentHTML('afterend', `<p class="text-red-500 p-1 text-sm">${errorToRender}</p>`);
             }
         });
     }
 })();
 
-// Handle machine regestration date and end date inputs with default values and error handling.
+// Handle machine registration date and end date inputs with default values and error handling.
 if (machineRegistrationDateInput && endDateInput) {
 
     let userManuallyEnteredEndDate = false;
@@ -199,18 +206,19 @@ if (machineRegistrationDateInput && endDateInput) {
         const selectedDate = new Date(e.target.value);
         if (isNaN(selectedDate.getTime())) {
             userManuallyEnteredEndDate = false;
+            machineRegistrationDateInput.max = null;
         } else {
             userManuallyEnteredEndDate = true;
             if (selectedDate < new Date(machineRegistrationDateInput.value)) {
-                machineRegistrationDateInput.value = formatDateInputValue(selectedDate)
+                machineRegistrationDateInput.value = formatDateInputValue(selectedDate);
             }
-            machineRegistrationDateInput.max = formatDateInputValue(selectedDate);
+            machineRegistrationDateInput.max = selectedDate.toISOString().split('T')[0];
         }
         changeActiveStatusBasedOnDates(selectedDate);
     });
 
     // Auto update on active status and end date (if the end date is not selected or empty)
-    subscrptionPeriodInput.addEventListener('change', (e) => {
+    subscriptionPeriodInput.addEventListener('change', (e) => {
         const selectedDate = new Date(machineRegistrationDateInput.value);
         const endDate = new Date(endDateInput.value);
         updateEndDate(endDate, selectedDate);
@@ -221,7 +229,8 @@ if (machineRegistrationDateInput && endDateInput) {
         if (allowRenewBtn.checked) {
             machineStatusErrorSpan.classList.add('hidden');
             return;
-        };
+        }
+        ;
         const status = e.target.value;
         if (status === 'active' && (new Date(endDateInput.value).getTime() < Date.now())) {
             machineStatusErrorSpan.textContent = 'Cannot set status to active if end date is in the past. Please update the end date or change the status to inactive.';
@@ -235,32 +244,34 @@ if (machineRegistrationDateInput && endDateInput) {
 
     allowRenewBtn.addEventListener('change', (e) => {
         const isChecked = (e.target.checked);
-        const endDate = new Date(endDateInput.value)
+        const endDate = endDateInput.value;
         if (!isChecked) {
-            changeActiveStatusBasedOnDates(endDate)
+            changeActiveStatusBasedOnDates(endDate);
         } else {
             machineStatusErrorSpan.classList.add('hidden');
-        };
-    })
+        }
+    });
 
     const changeActiveStatusBasedOnDates = (date) => {
-        if (allowRenewBtn.checked) return;
-        const today = new Date(Date.now());
-        const isActive = date > today;
+        if (allowRenewBtn.checked) {
+            return;
+        }
+        const today = new Date();
+
+        const isActive = formatDateInputValue(date) >= formatDateInputValue(today);
         machineStatusInput.value = isActive ? 'active' : 'inactive';
-    }
+    };
 
     const updateEndDate = (endDate, selectedDate) => {
         if (!userManuallyEnteredEndDate && !endDateInput.value) {
-            const subscriptionPeriod = Number(subscrptionPeriodInput.value) || 1;
-            const n_endDate = new Date(selectedDate)
+            const subscriptionPeriod = Number(subscriptionPeriodInput.value) || 1;
+            const n_endDate = new Date(selectedDate);
             n_endDate.setFullYear(
                 n_endDate.getFullYear() + subscriptionPeriod
             );
             endDateInput.value = formatDateInputValue(n_endDate);
         }
-        changeActiveStatusBasedOnDates(n_endDate);
-    }
+    };
 }
 
 
@@ -282,8 +293,8 @@ if (addMachineSubmitButton && typeSelector) {
         const subscriptionFees = subscriptionFeesInput?.value.trim() || '';
         const subscriptionPeriod = subscriptionPeriodInput?.value.trim() || '';
         const status = machineStatusInput?.value.trim() || 'active';
-        const registeredDate = registrationDateInput?.value || formatDateInputValue(new Date());
-        const endDate = endDateInput?.value || formatDateInputValue(new Date(new Date(registeredDate).getTime() + (1000 * 60 * 60 * 24 * 365)));
+        const registeredDate = registrationDateInput?.value ? formatDateInputValue(registrationDateInput.value) : formatDateInputValue(new Date());
+        const endDate = formatDateInputValue(endDateInput?.value);
         const allowRenewalValue = allowRenewalBtn.checked;
 
         let isValid = true;
@@ -294,7 +305,7 @@ if (addMachineSubmitButton && typeSelector) {
         }
 
         if (!customerId) {
-            setMachineFieldError('company-name', "Customer's company name is required.");
+            setMachineFieldError('company-name', 'Customer\'s company name is required.');
             isValid = false;
         }
 
@@ -309,7 +320,12 @@ if (addMachineSubmitButton && typeSelector) {
         }
 
         if (!subscriptionPeriod || Number.isNaN(Number(subscriptionPeriod))) {
-            setMachineFieldError('subscription-period', 'Enter a valid subscription period.')
+            setMachineFieldError('subscription-period', 'Enter a valid subscription period.');
+            isValid = false;
+        }
+
+        if (status === 'active' && (endDate < formatDateInputValue(new Date())) && !allowRenewalValue) {
+            setMachineFieldError('machine-status', 'Cannot set status to active if end date is in the past. Please update the end date or change the status to inactive.');
             isValid = false;
         }
 
@@ -325,10 +341,10 @@ if (addMachineSubmitButton && typeSelector) {
             subscription_fees: Number(subscriptionFees),
             subscription_period: Number(subscriptionPeriod),
             allow_renew_after_expiration: allowRenewalValue,
-            status,
             registered_date: registeredDate,
             end_date: endDate,
-            additional_fields: getAdditionalMachineFields()
+            additional_fields: getAdditionalMachineFields(),
+            status
         };
         const originalButtonText = addMachineSubmitButton.textContent;
         addMachineSubmitButton.disabled = true;

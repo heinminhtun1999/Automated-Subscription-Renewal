@@ -812,6 +812,10 @@ video {
   margin-bottom: 1.5rem;
 }
 
+.ml-1{
+  margin-left: 0.25rem;
+}
+
 .ml-3{
   margin-left: 0.75rem;
 }
@@ -948,6 +952,10 @@ video {
   height: 18rem;
 }
 
+.h-8{
+  height: 2rem;
+}
+
 .h-80{
   height: 20rem;
 }
@@ -1008,6 +1016,10 @@ video {
   width: 18rem;
 }
 
+.w-8{
+  width: 2rem;
+}
+
 .w-80{
   width: 20rem;
 }
@@ -1048,6 +1060,10 @@ video {
 
 .min-w-full{
   min-width: 100%;
+}
+
+.max-w-2xl{
+  max-width: 42rem;
 }
 
 .max-w-3xl{
@@ -2865,6 +2881,11 @@ select:focus::picker-icon {
   background-color: rgb(190 18 60 / var(--tw-bg-opacity, 1));
 }
 
+.hover\:bg-slate-100:hover{
+  --tw-bg-opacity: 1;
+  background-color: rgb(241 245 249 / var(--tw-bg-opacity, 1));
+}
+
 .hover\:bg-slate-200:hover{
   --tw-bg-opacity: 1;
   background-color: rgb(226 232 240 / var(--tw-bg-opacity, 1));
@@ -2961,6 +2982,11 @@ select:focus::picker-icon {
   border-color: rgb(52 211 153 / var(--tw-border-opacity, 1));
 }
 
+.focus\:border-emerald-500:focus{
+  --tw-border-opacity: 1;
+  border-color: rgb(16 185 129 / var(--tw-border-opacity, 1));
+}
+
 .focus\:border-red-400:focus{
   --tw-border-opacity: 1;
   border-color: rgb(248 113 113 / var(--tw-border-opacity, 1));
@@ -2996,6 +3022,10 @@ select:focus::picker-icon {
 .focus\:ring-emerald-200:focus{
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(167 243 208 / var(--tw-ring-opacity, 1));
+}
+
+.focus\:ring-emerald-500\/20:focus{
+  --tw-ring-color: rgb(16 185 129 / 0.2);
 }
 
 .focus\:ring-red-100:focus{
@@ -3058,6 +3088,10 @@ select:focus::picker-icon {
 
   .sm\:gap-4{
     gap: 1rem;
+  }
+
+  .sm\:p-6{
+    padding: 1.5rem;
   }
 
   .sm\:p-8{

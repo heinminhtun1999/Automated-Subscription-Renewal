@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourcePerFileMappings">
+    <file url="file://$PROJECT_DIR$/migrations/20260811_add_payment_type_to_orders.sql" value="349edc68-30e5-4d99-b00c-3e4be9999f5a" />
+  </component>
+</project>

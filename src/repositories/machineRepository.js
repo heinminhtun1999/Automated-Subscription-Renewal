@@ -51,11 +51,11 @@ function getMachineByDaysLeft(daysLeft, includeExpired = false, active) {
     const stmt = `
         SELECT * FROM  
         (SELECT m.*, c.id AS customer_id, c.company_name, c.pic_name, c.email, mt.name AS machine_type_name, 
-        julianday(m.end_date) - julianday('now') AS days_left
+        julianday(m.end_date) - julianday(date('now')) AS days_left
         FROM machines AS m
         JOIN machine_types AS mt ON m.machine_type_id = mt.id
         JOIN customers AS c ON m.customer_id = c.id)
-        WHERE ${includeExpired ? "" : "days_left > 0 AND"} days_left <= ? ${active ? 'AND status = ?' : ''}
+        WHERE ${includeExpired ? "" : "days_left >= 0 AND"} days_left <= ? ${active ? 'AND status = ?' : ''}
     `
 
     const params = [daysLeft]
@@ -71,7 +71,7 @@ function getMachineByDaysLeftAndCustomerId(daysLeft, customerId, includeExpired 
     let stmt = `
         SELECT * FROM
         (SELECT m.*, c.company_name, c.pic_name, c.email, mt.name AS machine_type_name,
-        julianday(m.end_date) - julianday('now') AS days_left
+        julianday(m.end_date) - julianday(date('now')) AS days_left
         FROM machines AS m
         JOIN machine_types AS mt ON m.machine_type_id = mt.id
         JOIN customers AS c ON m.customer_id = c.id)
@@ -79,11 +79,11 @@ function getMachineByDaysLeftAndCustomerId(daysLeft, customerId, includeExpired 
     `
 
     if (!includeExpired) {
-        stmt += "AND days_left > 0"
+        stmt += "AND days_left >= 0"
     }
 
     if (includeExpired && allowRenewalAfterExpiration) {
-        stmt += ` AND (days_left > 0 or allow_after_expired = 1)`
+        stmt += ` AND (days_left >= 0 or allow_after_expired = 1)`
     }
     
     return db.prepare(stmt).all(customerId, daysLeft);

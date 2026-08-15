@@ -8,7 +8,7 @@ const {
     deleteCustomer
 } = require('../repositories/customerRepository');
 const logger = require('../utils/services/winston');
-const { isValidEmail, localizedDateTime, formatDate } = require("../utils/utils");
+const { isValidEmail, localizedDateTime, formatDate } = require('../utils/utils');
 
 // Data Processing and Validation functions
 function validateRequiredFields(data, requiredFields) {
@@ -20,7 +20,6 @@ function validateRequiredFields(data, requiredFields) {
     return null;
 }
 
-
 // Controller functions
 function renderCustomersPage(req, res) {
     try {
@@ -28,7 +27,10 @@ function renderCustomersPage(req, res) {
         return res.render('admin/customers/index', { data: customers, error: null });
     } catch (error) {
         logger.error('Error fetching customers for admin panel:', error);
-        return res.render('admin/customers/index', { data: [], error: `Failed to fetch customers. Please try again later. Error: ${error.message}` });
+        return res.render('admin/customers/index', {
+            data: [],
+            error: `Failed to fetch customers. Please try again later. Error: ${error.message}`
+        });
     }
 }
 
@@ -36,32 +38,35 @@ function handleAddCustomer(req, res) {
     const body = req.body;
 
     if (!body || Object.keys(body).length === 0) {
-        return res.status(400).json({ success: false, message: "No customer data provided." });
+        return res.status(400).json({ success: false, message: 'No customer data provided.' });
     }
 
-    const requiredFields = ['company_name', 'email', 'contact_number', 'pic_name'];
+    const requiredFields = [ 'company_name', 'email', 'contact_number', 'pic_name' ];
     const validationError = validateRequiredFields(body, requiredFields);
     if (validationError) {
         return res.status(400).json({ success: false, message: validationError });
     }
-    
+
     try {
 
         const isCustomerExist = getCustomerByEmail(body.email);
         if (isCustomerExist) {
-            return res.status(409).json({ success: false, message: "A company with this email already exists." });
+            return res.status(409).json({ success: false, message: 'A company with this email already exists.' });
         }
 
         const isEmailValid = isValidEmail(body.email);
         if (!isEmailValid) {
-            return res.status(400).json({ success: false, message: "Incorrect Email Format."})
+            return res.status(400).json({ success: false, message: 'Incorrect Email Format.' });
         }
 
         const result = addCustomer(body);
-        return res.status(201).json({ success: true, message: "Customer added successfully.", data: result });
+        return res.status(201).json({ success: true, message: 'Customer added successfully.', data: result });
     } catch (error) {
         logger.error('Error adding customer:', error);
-        return res.status(500).json({ success: false, message: `Failed to add customer. Please try again later. ${error.message}` });
+        return res.status(500).json({
+            success: false,
+            message: `Failed to add customer. Please try again later. ${error.message}`
+        });
     }
 }
 
@@ -85,7 +90,7 @@ function handleViewCustomer(req, res) {
 
             return {
                 ...acc,
-                machines:[
+                machines: [
                     ...acc.machines,
                     {
                         id: curr.m_id,
@@ -95,7 +100,7 @@ function handleViewCustomer(req, res) {
                         machine_type: curr.machine_type
                     }
                 ]
-            }
+            };
 
         }, {
             id: customerInfo.id,
@@ -109,12 +114,15 @@ function handleViewCustomer(req, res) {
             beneficiary_name: customerInfo.beneficiary_name,
             created_at: localizedDateTime(customerInfo.created_at),
             machines: []
-        })
+        });
         return res.status(200).render('admin/customers/view', { data, error: null });
 
     } catch (e) {
         logger.error(`Error fetching customer with ID ${customerId}:`, e);
-        return res.status(500).render('admin/customers/view', { data: {}, error: `Failed to fetch customer details. Please try again later. ${e.message}` });
+        return res.status(500).render('admin/customers/view', {
+            data: {},
+            error: `Failed to fetch customer details. Please try again later. ${e.message}`
+        });
     }
 }
 
@@ -135,11 +143,14 @@ function renderEditCustomerPage(req, res) {
         if (!customer) {
             return res.status(404).render('admin/customers/edit', { data: {}, error: 'Customer not found.' });
         }
-        
+
         return res.status(200).render('admin/customers/edit', { data: customer, error: null });
     } catch (error) {
         logger.error(`Error fetching customer with ID ${id}:`, error);
-        return res.status(500).render('admin/customers/edit', { data: {}, error: `Failed to fetch customer details. Please try again later. ${error.message}` });
+        return res.status(500).render('admin/customers/edit', {
+            data: {},
+            error: `Failed to fetch customer details. Please try again later. ${error.message}`
+        });
     }
 }
 
@@ -151,7 +162,7 @@ function handleEditCustomer(req, res) {
         return res.status(400).json({ success: false, message: 'Customer ID is required.' });
     }
 
-    const requiredFields = ['company_name', 'email', 'contact_number', 'pic_name'];
+    const requiredFields = [ 'company_name', 'email', 'contact_number', 'pic_name' ];
     const body = req.body;
 
     const validationError = validateRequiredFields(body, requiredFields);
@@ -167,7 +178,10 @@ function handleEditCustomer(req, res) {
 
         const isEmailTaken = getCustomerByEmail(body.email);
         if (isEmailTaken && isEmailTaken.id !== parseInt(id)) {
-            return res.status(409).json({ success: false, message: 'Another customer with this email already exists.' });
+            return res.status(409).json({
+                success: false,
+                message: 'Another customer with this email already exists.'
+            });
         }
 
         updateCustomer(id, body);
@@ -175,7 +189,10 @@ function handleEditCustomer(req, res) {
 
     } catch (error) {
         logger.error(`Error updating customer with ID ${id}:`, error);
-        return res.status(500).json({ success: false, message: `Failed to update customer. Please try again later. ${error.message}` });
+        return res.status(500).json({
+            success: false,
+            message: `Failed to update customer. Please try again later. ${error.message}`
+        });
     }
 }
 
@@ -196,7 +213,10 @@ function handleDeleteCustomer(req, res) {
         return res.status(200).json({ success: true, message: 'Customer deleted successfully.' });
     } catch (error) {
         logger.error(`Error deleting customer with ID ${id}:`, error);
-        return res.status(500).json({ success: false, message: `Failed to delete customer. Please try again later. ${error.message}` });
+        return res.status(500).json({
+            success: false,
+            message: `Failed to delete customer. Please try again later. ${error.message}`
+        });
     }
 }
 
@@ -208,4 +228,4 @@ module.exports = {
     renderEditCustomerPage,
     handleEditCustomer,
     handleDeleteCustomer
-}
+};

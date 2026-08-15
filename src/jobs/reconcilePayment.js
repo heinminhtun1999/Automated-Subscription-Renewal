@@ -1,19 +1,25 @@
-const db = require("../db/db");
-const { getPendingOrProcessingOrders, updateOrder } = require("../repositories/orderRepository");
-const { getAllOrderItems } = require("../repositories/orderItemRepository");
-const logger = require("../utils/services/winston");
-const { generateMd5 } = require("../utils/utils");
-const { PAYMENT_STATUS } = require("../utils/constants");
-const { getMachinesByIds, updateMachine } = require("../repositories/machineRepository");
-const { updateMultipleEmailMachinesByOrderIdAndMachineIds } = require("../repositories/emailMachinesRepository");
-const { sendEmail } = require("../utils/services/nodemailer");
-const { failedOrdersNotificationTemplate, developerNotificationTemplate, reconciliationSuccessTemplate } = require("../utils/htmlTemplates");
+const db = require('../db/db');
+const { getPendingOrProcessingOrders, updateOrder } = require('../repositories/orderRepository');
+const { getAllOrderItems } = require('../repositories/orderItemRepository');
+const logger = require('../utils/services/winston');
+const { generateMd5 } = require('../utils/utils');
+const { PAYMENT_STATUS, MAX_RENEWAL_ALLOWED_MONTHS } = require('../utils/constants');
+const { getMachinesByIds, updateMachine } = require('../repositories/machineRepository');
+const { updateMultipleEmailMachinesByOrderIdAndMachineIds } = require('../repositories/emailMachinesRepository');
+const { sendEmail } = require('../utils/services/nodemailer');
+const {
+    failedOrdersNotificationTemplate,
+    developerNotificationTemplate,
+    reconciliationSuccessTemplate
+} = require('../utils/htmlTemplates');
 
 async function reconcilePayments() {
     try {
         const orders = getPendingOrProcessingOrders();
-        if (orders.length === 0) return;
-        
+        if (orders.length === 0) {
+            return;
+        }
+
         const orderMap = new Map();
         const orderIds = [];
 
@@ -27,7 +33,7 @@ async function reconcilePayments() {
         if (orderIds.length <= 100) {
             const result = await indirectStatusInquiry(orderIds);
             if (!result) {
-                logger.error("Failed to retrieve order status from reconciliation API:", result);
+                logger.error('Failed to retrieve order status from reconciliation API:', result);
                 return;
             }
 
@@ -42,7 +48,7 @@ async function reconcilePayments() {
                 if (result) {
                     orderResults.push(...result);
                 } else {
-                    logger.error(`Failed to retrieve order status for batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(orderIds.length / batchSize)}:`, result, "Affected order IDs:", batch);
+                    logger.error(`Failed to retrieve order status for batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(orderIds.length / batchSize)}:`, result, 'Affected order IDs:', batch);
                 }
             }
         }
@@ -54,7 +60,7 @@ async function reconcilePayments() {
             }
             orderItemsMap.get(item.order_id).push(item.machine_id);
         }
-        
+
         const failedToProcessOrders = [];
         const successfullyProcessedOrders = [];
         for (const orderResult of orderResults) {
@@ -63,10 +69,10 @@ async function reconcilePayments() {
             if (order) {
                 try {
 
-                    if (orderResult?.ErrorCode && orderResult?.ErrorCode === "Q203") {
+                    if (orderResult?.ErrorCode && orderResult?.ErrorCode === 'Q203') {
                         updateOrder(order.order_id, {
                             transaction_id: orderResult.TranID,
-                            payment_status: "failed",
+                            payment_status: 'failed',
                             failed_remark: `Automatically marked as failed due to transaction not found in Fiuu database.\nPossible reason: User created order and did not select channel.`,
                             channel: orderResult.Channel,
                             process_status: 'failed',
@@ -74,7 +80,7 @@ async function reconcilePayments() {
                         }, {
                             process_status: {
                                 operator: 'IN',
-                                value: ['pending', 'processing']
+                                value: [ 'pending', 'processing' ]
                             },
                             process_worker_level: {
                                 operator: '<=',
@@ -97,13 +103,13 @@ async function reconcilePayments() {
 
                         // Checking concurrent update
                         const result = updateOrder(order.order_id, {
-                            process_status: 'processing',
-                            process_worker_level: 2
-                        },
+                                process_status: 'processing',
+                                process_worker_level: 2
+                            },
                             {
                                 process_status: {
                                     operator: 'IN',
-                                    value: ['pending', 'processing']
+                                    value: [ 'pending', 'processing' ]
                                 },
                                 process_worker_level: {
                                     operator: '<',
@@ -118,7 +124,7 @@ async function reconcilePayments() {
 
                         // ========== Handling failed payment status ==========
                         // If PG status indicates failed payment, we update the order as failed with the error code and description from PG, and mark the process as failed without proceeding to update machines. 
-                        if (statusFromPG == "11") {
+                        if (statusFromPG === '11') {
                             updateOrder(order.order_id, {
                                 transaction_id: orderResult.TranID,
                                 payment_status: paymentStatus,
@@ -144,7 +150,7 @@ async function reconcilePayments() {
                         // If PG status indicates pending payment, we check the duration since the order was created. 
                         // If it's been pending for more than 48 hours, we automatically mark it as failed to prevent indefinite pending status. 
                         // If it's within 48 hours, we reset the process_status to pending for reprocessing in the next reconciliation cycle, allowing for the possibility that the payment might still go through successfully.
-                        if (statusFromPG == "22") {
+                        if (statusFromPG === '22') {
 
                             const orderCreatedDuration = order.minutes_passed / 60;
                             if (orderCreatedDuration > 48) {
@@ -155,7 +161,7 @@ async function reconcilePayments() {
                                 }, {
                                     process_status: {
                                         operator: 'IN',
-                                        value: ['pending', 'processing']
+                                        value: [ 'pending', 'processing' ]
                                     },
                                     process_worker_level: {
                                         operator: '<=',
@@ -196,8 +202,17 @@ async function reconcilePayments() {
                         const orderRelatedMachineIds = orderItemsMap.get(order.order_id) || [];
                         const machines = getMachinesByIds(orderRelatedMachineIds);
                         for (const machine of machines) {
-                            const newEndDate = new Date(machine.end_date);
+
+                            // Checking to decide whether the end date should be extended from the end_date from database, or extended from current date
+                            // Logic: if the machine has expired beyond allowed max time frame, it will extend from the current date, otherwise use from database
+                            const date = new Date();
+                            const machineEndDate = new Date(machine.end_date);
+
+                            const todayAndEndDateMonthsDifference = (date.getFullYear() - machineEndDate.getFullYear()) * 12 + date.getMonth() - machineEndDate.getMonth();
+
+                            const newEndDate = todayAndEndDateMonthsDifference > MAX_RENEWAL_ALLOWED_MONTHS ? date : machineEndDate;
                             newEndDate.setFullYear(newEndDate.getFullYear() + Number(machine.subscription_period));
+
                             updateMachine(machine.id, {
                                 end_date: newEndDate.toISOString(),
                                 renewal_process_id: null,
@@ -222,15 +237,15 @@ async function reconcilePayments() {
                             },
                             {
                                 process_status:
-                                {
-                                    operator: '=',
-                                    value: 'processing'
-                                },
+                                    {
+                                        operator: '=',
+                                        value: 'processing'
+                                    },
                                 process_worker_level:
-                                {
-                                    operator: '<=',
-                                    value: 2
-                                }
+                                    {
+                                        operator: '<=',
+                                        value: 2
+                                    }
                             });
 
                         successfullyProcessedOrders.push({
@@ -245,11 +260,11 @@ async function reconcilePayments() {
                     const prepareData = {
                         order_id: order.order_id,
                         transaction_id: order.TranID,
-                        processed_at: new Date().toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" }),
-                        error_message: (order.failed_remark ? order.failed_remark + ', ' : '') + "Server error during reconciliation: " + (e.message || 'Unknown error'),
+                        processed_at: new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' }),
+                        error_message: (order.failed_remark ? order.failed_remark + ', ' : '') + 'Server error during reconciliation: ' + (e.message || 'Unknown error'),
                         payment_status: PAYMENT_STATUS[orderResult.StatCode] || 'Unknown status code',
                         amount: order.amount
-                    }
+                    };
                     failedToProcessOrders.push(prepareData);
                 }
             }
@@ -273,13 +288,13 @@ async function reconcilePayments() {
             for (const failedOrder of failedToProcessOrders) {
                 try {
                     updateOrder(failedOrder.order_id, {
-                        process_status: 'failed',
-                        failed_remark: failedOrder.error_message,
-                    },
+                            process_status: 'failed',
+                            failed_remark: failedOrder.error_message,
+                        },
                         {
                             process_status: {
                                 operator: 'IN',
-                                value: ['pending', 'processing']
+                                value: [ 'pending', 'processing' ]
                             },
                             process_worker_level: {
                                 operator: '<',
@@ -288,7 +303,7 @@ async function reconcilePayments() {
                         });
                 } catch (e) {
                     const originalMessage = failedOrder.error_message;
-                    const newMessage = originalMessage + `\nFailed to update process_status to failed for this order due to database error: ${e.message || 'Unknown error'}`
+                    const newMessage = originalMessage + `\nFailed to update process_status to failed for this order due to database error: ${e.message || 'Unknown error'}`;
                     failedOrder.error_message = newMessage;
                     failedToUpdateProcessStatus.push(failedOrder);
                     logger.error(`Additionally, failed to update process_status to failed for order ${failedOrder.order_id} after processing error:`, e);
@@ -298,7 +313,7 @@ async function reconcilePayments() {
             // Notify customer service about the orders that failed during reconciliation processing with the corresponding error message for each order, 
             // so that they can follow up with the customers proactively and provide necessary support. This is important to maintain good customer service and address any potential issues that customers might be facing due to the failed orders.
             const emailBody = failedOrdersNotificationTemplate(failedToProcessOrders);
-            await sendEmail(process.env.CS_EMAIL, '|Subscription Renewal| Reconciliation Update Failed Orders', emailBody, 'Failed Reconciliation Orders', [process.env.DEV_EMAIL]);
+            await sendEmail(process.env.CS_EMAIL, '|Subscription Renewal| Reconciliation Update Failed Orders', emailBody, 'Failed Reconciliation Orders', [ process.env.DEV_EMAIL ]);
 
             // Critical: If there are orders that failed to update process_status to failed after reconciliation processing error, we need to send an additional alert email to developer with the list of those orders and the corresponding error message for further investigation and manual handling. This is important to ensure that those orders are not left in an inconsistent state without proper attention.
             if (failedToUpdateProcessStatus.length > 0) {
@@ -308,14 +323,14 @@ async function reconcilePayments() {
         }
 
     } catch (e) {
-        logger.error("Critical error: This is the final catch block for the reconcilePayments function. Error details:", e);
+        logger.error('Critical error: This is the final catch block for the reconcilePayments function. Error details:', e);
     }
 }
 
 
 async function indirectStatusInquiry(orderIds) {
     try {
-        const oIDs = orderIds.join("|");
+        const oIDs = orderIds.join('|');
         const orderBody = {
             domain: process.env.merchantID,
             type: 2,
@@ -342,7 +357,7 @@ async function indirectStatusInquiry(orderIds) {
         return result;
 
     } catch (e) {
-        logger.error("Error performing indirect status inquiry:", e);
+        logger.error('Error performing indirect status inquiry:', e);
         return null;
     }
 }

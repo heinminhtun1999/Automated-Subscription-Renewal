@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS orders (
     paid_on DATETIME,
     amount REAL NOT NULL,
     channel TEXT,
+    payment_type TEXT NOT NULL DEFAULT 'FIUU' CHECK(payment_type IN ('FIUU', 'EXTERNAL/MANUAL')),
     customer_id INTEGER NOT NULL,
     process_status TEXT CHECK (process_status IN ('pending', 'processing', 'completed', 'failed')) NOT NULL DEFAULT 'pending',
     process_worker_level INTEGER DEFAULT 0,

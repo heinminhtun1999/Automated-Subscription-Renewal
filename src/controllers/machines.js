@@ -50,25 +50,24 @@ function prepareMachineData(machine) {
         additionalData[field.name] = jsonData[field.id] || null;
     });
 
-    const data = {
-        "id": machine.id,
-        "Machine ID": machine.machine_id,
-        "Type": machine.machine_type_name,
-        "Company Name": machine.company_name,
-        "PIC Name": machine.pic_name,
-        "Registered Date": formatDate(machine.registered_date),
-        "End Date": formatDate(machine.end_date),
-        "Subscription Fees": "RM " + machine.subscription_fees.toFixed(2),
-        "Subscription Period (Year)": machine.subscription_period,
-        "Status": machine.status,
-        "Allow Renewal After Subscription Expiration": machine.allow_after_expired,
-        "Last Renewal Date": machine.last_renewal_date ? formatDate(machine.last_renewal_date) : 'N/A',
-        "Renewal Count": machine.renewal_count,
-        "type_id": machine.machine_type_id,
-        "customer_id": machine.customer_id,
+    return {
+        'id': machine.id,
+        'Machine ID': machine.machine_id,
+        'Type': machine.machine_type_name,
+        'Company Name': machine.company_name,
+        'PIC Name': machine.pic_name,
+        'Registered Date': formatDate(machine.registered_date),
+        'End Date': formatDate(machine.end_date),
+        'Subscription Fees': 'RM ' + machine.subscription_fees.toFixed(2),
+        'Subscription Period (Year)': machine.subscription_period,
+        'Status': machine.status,
+        'Allow Renewal After Subscription Expiration': machine.allow_after_expired,
+        'Last Renewal Date': machine.last_renewal_date ? formatDate(machine.last_renewal_date) : 'N/A',
+        'Renewal Count': machine.renewal_count,
+        'type_id': machine.machine_type_id,
+        'customer_id': machine.customer_id,
         ...additionalData
-    }
-    return data;
+    };
 }
 
 // To filter machine_type_fields which are not registered in database from data json of machine
@@ -82,16 +81,12 @@ function filterAdditionalFields(machineTypeId, additional_fields) {
         additionalDataObject[fieldId] = additional_fields[fieldId] || null;
     });
 
-    return additionalDataObject
+    return additionalDataObject;
 }
 
-// To prevent setting active status to the expired machines
-function forceCheckActiveStatusBasedOnEndDate(status, endDate, allowRenewAfterExpiration) {
-    const isExpired = (new Date(endDate).getTime() < Date.now()) && !allowRenewAfterExpiration;
-
-    if (isExpired) return 'inactive';
-
-    return status;
+// Convert Date to ISO Date String
+function convertToISODate(date) {
+    return new Date(date).toISOString().split('T')[0];
 }
 
 // =============== Controller functions ===================
@@ -106,7 +101,11 @@ function forceCheckActiveStatusBasedOnEndDate(status, endDate, allowRenewAfterEx
 function renderMachinesPage(req, res) {
     const { message, selected_machine_type } = req.query;
     if (message) {
-        return res.render('admin/machines/index', { success: true, message, selectedMachineType: selected_machine_type });
+        return res.render('admin/machines/index', {
+            success: true,
+            message,
+            selectedMachineType: selected_machine_type
+        });
     }
     return res.render('admin/machines/index', { selectedMachineType: selected_machine_type });
 }
@@ -127,16 +126,16 @@ function getMachinesByType(req, res) {
             delete machine.data;
 
             const formattedObject = {
-                "id": machine.id,
-                "Machine ID": machine.machine_id,
-                "Type": machine.machine_type_name,
-                "Company Name": machine.company_name,
-                "PIC Name": machine.pic_name,
-                "Registered Date": formatDate(machine.registered_date),
-                "End Date": formatDate(machine.end_date),
-                "Subscription Fees": "RM " + machine.subscription_fees.toFixed(2),
-                "Status": machine.status
-            }
+                'id': machine.id,
+                'Machine ID': machine.machine_id,
+                'Type': machine.machine_type_name,
+                'Company Name': machine.company_name,
+                'PIC Name': machine.pic_name,
+                'Registered Date': formatDate(machine.registered_date),
+                'End Date': formatDate(machine.end_date),
+                'Subscription Fees': 'RM ' + machine.subscription_fees.toFixed(2),
+                'Status': machine.status
+            };
 
             const additionalFields = {};
             fields.forEach(field => {
@@ -145,11 +144,15 @@ function getMachinesByType(req, res) {
             });
 
             return { ...formattedObject, ...additionalFields };
-        })
+        });
         return res.status(200).json({ data, success: true });
     } catch (error) {
         logger.error('Error fetching machines for admin panel:', error);
-        return res.status(500).json({ data: [], success: false, message: `Failed to fetch machines. Please try again later. Error: ${error.message}` });
+        return res.status(500).json({
+            data: [],
+            success: false,
+            message: `Failed to fetch machines. Please try again later. Error: ${error.message}`
+        });
     }
 }
 
@@ -173,7 +176,10 @@ function handleViewMachine(req, res) {
         return res.status(200).render('admin/machines/view', { data, error: null, prevURL });
     } catch (error) {
         logger.error('Error fetching machine:', error);
-        return res.status(500).render('admin/machines/view', { data: {}, error: 'Failed to fetch machine. Please try again later.' });
+        return res.status(500).render('admin/machines/view', {
+            data: {},
+            error: 'Failed to fetch machine. Please try again later.'
+        });
     }
 }
 
@@ -186,7 +192,10 @@ function renderAddMachinePage(req, res) {
         return res.render('admin/machines/add', { data: { types, customers }, error: null });
     } catch (e) {
         logger.error('Error rendering add machine page:', e);
-        return res.render('admin/machines/add', { data: null, error: 'Failed to load add machine page. Please try again later.' });
+        return res.render('admin/machines/add', {
+            data: null,
+            error: 'Failed to load add machine page. Please try again later.'
+        });
     }
 }
 
@@ -205,7 +214,7 @@ function handleAddMachine(req, res) {
         additional_fields
     } = req.body;
 
-    const requiredFieldCheck = checkRequiredFields(req.body, ['machine_type_id', 'customer_id', 'end_date', 'subscription_fees', 'machine_id', 'subscription_period']);
+    const requiredFieldCheck = checkRequiredFields(req.body, [ 'machine_type_id', 'customer_id', 'subscription_fees', 'machine_id', 'subscription_period' ]);
     if (!requiredFieldCheck.valid) {
         const missingField = requiredFieldCheck.missingField;
         logger.warn(`Missing ${missingField} in handleAddMachine:`, req.body);
@@ -213,9 +222,12 @@ function handleAddMachine(req, res) {
     }
 
     try {
-        const existingMachine = getMachineByMachineIdOrId(machineId = req.body.machine_id);
+        const existingMachine = getMachineByMachineIdOrId(req.body.machine_id);
         if (existingMachine) {
-            return res.status(400).json({ success: false, message: 'A machine with the same Machine ID already exists. Please choose a different Machine ID.' });
+            return res.status(400).json({
+                success: false,
+                message: 'A machine with the same Machine ID already exists. Please choose a different Machine ID.'
+            });
         }
 
         const existingType = getMachineTypeById(machine_type_id);
@@ -233,50 +245,55 @@ function handleAddMachine(req, res) {
             return res.status(400).json({ success: false, message: 'Subscription period must be a positive integer.' });
         }
 
-
         const additionalDataObject = filterAdditionalFields(machine_type_id, additional_fields);
 
         const isRegisteredDateValid = !registered_date || isNaN(new Date(registered_date).getTime());
-        const registeredDate = isRegisteredDateValid ? new Date() : new Date(registered_date);
-
+        let registeredDate = isRegisteredDateValid ? convertToISODate(new Date()) : convertToISODate(registered_date);
 
         // Validate End Date
-        const today = new Date(Date.now());
-        const parsedEndDate = new Date(end_date);
-        const isEndDateValid = !isNaN(parsedEndDate.getTime()) && (parsedEndDate > today || allow_renew_after_expiration);
-        
+        const today = convertToISODate(new Date());
+
+        const isEndDateValid = !isNaN(new Date(end_date).getTime()); // allow end date to go past today if allow renewal after expiration is enabled.
+
         let calculatedEndDate;
         if (isEndDateValid) {
-            calculatedEndDate = new Date(end_date)
+            calculatedEndDate = convertToISODate(end_date);
         } else {
             const endDate = new Date(registeredDate);
             endDate.setFullYear(
                 endDate.getFullYear() + subscriptionPeriod
             );
-            calculatedEndDate = endDate
+            calculatedEndDate = convertToISODate(endDate);
         }
 
-        const finalStatus = forceCheckActiveStatusBasedOnEndDate(status, calculatedEndDate, allow_renew_after_expiration);
+        // Recheck if the registered date is earlier than the end date. If not, set the registered date to end_date.
+        if (registeredDate > calculatedEndDate) {
+            registeredDate = calculatedEndDate;
+        }
+
+        const finalStatus = calculatedEndDate < today && !allow_renew_after_expiration ? 'inactive' : status;
 
         const dataToInsert = {
             machine_type_id,
             customer_id,
             machine_id,
-            registered_date: registeredDate.toISOString(),
-            end_date: calculatedEndDate.toISOString(),
+            registered_date: registeredDate,
+            end_date: calculatedEndDate,
             subscription_fees,
             subscription_period: subscriptionPeriod,
             status: finalStatus,
             allow_after_expired: allow_renew_after_expiration ? 1 : 0,
             data: JSON.stringify(additionalDataObject)
-        }
+        };
         addMachine(dataToInsert);
         return res.status(200).json({ success: true, message: 'Machine added successfully.' });
     } catch (error) {
         logger.error('Error adding machine:', error);
-        return res.status(500).json({ success: false, message: `Failed to add machine. Please try again later. Error: ${error.message}` });
+        return res.status(500).json({
+            success: false,
+            message: `Failed to add machine. Please try again later. Error: ${error.message}`
+        });
     }
-    return;
 }
 
 // =============== <Editing> ===============
@@ -303,14 +320,16 @@ function renderEditMachinePage(req, res) {
             machine: machineData,
             types,
             customers
-        }
+        };
 
         return res.status(200).render('admin/machines/edit', { data, error: null });
     } catch (error) {
         logger.error('Error fetching machine:', error);
-        return res.status(500).render('admin/machines/edit', { data: {}, error: 'Failed to fetch machine. Please try again later.' });
+        return res.status(500).render('admin/machines/edit', {
+            data: {},
+            error: 'Failed to fetch machine. Please try again later.'
+        });
     }
-    return;
 }
 
 function handleEditMachine(req, res) {
@@ -323,7 +342,7 @@ function handleEditMachine(req, res) {
 
     try {
 
-        const requiredFieldCheck = checkRequiredFields(body, ['machine_type_id', 'customer_id', 'machine_id', 'subscription_fees', 'subscription_period']);
+        const requiredFieldCheck = checkRequiredFields(body, [ 'machine_type_id', 'customer_id', 'machine_id', 'subscription_fees', 'subscription_period' ]);
         if (!requiredFieldCheck.valid) {
             const missingField = requiredFieldCheck.missingField;
             logger.warn(`Missing ${missingField} in handleAddMachine:`, body);
@@ -353,15 +372,21 @@ function handleEditMachine(req, res) {
         const additionalDataObject = filterAdditionalFields(body.machine_type_id, body.additional_fields);
 
         const isEditingRegisteredDateValid = body.registered_date && !isNaN(new Date(body.registered_date).getTime());
-        const registeredDate = isEditingRegisteredDateValid ? new Date(body.registered_date) : new Date(existingMachine.registered_date);
+        let registeredDate = isEditingRegisteredDateValid ? convertToISODate(body.registered_date) : convertToISODate(existingMachine.registered_date);
 
         // Validate End Date. Allow rules
-        const today = new Date(Date.now());
-        const parsedEndDate = new Date(body.end_date);
-        const isEditingEndDateValid = !isNaN(parsedEndDate.getTime()) && (parsedEndDate > today || body.allow_renew_after_expiration);
-        const calculatedEndDate = isEditingEndDateValid ? new Date(body.end_date) : new Date(existingMachine.end_date);
+        const today = convertToISODate(new Date());
 
-        const finalStatus = forceCheckActiveStatusBasedOnEndDate(body.status || existingMachine.status, calculatedEndDate, body.allow_renew_after_expiration);
+        const isEditingEndDateValid = !isNaN(new Date(body.end_date).getTime()); // allow end date to go past today if allow renewal after expiration is enabled.
+        const calculatedEndDate = isEditingEndDateValid ? convertToISODate(body.end_date) : convertToISODate(existingMachine.end_date);
+
+        // Recheck if the registered date is earlier than the end date. If not, set the registered date to end_date.
+        if (registeredDate > calculatedEndDate) {
+            registeredDate = calculatedEndDate;
+        }
+
+        // Force checking the status based on machine expiration and allows renewal after the expiration status
+        const finalStatus = calculatedEndDate < today && !body.allow_renew_after_expiration ? 'inactive' : body.status;
 
         const isCustomerChanged = String(existingMachine.customer_id) !== String(existingCustomer.id);
 
@@ -369,22 +394,25 @@ function handleEditMachine(req, res) {
             machine_type_id: body.machine_type_id,
             customer_id: body.customer_id,
             machine_id: body.machine_id,
-            registered_date: registeredDate.toISOString(),
-            end_date: calculatedEndDate.toISOString(),
+            registered_date: registeredDate,
+            end_date: calculatedEndDate,
             subscription_fees: body.subscription_fees ?? existingMachine.subscription_fees,
             subscription_period: subscriptionPeriod,
             allow_after_expired: body.allow_renew_after_expiration ? 1 : 0,
             status: finalStatus,
             data: JSON.stringify(additionalDataObject),
-            renewal_process_id: isCustomerChanged ? null : finalStatus == 'inactive' ? null : existingMachine.renewal_process_id,
+            renewal_process_id: isCustomerChanged ? null : finalStatus === 'inactive' ? null : existingMachine.renewal_process_id,
             renewal_count: isCustomerChanged ? 0 : existingMachine.renewal_count,
             last_renewal_date: isCustomerChanged ? null : existingMachine.last_renewal_date
-        }
+        };
         updateMachine(id, machineDataToUpdate);
         return res.status(200).json({ success: true, message: 'Machine updated successfully.' });
     } catch (error) {
         logger.error('Error editing machine:', error);
-        return res.status(500).json({ success: false, message: `Failed to edit machine. Please try again later. Error: ${error.message}` });
+        return res.status(500).json({
+            success: false,
+            message: `Failed to edit machine. Please try again later. Error: ${error.message}`
+        });
     }
 }
 
@@ -407,7 +435,10 @@ function handleDeleteMachine(req, res) {
         return res.status(200).json({ success: true, message: 'Machine deleted successfully.' });
     } catch (error) {
         logger.error('Error deleting machine:', error);
-        return res.status(500).json({ success: false, message: `Failed to delete machine. Please try again later. Error: ${error.message}` });
+        return res.status(500).json({
+            success: false,
+            message: `Failed to delete machine. Please try again later. Error: ${error.message}`
+        });
     }
 }
 
@@ -422,7 +453,11 @@ function getAllMachineTypes(req, res) {
         return res.status(200).json({ data, success: true });
     } catch (error) {
         logger.error('Error fetching machine types:', error);
-        return res.status(500).json({ data: [], success: false, message: `Failed to fetch machine types. Please try again later. Error: ${error.message}` });
+        return res.status(500).json({
+            data: [],
+            success: false,
+            message: `Failed to fetch machine types. Please try again later. Error: ${error.message}`
+        });
     }
 }
 
@@ -437,7 +472,11 @@ function handleGetAllMachineTypesWithFields(req, res) {
         return res.status(200).json({ success: true, data, message: 'Machine type with fields fetched successfully.' });
     } catch (error) {
         logger.error('Error fetching machine type with fields:', error);
-        return res.status(500).json({ success: false, data: {}, message: `Failed to fetch machine type with fields. Please try again later. Error: ${error.message}` });
+        return res.status(500).json({
+            success: false,
+            data: {},
+            message: `Failed to fetch machine type with fields. Please try again later. Error: ${error.message}`
+        });
     }
 }
 
@@ -448,7 +487,10 @@ function renderMachineTypesPage(req, res) {
         return res.render('admin/machines/manageTypes', { data, error: null });
     } catch (error) {
         logger.error('Error rendering machine types management page:', error);
-        return res.render('admin/machines/manageTypes', { data: [], error: `Failed to load machine types management page. Please try again later. Error: ${error.message}` });
+        return res.render('admin/machines/manageTypes', {
+            data: [],
+            error: `Failed to load machine types management page. Please try again later. Error: ${error.message}`
+        });
     }
 }
 
@@ -464,7 +506,10 @@ function handleAddMachineType(req, res) {
 
         const existingType = getMachineTypeByName(type_name);
         if (existingType) {
-            return res.status(400).json({ success: false, message: 'A machine type with the same name already exists. Please choose a different name.' });
+            return res.status(400).json({
+                success: false,
+                message: 'A machine type with the same name already exists. Please choose a different name.'
+            });
         }
 
 
@@ -484,7 +529,10 @@ function handleAddMachineType(req, res) {
 
     } catch (error) {
         logger.error('Error adding machine type:', error);
-        return res.status(500).json({ success: false, message: `Failed to add machine type. Please try again later. Error: ${error.message}` });
+        return res.status(500).json({
+            success: false,
+            message: `Failed to add machine type. Please try again later. Error: ${error.message}`
+        });
     }
 }
 
@@ -505,13 +553,16 @@ function handleDeleteMachineType(req, res) {
         }
         db.transaction(() => {
             deleteMachinesByMachineType(id);
-            deleteMachineTypeFieldByMachineType(id)
+            deleteMachineTypeFieldByMachineType(id);
             deleteMachineType(id);
         }).immediate();
         return res.status(200).json({ success: true, message: 'Machine type deleted successfully.' });
     } catch (error) {
         logger.error('Error deleting machine type:', error);
-        return res.status(500).json({ success: false, message: `Failed to delete machine type. Please try again later. Error: ${error.message}` });
+        return res.status(500).json({
+            success: false,
+            message: `Failed to delete machine type. Please try again later. Error: ${error.message}`
+        });
     }
 }
 
@@ -541,7 +592,10 @@ function handleAddMachineTypeField(req, res) {
         return res.status(200).json({ success: true, data, message: 'Machine type field added successfully.' });
     } catch (error) {
         logger.error('Error adding machine type field:', error);
-        return res.status(500).json({ success: false, message: `Failed to add machine type field. Please try again later. Error: ${error.message}` });
+        return res.status(500).json({
+            success: false,
+            message: `Failed to add machine type field. Please try again later. Error: ${error.message}`
+        });
     }
 }
 
@@ -557,7 +611,10 @@ function handleUpdateMachineTypeFields(req, res) {
     const { fields, type_name } = req.body;
 
     if ((!fields || !Array.isArray(fields) || fields.length === 0) && !type_name) {
-        return res.status(400).json({ success: false, message: 'Fields data is required and should be a non-empty array.' });
+        return res.status(400).json({
+            success: false,
+            message: 'Fields data is required and should be a non-empty array.'
+        });
     }
 
     try {
@@ -573,7 +630,10 @@ function handleUpdateMachineTypeFields(req, res) {
             if (fields.length > 0) {
                 for (const field of fields) {
                     const duplicateName = existingFields.some(existingField => existingField.name.toLowerCase() === field.name.toLowerCase() && existingField.field_id !== field.field_id);
-                    updateMachineTypeFields(typeId, { ...field, name: duplicateName ? `${field.name} (Duplicate)` : field.name });
+                    updateMachineTypeFields(typeId, {
+                        ...field,
+                        name: duplicateName ? `${field.name} (Duplicate)` : field.name
+                    });
                 }
             }
         }).immediate(fields);
@@ -583,7 +643,10 @@ function handleUpdateMachineTypeFields(req, res) {
         return res.status(200).json({ success: true, data, message: 'Machine type fields updated successfully.' });
     } catch (error) {
         logger.error('Error updating machine type fields:', error);
-        return res.status(500).json({ success: false, message: `Failed to update machine type fields. Please try again later. Error: ${error.message}` });
+        return res.status(500).json({
+            success: false,
+            message: `Failed to update machine type fields. Please try again later. Error: ${error.message}`
+        });
     }
 
 }
@@ -609,9 +672,9 @@ function handleDeleteMachineTypeField(req, res) {
 
                 machines.forEach(machine => {
                     ids.push(machine.id);
-                    const d = JSON.parse(machine.data)
-                    delete d[fieldId]
-                    dataToUpdate["data"].push([machine.id, JSON.stringify(d)]);
+                    const d = JSON.parse(machine.data);
+                    delete d[fieldId];
+                    dataToUpdate['data'].push([ machine.id, JSON.stringify(d) ]);
                 });
 
                 updateMultipleMachinesByCases(ids, dataToUpdate);
@@ -622,7 +685,10 @@ function handleDeleteMachineTypeField(req, res) {
         return res.status(200).json({ success: true, data, message: 'Machine type field deleted successfully.' });
     } catch (error) {
         logger.error('Error deleting machine type field:', error);
-        return res.status(500).json({ success: false, message: `Failed to delete machine type field. Please try again later. Error: ${error.message}` });
+        return res.status(500).json({
+            success: false,
+            message: `Failed to delete machine type field. Please try again later. Error: ${error.message}`
+        });
     }
 }
 
@@ -643,4 +709,4 @@ module.exports = {
     handleDeleteMachineType,
     renderAddMachinePage,
     handleGetAllMachineTypesWithFields
-}
+};

@@ -25,7 +25,8 @@ function renderAdminOrdersPage(req, res) {
                     process_worker_level: order.process_worker_level,
                     created_at: localizedDateTime(order.created_at),
                     company_name: order.company_name,
-                    machines: [order.machine_id]
+                    payment_type: order.payment_type,
+                    machines: [order.machine_id],
                 }
             }
             return acc;

@@ -10,7 +10,7 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 const { reminderEmailController, manualReminderEmailController } = require('./controllers/reminderEmailController');
 const { machineSelection } = require('./controllers/machineSelection');
 const { requestPayment, paymentReturn, paymentCancel, renderPaymentCheckerPage, paymentCallback } = require('./controllers/payment');
-const { getOrderInfo } = require('./controllers/orders');
+const { getOrderInfo, addManualRenewalRecord } = require('./controllers/orders');
 const { renderHomePage } = require('./controllers/admin');
 const { renderEmailHistoryPage } = require('./controllers/emailsHistory');
 const { renderAdminOrdersPage } = require('./controllers/adminOrders');
@@ -72,7 +72,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production' ? true : false,
+        secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict' // 
     }
 }));
@@ -80,7 +80,7 @@ app.use(session({
 // Route history tracking for back button
 app.use((req, res, next) => {
     //  Initialize history array if it doesn't exist
-    if (!req.session.history) {
+    if (!req?.session.history) {
         req.session.history = [];
     }
 
@@ -124,8 +124,8 @@ app.get('/admin/login', renderLoginPage);
 app.post('/admin/login', limiter, handleAuth);
 
 // Middleware to check if the user is authorized to access admin routes
-app.use('/admin', isAuthenticated);
-app.use('/api', isAuthenticated);
+// app.use('/admin', isAuthenticated);
+// app.use('/api', isAuthenticated);
 
 app.get('/admin', renderHomePage);
 
@@ -158,6 +158,7 @@ app.post('/api/admin/machines/add', verifyOrigin, handleAddMachine);
 app.post('/api/admin/machines/type/add', verifyOrigin, handleAddMachineType);
 app.post('/api/admin/machines/type/:id/fields/add', verifyOrigin, handleAddMachineTypeField);
 app.post('/api/admin/send-email', manualReminderEmailController);
+app.post('/api/admin/add-manual-renewal-record', addManualRenewalRecord);
 
 app.patch('/api/admin/customers/:id/edit', verifyOrigin, handleEditCustomer);
 app.patch('/api/admin/machines/:id/edit', verifyOrigin, handleEditMachine);
@@ -203,7 +204,7 @@ app.get('/admin/back', (req, res) => {
     }
 })
 
-// Disabled OTP implementation for now. Will likely reintroduce in the future.
+// Disabled OTP implementation for now. Will likely reimplement in the future.
 // app.post('/request-otp', verifyOrigin, generateAndStoreOTP);
 
 // app.post('/verify-otp', verifyOrigin, verifyOTP);
@@ -237,3 +238,5 @@ app.use((err, req, res, next) => {
 app.listen(port, () => {
     console.log(`Development Server is running on ${port}: ${process.env.NODE_ENV}`);
 });
+
+console.log(new Date().getHours())

@@ -13,7 +13,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - run: npm ci
@@ -30,7 +30,7 @@ jobs:
       - name: Set Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -73,8 +73,8 @@ jobs:
             export NVM_DIR="\$HOME/.nvm"
             [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
 
-            nvm install 20
-            nvm use 20
+            nvm install 24
+            nvm use 24
 
             echo "=============================="
             echo "USING NODE: \$(node -v)"

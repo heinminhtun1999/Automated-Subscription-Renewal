@@ -20,8 +20,8 @@ function renderEmailHistoryPage(req, res) {
                 payment_status: email.payment_status,
                 process_status: email.process_status,
                 machine_type: email.machine_type_name
-            }
-            
+            };
+
             const isPaid = email.payment_status === 'paid';
 
             if (map.has(email.id)) {
@@ -38,8 +38,8 @@ function renderEmailHistoryPage(req, res) {
                     customer_id: email.customer_id,
                     nodemailer_message_id: email.nodemailer_message_id,
                     company_name: email.company_name,
-                    machines: { "renewed": [], "pendingRenewal": [] }
-                }
+                    machines: { 'renewed': [], 'pendingRenewal': [] }
+                };
                 data['machines'][isPaid ? 'renewed' : 'pendingRenewal'].push(machineData);
                 map.set(email.id, data);
             }
@@ -54,4 +54,4 @@ function renderEmailHistoryPage(req, res) {
 
 module.exports = {
     renderEmailHistoryPage
-}
+};

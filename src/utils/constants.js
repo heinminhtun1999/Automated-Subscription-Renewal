@@ -21,10 +21,6 @@ const SHEET_CONFIGS = [
     { sheetKey: 'arvdn', endDateColumn: 'End Date', renewalEndDateColumn: 'Renewal End Date' }
 ];
 
-// Email Due Dates
-const FIRST_EMAIL_DUE_DAYS = 45;
-const SECOND_EMAIL_DUE_DAYS = 7;
-
 // Payment payload validation and status mapping.
 const PAYMENT_REQUIRED_FIELDS = ['tranID', 'orderid', 'status', 'amount', 'currency', 'paydate', 'skey'];
 const PAYMENT_STATUS = {
@@ -34,6 +30,8 @@ const PAYMENT_STATUS = {
 };
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+const MAX_RENEWAL_ALLOWED_MONTHS = 3;
 
 const DEFAULT_MACHINE_TYPE_MAPPING = [
     {
@@ -106,8 +104,7 @@ module.exports = {
     SHEET_NAMES,
     REVERSED_SHEET_NAMES,
     SHEET_CONFIGS,
-    FIRST_EMAIL_DUE_DAYS,
-    SECOND_EMAIL_DUE_DAYS,
+    MAX_RENEWAL_ALLOWED_MONTHS,
     PAYMENT_STATUS,
     PAYMENT_REQUIRED_FIELDS,
     DEFAULT_MACHINE_TYPE_MAPPING

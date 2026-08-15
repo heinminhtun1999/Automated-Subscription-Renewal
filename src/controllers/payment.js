@@ -1,16 +1,24 @@
-const logger = require("../utils/services/winston");
-const db = require("../db/db");
-const { SHEET_CONFIGS, PAYMENT_STATUS, PAYMENT_REQUIRED_FIELDS } = require("../utils/constants");
-const { uid, getUserMessage } = require("../utils/dataProcessors");
-const { preparePaymentBody } = require("../utils/services/fiuu");
-const { redirectTemplate, customerSubscriptionRenewalSuccessTemplate, subscriptionRenewalSuccessTemplate } = require("../utils/htmlTemplates");
-const { insertOrder, updateOrder, getOrder } = require("../repositories/orderRepository");
-const { getCustomerById } = require("../repositories/customerRepository");
-const { insertOrderItem, getOrderItemsByOrderId } = require("../repositories/orderItemRepository");
-const { getMachinesByIds, updateMachine } = require("../repositories/machineRepository");
-const { getEmailMachineByRenewalProcessIds, updateMultipleEmailMachinesByOrderIdAndMachineIds, updateEmailMachineByMachineIdAndRenewalProcessId } = require("../repositories/emailMachinesRepository");
-const { validateSkey, checkRequiredFields, localizedDateTime } = require("../utils/utils");
-const { sendEmail } = require("../utils/services/nodemailer");
+const logger = require('../utils/services/winston');
+const db = require('../db/db');
+const { PAYMENT_STATUS, PAYMENT_REQUIRED_FIELDS, MAX_RENEWAL_ALLOWED_MONTHS } = require('../utils/constants');
+const { uid, getUserMessage } = require('../utils/dataProcessors');
+const { preparePaymentBody } = require('../utils/services/fiuu');
+const {
+    redirectTemplate,
+    customerSubscriptionRenewalSuccessTemplate,
+    subscriptionRenewalSuccessTemplate
+} = require('../utils/htmlTemplates');
+const { insertOrder, updateOrder, getOrder } = require('../repositories/orderRepository');
+const { getCustomerById } = require('../repositories/customerRepository');
+const { insertOrderItem, getOrderItemsByOrderId } = require('../repositories/orderItemRepository');
+const { getMachinesByIds, updateMachine } = require('../repositories/machineRepository');
+const {
+    getEmailMachineByRenewalProcessIds,
+    updateMultipleEmailMachinesByOrderIdAndMachineIds,
+    updateEmailMachineByMachineIdAndRenewalProcessId
+} = require('../repositories/emailMachinesRepository');
+const { validateSkey, checkRequiredFields, localizedDateTime } = require('../utils/utils');
+const { sendEmail } = require('../utils/services/nodemailer');
 
 // Build payment request, persist order + items, and redirect to gateway.
 async function requestPayment(req, res, next) {
@@ -20,7 +28,7 @@ async function requestPayment(req, res, next) {
     // Checking if the customerID present in the payload
     if (!customerId) {
         const err = new Error('Requested data not found. Please refresh the page and try again.\nIf the issue persists, contact support.');
-        err.title = "Not Found";
+        err.title = 'Not Found';
         err.status = 400;
         return next(err);
     }
@@ -28,7 +36,7 @@ async function requestPayment(req, res, next) {
     const machineIdsFromPayload = JSON.parse(machineIds || []);
     if (machineIdsFromPayload.length === 0) {
         const err = new Error('No machines selected. Please select at least one machine and try again.');
-        err.title = "Bad Request";
+        err.title = 'Bad Request';
         err.status = 400;
         return next(err);
     }
@@ -36,24 +44,24 @@ async function requestPayment(req, res, next) {
     const selectedMachines = getMachinesByIds(machineIdsFromPayload);
     if (selectedMachines.length === 0 || selectedMachines.length !== machineIdsFromPayload.length) {
         const err = new Error('Selected machines not found.\nIf the issue persists, contact support.');
-        err.title = "Not Found";
+        err.title = 'Not Found';
         err.status = 400;
         return next(err);
     }
 
+    // Selected machines validation
+    // Allow only those machines which were sent in the reminder emails.
     const renewalProcessIds = selectedMachines.map(machine => machine.renewal_process_id);
     const emailMachines = getEmailMachineByRenewalProcessIds(renewalProcessIds);
-    const emailMachineRenewalProcessIds = emailMachines.map(em => em.renewal_process_id);
+    // For all machine ids from payload, there must exist at least one email machine record that has the machine id from payload
     const areAllMachineIdsValid = machineIdsFromPayload.every(id => emailMachines.some(emailMachine => emailMachine.machine_id === parseInt(id)));
 
     if (emailMachines.length === 0 || renewalProcessIds.length !== emailMachines.length || !areAllMachineIdsValid) {
-        console.log("This one has error? ")
         const err = new Error('We have encountered an issue while processing your request.\nIf the issue persists, contact support.');
-        err.title = "Server Error";
+        err.title = 'Server Error';
         err.status = 500;
         return next(err);
     }
-
 
     try {
 
@@ -69,7 +77,7 @@ async function requestPayment(req, res, next) {
             contactNumber: customer.contact_number,
             companyName: customer.company_name,
             total: total
-        }
+        };
 
         // Prepare URL for return, callback and cancel urls
         const baseURL = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`;
@@ -80,22 +88,22 @@ async function requestPayment(req, res, next) {
             orderId: paymentBody.orderid,
             customerId: customer.id,
             amount: parseFloat(bodyData.total).toFixed(2),
-        }
+        };
 
-        // Atomically insert order and items.
+        // insert order and items.
         db.transaction(() => {
             insertOrder(orderInfo);
-            for (const machines of selectedMachines) {
+            for (const machine of selectedMachines) {
                 insertOrderItem(
                     orderInfo.orderId,
-                    machines.id
+                    machine.id
                 );
-                const result = updateEmailMachineByMachineIdAndRenewalProcessId(machines.id, machines.renewal_process_id, { order_id: orderInfo.orderId });
+                updateEmailMachineByMachineIdAndRenewalProcessId(machine.id, machine.renewal_process_id, { order_id: orderInfo.orderId });
             }
-        }).immediate(orderInfo, selectedMachines);
+        }).immediate();
 
         // Convert payload to hidden form inputs for gateway POST.
-        const hiddenInputs = Object.entries(paymentBody).map(([key, value]) => {
+        const hiddenInputs = Object.entries(paymentBody).map(([ key, value ]) => {
             return `<input type="hidden" name="${key}" value="${value}">`;
         });
 
@@ -180,7 +188,7 @@ function paymentReturn(req, res, next) {
 
             logger.warn('No order record updated to processing status for payment return. Possible concurrent update or order already processed: ', body.orderid);
             let failedRemark = existingOrder.failed_remark;
-            failedRemark = failedRemark ? "\n" + failedRemark.split(",").filter(m => m.includes("Error Description")).join("").replace("Error Description: ", "Reason: ") : "";
+            failedRemark = failedRemark ? '\n' + failedRemark.split(',').filter(m => m.includes('Error Description')).join('').replace('Error Description: ', 'Reason: ') : '';
 
             return res.render('return', {
                 data: {
@@ -198,17 +206,20 @@ function paymentReturn(req, res, next) {
 
         // ----------- Handle different payment statuses and update order accordingly. -----------
 
-        // Failed payment - mark order as failed with failure remark to prevent retries, and show failure message. 
+        // Failed payment - mark order as failed with failure remark to prevent retries and show a failure message.
         // Process status remains pending as we are waiting for callback to confirm final status; 
-        // if callback is not received within expected timeframe, we have a cron job to mark it as 
+        // if callback is not received within the expected timeframe, we have a cron job to mark it as
         // completed with failed status to prevent indefinite pending state.
-        if (body.status === "11") {
+        if (body.status === '11') {
             updateOrder(existingOrder.order_id, {
                 transaction_id: body.tranID,
                 payment_status: PAYMENT_STATUS[body.status],
                 failed_remark: `Error Code: ${body.error_code}, Error Description: ${body.error_desc}`,
                 channel: body.channel,
-            }, { process_status: { operator: '=', value: 'processing' }, process_worker_level: { operator: '<=', value: 1 } });
+            }, {
+                process_status: { operator: '=', value: 'processing' },
+                process_worker_level: { operator: '<=', value: 1 }
+            });
 
             return res.render('return', {
                 data: {
@@ -223,15 +234,18 @@ function paymentReturn(req, res, next) {
             });
         }
 
-        // Pending payment - show pending message, and waiting for the callback to confirm the final status. 
+        // Pending payment - show a pending message and waiting for the callback to confirm the final status.
         // Setting process_status back to pending to allow the callback handler to get the order entry and update the status.
-        if (body.status === "22") {
+        if (body.status === '22') {
             updateOrder(existingOrder.order_id, {
                 transaction_id: body.tranID,
                 payment_status: PAYMENT_STATUS[body.status],
                 channel: body.channel,
                 process_status: 'pending',
-            }, { process_status: { operator: '=', value: 'processing' }, process_worker_level: { operator: '<=', value: 1 } });
+            }, {
+                process_status: { operator: '=', value: 'processing' },
+                process_worker_level: { operator: '<=', value: 1 }
+            });
 
             return res.render('return', {
                 data: {
@@ -246,8 +260,8 @@ function paymentReturn(req, res, next) {
             });
         }
 
-        // For successful payment, we will show processing status as we are waiting for the callback to update the final status. 
-        // This is to handle the case when user completes payment but does not return to the site or callback is delayed for some reason. 
+        // For successful payment, we will show the processing status as we are waiting for the callback to update the final status.
+        // This is to handle the case when the user completes payment but does not return to the site or callback is delayed for some reason.
         // We will set it to completed in callback once we update the machines.
         updateOrder(existingOrder.order_id, {
             transaction_id: body.tranID,
@@ -255,7 +269,10 @@ function paymentReturn(req, res, next) {
             channel: body.channel,
             paid_on: body.paydate,
             process_status: 'processing',
-        }, { process_status: { operator: '=', value: 'processing' }, process_worker_level: { operator: '<=', value: 1 } });
+        }, {
+            process_status: { operator: '=', value: 'processing' },
+            process_worker_level: { operator: '<=', value: 1 }
+        });
 
         return res.render('return', {
             data: {
@@ -302,7 +319,7 @@ async function paymentCallback(req, res) {
         return res.status(400).send('Invalid data signature.');
     }
 
-    res.status(200).send("RECEIVEDOK");
+    res.status(200).send('RECEIVEDOK');
 
     try {
         body.amount = parseFloat(body.amount).toFixed(2);
@@ -325,7 +342,7 @@ async function paymentCallback(req, res) {
                 {
                     process_status: {
                         operator: 'IN',
-                        value: ['pending', 'processing']
+                        value: [ 'pending', 'processing' ]
                     },
                     process_worker_level: {
                         operator: '<',
@@ -340,7 +357,7 @@ async function paymentCallback(req, res) {
             // ----------- Handle different payment statuses and update order accordingly. -----------
 
             // Failed Payment
-            if (body.status === "11") {
+            if (body.status === '11') {
                 updateOrder(existingOrder.order_id, {
                     transaction_id: body.tranID,
                     payment_status: PAYMENT_STATUS[body.status],
@@ -348,31 +365,45 @@ async function paymentCallback(req, res) {
                     channel: body.channel,
                     process_status: 'failed',
                     paid_on: body.paydate,
-                }, { process_status: { operator: '=', value: 'processing' }, process_worker_level: { operator: '<=', value: 2 } });
+                }, {
+                    process_status: { operator: '=', value: 'processing' },
+                    process_worker_level: { operator: '<=', value: 2 }
+                });
                 return;
             }
 
             // Pending Payment
-            if (body.status === "22") {
+            if (body.status === '22') {
                 updateOrder(existingOrder.order_id, {
                     transaction_id: body.tranID,
                     payment_status: PAYMENT_STATUS[body.status],
                     channel: body.channel,
                     process_status: 'pending',
                     process_worker_level: 0
-                }, { process_status: { operator: '=', value: 'processing' }, process_worker_level: { operator: '<=', value: 2 } });
-                return
+                }, {
+                    process_status: { operator: '=', value: 'processing' },
+                    process_worker_level: { operator: '<=', value: 2 }
+                });
+                return;
             }
 
             // For successful payment,
-            // Update the order record, and update end date for the machines linked to this order, and remove renewal process IDs for future renewals.
+            // Update the order record and update the end date for the machines linked to this order, and remove renewal process IDs for future renewals.
             // Finally, set process_status to completed to mark the order as fully processed.
             const orderItems = getOrderItemsByOrderId(existingOrder.order_id);
             const machineIds = orderItems.map(item => item.machine_id);
             const machines = getMachinesByIds(machineIds);
+
             for (const machine of machines) {
-                const newEndDate = new Date(machine.end_date);
-                newEndDate.setFullYear(newEndDate.getFullYear() + Number(machine.subscription_period))
+
+                // Checking to decide whether the end date should be extended from the end_date from database, or extended from current date
+                // Logic: if the machine has expired beyond allowed max time frame, it will extend from the current date, otherwise use from database
+                const date = new Date();
+                const machineEndDate = new Date(machine.end_date);
+                const todayAndEndDateMonthsDifference = (date.getFullYear() - machineEndDate.getFullYear()) * 12 + date.getMonth() - machineEndDate.getMonth();
+                const newEndDate = todayAndEndDateMonthsDifference > MAX_RENEWAL_ALLOWED_MONTHS ? date : machineEndDate;
+                newEndDate.setFullYear(newEndDate.getFullYear() + Number(machine.subscription_period));
+
                 updateMachine(machine.id, {
                     end_date: newEndDate.toISOString(),
                     renewal_process_id: null,
@@ -396,15 +427,15 @@ async function paymentCallback(req, res) {
                 },
                 {
                     process_status:
-                    {
-                        operator: '=',
-                        value: 'processing'
-                    },
+                        {
+                            operator: '=',
+                            value: 'processing'
+                        },
                     process_worker_level:
-                    {
-                        operator: '<=',
-                        value: 2
-                    }
+                        {
+                            operator: '<=',
+                            value: 2
+                        }
                 });
 
             const updatedMachines = getMachinesByIds(machineIds);
@@ -414,33 +445,31 @@ async function paymentCallback(req, res) {
                 transactionDate: existingOrder.created_at,
                 orderId: existingOrder.order_id,
                 machines: updatedMachines
-            }
+            };
         }).immediate();
 
         // Send the email notification to customer support after the payment and the process is successfully completed
         if (emailPayload) {
             const customerEmailBody = customerSubscriptionRenewalSuccessTemplate(emailPayload);
-            await sendEmail(existingOrder.email, "Subscription Renewal Confirmation", customerEmailBody);
+            await sendEmail(existingOrder.email, 'Subscription Renewal Confirmation', customerEmailBody);
 
 
             const emailBody = subscriptionRenewalSuccessTemplate(emailPayload);
-            await sendEmail(process.env.CS_EMAIL, "Machines Subscription Renewal", emailBody)
+            await sendEmail(process.env.CS_EMAIL, 'Machines Subscription Renewal', emailBody);
         }
     } catch (e) {
-        logger.error('Error processing payment callback:', e, "Order ID:", body.orderid);
-    } finally {
-        return;
-    }
+        logger.error('Error processing payment callback:', e, 'Order ID:', body.orderid);
+    } 
 }
 
 // Render the payment cancel screen.
 function paymentCancel(req, res) {
-    res.render('cancel');
+    return res.render('cancel');
 }
 
 // Render a payment status check page.
 function renderPaymentCheckerPage(req, res) {
-    res.render('status-check', { status: null });
+    return es.render('status-check', { status: null });
 }
 
 module.exports = {
