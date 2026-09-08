@@ -57,7 +57,7 @@ async function requestPayment(req, res, next) {
     const areAllMachineIdsValid = machineIdsFromPayload.every(id => emailMachines.some(emailMachine => emailMachine.machine_id === parseInt(id)));
 
     if (emailMachines.length === 0 || renewalProcessIds.length !== emailMachines.length || !areAllMachineIdsValid) {
-        const err = new Error('We have encountered an issue while processing your request.\nIf the issue persists, contact support.');
+        const err = new Error('Some machines that you have selected are not allowed to renew. \nIf the issue persists, contact support.');
         err.title = 'Server Error';
         err.status = 500;
         return next(err);
@@ -85,17 +85,17 @@ async function requestPayment(req, res, next) {
         const paymentBody = preparePaymentBody(bodyData, baseURL);
 
         const orderInfo = {
-            orderId: paymentBody.orderid,
-            customerId: customer.id,
+            order_id: paymentBody.orderid,
+            customer_id: customer.id,
             amount: parseFloat(bodyData.total).toFixed(2),
         };
-
+        // console.log(orderInfo)
         // insert order and items.
         db.transaction(() => {
             insertOrder(orderInfo);
             for (const machine of selectedMachines) {
                 insertOrderItem(
-                    orderInfo.orderId,
+                    orderInfo.order_id,
                     machine.id
                 );
                 updateEmailMachineByMachineIdAndRenewalProcessId(machine.id, machine.renewal_process_id, { order_id: orderInfo.orderId });

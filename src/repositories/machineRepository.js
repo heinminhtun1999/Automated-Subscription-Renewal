@@ -83,7 +83,7 @@ function getMachineByDaysLeftAndCustomerId(daysLeft, customerId, includeExpired 
     }
 
     if (includeExpired && allowRenewalAfterExpiration) {
-        stmt += ` AND (days_left >= 0 or allow_after_expired = 1)`
+        stmt += ` AND (days_left >= 0 OR allow_after_expired = 1)`
     }
     
     return db.prepare(stmt).all(customerId, daysLeft);
