@@ -537,7 +537,7 @@ This means adding a new category of machine requires no code changes.
 ## 11. Middlewares
 
 ### `isAuthenticated` (`src/middlewares/auth.js`)
-When `NODE_ENV=production`, guards all `/admin/*` routes and `/api/*` routes. It checks `req.session.isAdmin`; if not set, browser requests are redirected to `/admin/login` and the requested URL is saved to `req.session.redirectURL`. In development, these route guards are not mounted.
+Guards all `/admin/*` routes and `/api/*` routes. It checks `req.session.isAdmin`; if not set, browser requests are redirected to `/admin/login` and the requested URL is saved to `req.session.redirectURL`. In development, these route guards are not mounted.
 
 ### `verifyOrigin` (`src/middlewares/originCheck.js`)
 Applied to the payment initiation route and the customer, machine, and machine-type create/update/delete endpoints that explicitly include the middleware. Checks that the `Origin` or `Referer` header matches `PUBLIC_BASE_URL` from `.env`. Rejects requests with no origin headers entirely. This reduces CSRF risk without a full CSRF token implementation.
