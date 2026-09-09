@@ -15,6 +15,8 @@ cron.schedule("0 */12 * * *", reminderEmailRunner, {
 }); // Every 12 hours
 
 // Database Backup Cron
-cron.schedule("0 0 * * *", dbBackup, {
-    timezone: 'Asia/Kuala_Lumpur'
-}); // Every day at 00:00:00 AM
+if (process.env.NODE_ENV === 'production') {
+    cron.schedule("0 0 * * *", dbBackup, {
+        timezone: 'Asia/Kuala_Lumpur'
+    }); // Every day at 00:00:00 AM
+}

@@ -652,8 +652,8 @@ pm2 startup  # Follow the printed command to enable auto-start on reboot
 
 | PM2 Name | Script | Purpose |
 |---|---|---|
-| `asr` (prod) / `asr-dev` (dev) | `src/index.js` | Web server |
-| `asr-crons` (prod) / `asr-dev-crons` (dev) | `src/jobs/worker.js` | Background jobs |
+| `asr` (prod) / `asrd` (dev) | `src/index.js` | Web server |
+| `asrc` (prod) / `asrdc` (dev) | `src/jobs/worker.js` | Background jobs |
 
 ### Useful PM2 commands
 

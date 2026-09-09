@@ -5,7 +5,7 @@ module.exports = {
     apps: [
         {
             // PM2 process definition for the web app.
-            name: isProduction ? 'asr' : 'asr-dev',
+            name: isProduction ? 'asr' : 'asrd',
             cwd: __dirname,
             script: path.join(__dirname, 'src/index.js'),
             env: {
@@ -14,7 +14,7 @@ module.exports = {
         },
         {
             // PM2 process definition for the cron worker.
-            name: isProduction ? 'asr-crons' : 'asr-dev-crons',
+            name: isProduction ? 'asrc' : 'asrdc',
             cwd: __dirname,
             script: path.join(__dirname, 'src/jobs/worker.js'),
             env: {
