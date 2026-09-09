@@ -469,7 +469,7 @@ function paymentCancel(req, res) {
 
 // Render a payment status check page.
 function renderPaymentCheckerPage(req, res) {
-    return es.render('status-check', { status: null });
+    return res.render('status-check', { status: null });
 }
 
 module.exports = {

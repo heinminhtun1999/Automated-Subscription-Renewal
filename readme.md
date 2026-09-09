@@ -1,6 +1,6 @@
 # Automated Subscription Renewal (ASR) — Project Documentation
 
-> Last updated: May 2026  
+> Last updated: September 2026
 > Stack: Node.js, Express, SQLite, EJS, Tailwind CSS
 
 ---
@@ -31,16 +31,18 @@
 
 ## 1. Project Overview
 
-Automated Subscription Renewal is an internal web application built for **AR Vending** to automate the subscription renewal process for vending machines. 
+Automated Subscription Renewal is an internal web application built for **AR Vending** to automate the subscription renewal process for vending machines.
 
 1. The system detects machines nearing their subscription expiry
 2. It sends a reminder email to the customer with a unique renewal link
 3. The customer selects which machines to renew and proceeds to payment
 4. The payment gateway (Fiuu) processes the transaction
-5. On successful payment, machine subscription dates are automatically extended by one year
+5. On successful payment, machine subscription dates are automatically extended by each machine's configured subscription period
 6. A confirmation email is sent to customer service
 
 The system also has a full **admin panel** for managing customers, machines, machine types, orders, and email history.
+
+The public home page is available at `/` and provides an overview of the renewal service with a direct link to the payment status checker at `/status-check`.
 
 ---
 
@@ -68,75 +70,35 @@ The system also has a full **admin panel** for managing customers, machines, mac
 
 ```
 Automated-Subscription-Renewal/
-backups/                            # Local database backups (auto-generated)
-app/
-    ├── .github/
-    │   └── workflows/
-    │       └── deploy.yml          # CI/CD pipeline
-    ├── public/                     # Static assets served directly
-    │   ├── css/                    # Page-specific stylesheets
-    │   ├── js/                     # Client-side JavaScript
-    │   └── images/                 # Logo and icons
-    ├── scripts/                    # One-time utility scripts (not part of app)
-    │   ├── seed-dummy.js           # Seed dummy data for development
-    │   ├── initialize-machine-types.js
-    │   └── update-timestamps.js
-    ├── src/
-    │   ├── controllers/            # Route handlers — business logic lives here
-    │   │   ├── admin.js
-    │   │   ├── adminOrders.js
-    │   │   ├── customers.js
-    │   │   ├── emailsHistory.js
-    │   │   ├── machines.js
-    │   │   ├── machineSelection.js
-    │   │   ├── orders.js
-    │   │   ├── payment.js          # Core payment lifecycle handler
-    │   │   └── reminderEmailController.js
-    │   ├── db/
-    │   │   ├── db.js               # Database initialization and table creation
-    │   │   └── database.db         # SQLite database file
-    │   ├── jobs/                   # Background jobs
-    │   │   ├── worker.js           # Cron scheduler entry point
-    │   │   ├── generalJobsRunner.js
-    │   │   ├── backupDB.js         # Database backup to Backblaze
-    │   │   ├── handleExpiredMachines.js
-    │   │   ├── reconcilePayment.js # Payment reconciliation with Fiuu API
-    │   │   └── runReminderEmail.js
-    │   ├── middlewares/
-    │   │   ├── auth.js             # Admin session guard
-    │   │   └── originCheck.js      # CSRF origin check for mutating endpoints
-    │   ├── repositories/           # Database query functions — all SQL lives here
-    │   │   ├── customerRepository.js
-    │   │   ├── emailMachinesRepository.js
-    │   │   ├── emailsRepository.js
-    │   │   ├── machineRepository.js
-    │   │   ├── machineTypeFieldsRepository.js
-    │   │   ├── machineTypeRepository.js
-    │   │   ├── orderItemRepository.js
-    │   │   └── orderRepository.js
-    │   ├── utils/
-    │   │   ├── constants.js        # Shared constants (payment statuses, etc.)
-    │   │   ├── dataProcessors.js   # Data transformation helpers
-    │   │   ├── htmlTemplates.js    # Email HTML templates
-    │   │   ├── utils.js            # General utilities (JWT, MD5, validation)
-    │   │   └── services/
-    │   │       ├── fiuu.js         # Fiuu payment gateway helper
-    │   │       ├── nodemailer.js   # Email sending service
-    │   │       ├── reminderEmail.js
-    │   │       └── winston.js      # Logger setup
-    │   ├── views/                  # EJS templates
-    │   │   ├── admin/              # Admin panel pages
-    │   │   ├── partials/           # Shared layout components
-    │   │   ├── machines.ejs        # Customer machine selection page
-    │   │   ├── return.ejs          # Post-payment return page
-    │   │   ├── status-check.ejs    # Payment status checker
-    │   │   ├── cancel.ejs          # Payment cancelled page
-    │   │   └── error.ejs           # Error page
-    │   └── index.js                # App entry point — server setup and all routes
-    ├── logs/                       # Winston log output (auto-generated)
-    ├── ecosystem.config.js         # PM2 process configuration
-    ├── package.json
-    └── .env                        # Environment variables 
+├── migrations/                     # Incremental database schema changes
+├── public/                         # Static assets served directly
+│   ├── css/                        # Page-specific stylesheets
+│   │   ├── home.css                # Public landing page styles
+│   │   └── ...
+│   ├── js/                         # Client-side JavaScript
+│   └── images/                     # Logo and icons
+├── scripts/                        # One-time utility scripts (not part of app)
+├── src/
+│   ├── controllers/                # Route handlers and business logic
+│   ├── db/                         # Database initialization
+│   ├── jobs/                       # Background jobs
+│   ├── middlewares/                # Authentication and origin checks
+│   ├── repositories/               # Database query functions
+│   ├── utils/                      # Shared helpers, templates, and services
+│   ├── views/                      # EJS templates
+│   │   ├── admin/                  # Admin panel pages
+│   │   ├── partials/               # Shared layout components
+│   │   ├── home.ejs                # Public landing page
+│   │   ├── machines.ejs            # Customer machine selection page
+│   │   ├── return.ejs              # Post-payment return page
+│   │   ├── status-check.ejs        # Payment status checker
+│   │   ├── cancel.ejs              # Payment cancelled page
+│   │   └── error.ejs               # Error page
+│   └── index.js                    # App entry point and route definitions
+├── logs/                           # Winston log output (auto-generated)
+├── ecosystem.config.js             # PM2 process configuration
+├── package.json
+└── .env                            # Environment variables
 ```
 
 ---
@@ -241,15 +203,19 @@ The actual machines owned by customers.
 | machine_type_id | INTEGER FK | References `machine_types(id)` |
 | customer_id | INTEGER FK | References `customers(id)` ON DELETE CASCADE |
 | machine_id | TEXT UNIQUE | Human-readable machine identifier |
-| subscription_fees | REAL | Annual fee for this machine |
+| subscription_fees | REAL | Configured renewal fee for this machine |
 | registered_date | DATETIME | |
 | end_date | DATETIME | Subscription expiry date |
+| allow_after_expired | BOOLEAN | When `1`, the machine may remain active and be renewed after `end_date`; defaults to `0` |
 | status | TEXT | `active` or `inactive` |
+| subscription_period | INTEGER | Renewal period in years; must be at least 1 |
 | renewal_count | INTEGER | How many times renewed |
 | last_renewal_date | DATETIME | |
 | data | JSON | Dynamic fields from machine_type_fields |
 | renewal_process_id | TEXT | UUID linking machine to active email flow |
 | created_at | DATETIME | |
+
+The `20260806_add_allow_renewafterexpire_to_machines.sql` migration introduced the `allow_after_expired` column. The implemented behavior is renewal eligibility after subscription expiration.
 
 ### `emails`
 Audit log of every email sent by the system.
@@ -371,6 +337,17 @@ prepareAndSendDueDateEmail() in nodemailer.js
 
 **Key design decision:** Each renewal cycle gets a `renewal_process_id` (UUID) generated at first email send. This ID links the machine → email record → order together, making it possible to track a renewal from first reminder through to payment completion.
 
+### 7.1.1 Renewal After Expiration
+
+The `machines.allow_after_expired` flag controls the post-expiration policy. It is exposed to administrators as **Allow Renewal After Subscription Expiration** and defaults to disabled.
+
+- When the flag is disabled and an end date is in the past, the machine is treated as expired and is eventually set to `inactive` by the expiry job. Any existing `renewal_process_id` is cleared so the old reminder cycle cannot be used.
+- When the flag is enabled, the machine may remain `active` after its end date. This does not by itself make the machine payable: the customer must also have a `renewal_process_id` created by the reminder email flow.
+- The customer machine page can display expired machines, but an expired machine is selectable only when both `allow_after_expired = 1` and `renewal_process_id` is present. Otherwise it is shown as disabled and the customer is directed to support.
+- The reminder flow normally targets active machines up to 45 days before expiration, with a second reminder when 7 days or fewer remain. The expired-renewal path therefore depends on the existing reminder record remaining linked to the machine.
+
+The flag is applied when machines are created or edited. If an administrator supplies an end date in the past while the flag is disabled, the controller forces the machine status to `inactive`; with the flag enabled, the submitted status may remain active.
+
 ---
 
 ### 7.2 Payment Flow
@@ -388,6 +365,8 @@ Customer selects machines → POST /payment
     │
     ├── Validate machineIds and customerId
     ├── Verify machines exist in email_machines (must have gone through email flow)
+    ├── The page enables expired selections only when allow_after_expired = 1 and renewal_process_id exists
+    ├── Server-side payment validation requires the machine renewal_process_id to match an email_machines record
     ├── Calculate total amount
     ├── Generate order ID
     ├── DB Transaction (immediate):
@@ -411,7 +390,8 @@ POST /return        POST /callback
               │
               ▼
         On success:
-        ├── Update machine end_date (+1 year)
+        ├── Update machine end_date (+ subscription_period years)
+        ├── If the machine is more than 3 months expired, extend from today; otherwise extend from its stored end_date
         ├── Clear renewal_process_id on machine
         ├── Clear renewal_process_id on email_machines
         ├── Update order: process_status = completed
@@ -419,6 +399,8 @@ POST /return        POST /callback
 ```
 
 **Key design decision — concurrency lock:** Both `/return` and `/callback` can arrive at nearly the same time. The `process_worker_level` column acts as a versioned lock — each handler only updates if the current level is below its own level. This prevents double-processing.
+
+The same end-date calculation is used by the browser return handler, the server callback, payment reconciliation, and manual renewal records. After a successful renewal, the machine is set back to `active`, its renewal count is incremented, the renewal process IDs are cleared, and the completed order is recorded.
 
 ---
 
@@ -458,7 +440,13 @@ All jobs are scheduled in `src/jobs/worker.js` and run in the separate PM2 cron 
 | `backupDatabase` | Daily at midnight | Backs up SQLite DB locally and to Backblaze |
 
 ### `handleExpiredMachines`
-Marks machines as `inactive` if their `end_date` has passed and they have not been renewed. Prevents expired machines from appearing active in the system.
+Runs every 5 minutes and checks active machines whose `end_date` is at least one day in the past.
+
+- For machines with `allow_after_expired = 0`, clears `renewal_process_id`, sets `status` to `inactive`, and includes them in the Customer Support notification email.
+- For machines with `allow_after_expired = 1`, leaves them active and reports them as still eligible for renewal after expiration. The notification is sent at 00:05 and 12:05 in the `Asia/Kuala_Lumpur` timezone.
+- The allowed machines remain active indefinitely unless another flow changes their status; the notification explicitly calls this out for follow-up.
+
+The job does not create a new renewal process for an expired machine. The page uses both the flag and `renewal_process_id` to enable an expired selection, while the payment endpoint independently requires the existing `renewal_process_id` to match an `email_machines` record before creating an order.
 
 ### `reconcilePayment`
 See [7.3 Reconciliation Flow](#73-reconciliation-flow) above.
@@ -474,7 +462,7 @@ See [13. Backup System](#13-backup-system) below.
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/` | Redirects to `/status-check` |
+| GET | `/` | Public AR Vending landing page |
 | GET | `/machines` | Machine selection page (requires valid JWT token) |
 | POST | `/payment` | Initiates payment — requires origin check |
 | POST | `/return` | Fiuu browser redirect after payment |
@@ -504,17 +492,17 @@ See [13. Backup System](#13-backup-system) below.
 | GET | `/admin/orders` | Order history |
 | GET | `/admin/back` | Navigate to previous admin page |
 
-### Admin — API (require authentication + origin check)
+### Admin — API (authentication enabled in production; origin check applied where shown)
 
 | Method | Path | Description |
 |---|---|---|
 | GET | `/api/admin/machines/type/:id` | Get machines by type |
 | GET | `/api/admin/machines/type/:id/fields` | Get type fields |
 | GET | `/api/admin/get-machine-types` | Get all machine types |
-| POST | `/api/admin/customers/add` | Create customer |
-| POST | `/api/admin/machines/add` | Create machine |
-| POST | `/api/admin/machines/type/add` | Create machine type |
-| POST | `/api/admin/machines/type/:id/fields/add` | Add field to type |
+| POST | `/api/admin/customers/add` | Create customer — origin check |
+| POST | `/api/admin/machines/add` | Create machine — origin check |
+| POST | `/api/admin/machines/type/add` | Create machine type — origin check |
+| POST | `/api/admin/machines/type/:id/fields/add` | Add field to type — origin check |
 | PATCH | `/api/admin/customers/:id/edit` | Update customer |
 | PATCH | `/api/admin/machines/:id/edit` | Update machine |
 | PATCH | `/api/admin/machines/type/:typeId/fields` | Update type fields |
@@ -549,10 +537,10 @@ This means adding a new category of machine requires no code changes.
 ## 11. Middlewares
 
 ### `isAuthenticated` (`src/middlewares/auth.js`)
-Guards all `/admin/*` routes. Checks `req.session.isAdmin`. If not set, saves the requested URL to `req.session.redirectURL` and redirects to `/admin/login`. After login, the user is redirected back to their original destination.
+When `NODE_ENV=production`, guards all `/admin/*` routes and `/api/*` routes. It checks `req.session.isAdmin`; if not set, browser requests are redirected to `/admin/login` and the requested URL is saved to `req.session.redirectURL`. In development, these route guards are not mounted.
 
 ### `verifyOrigin` (`src/middlewares/originCheck.js`)
-Applied to all mutating API endpoints (POST, PATCH, DELETE) and the payment initiation route. Checks that the `Origin` or `Referer` header matches `PUBLIC_BASE_URL` from `.env`. Rejects requests with no origin headers entirely. This reduces CSRF risk without a full CSRF token implementation.
+Applied to the payment initiation route and the customer, machine, and machine-type create/update/delete endpoints that explicitly include the middleware. Checks that the `Origin` or `Referer` header matches `PUBLIC_BASE_URL` from `.env`. Rejects requests with no origin headers entirely. This reduces CSRF risk without a full CSRF token implementation.
 
 ---
 
@@ -728,4 +716,4 @@ These exist as a starting point for the customer self-service portal when that w
 
 ---
 
-*This documentation was written based on the codebase as of May 2026. Update it as the project evolves.*
+*This documentation was updated based on the codebase as of September 2026. Update it as the project evolves.*

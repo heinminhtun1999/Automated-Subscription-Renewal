@@ -8,3 +8,4 @@ credentials.json
 logs
 
 src/db/database.db*
+scripts/migration_data.json

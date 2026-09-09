@@ -9,7 +9,13 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 // Import Controllers
 const { reminderEmailController, manualReminderEmailController } = require('./controllers/reminderEmailController');
 const { machineSelection } = require('./controllers/machineSelection');
-const { requestPayment, paymentReturn, paymentCancel, renderPaymentCheckerPage, paymentCallback } = require('./controllers/payment');
+const {
+    requestPayment,
+    paymentReturn,
+    paymentCancel,
+    renderPaymentCheckerPage,
+    paymentCallback
+} = require('./controllers/payment');
 const { getOrderInfo, addManualRenewalRecord } = require('./controllers/orders');
 const { renderHomePage } = require('./controllers/admin');
 const { renderEmailHistoryPage } = require('./controllers/emailsHistory');
@@ -45,7 +51,7 @@ const {
 
 // Import Middlewares
 const verifyOrigin = require('./middlewares/originCheck');
-const isAuthenticated = require("./middlewares/auth");
+const isAuthenticated = require('./middlewares/auth');
 
 // Rate Limiter Setup
 const limiter = rateLimit({
@@ -89,7 +95,7 @@ app.use((req, res, next) => {
     if (!currentUrl.startsWith('/api') &&
         !currentUrl.startsWith('/admin/back') &&
         !currentUrl.startsWith('/static') &&
-        !currentUrl.includes(".") &&
+        !currentUrl.includes('.') &&
         (req.session.history[req.session.history.length - 1] !== currentUrl)) {
         req.session.history.push(currentUrl);
     }
@@ -102,17 +108,17 @@ app.use((req, res, next) => {
 
 
 // ================== Reconciliation in development environment ==================
-if (process.env.NODE_ENV === 'development') {
-    const runCronJobs = require('./jobs/generalJobsRunner');
-    setInterval(() => {
-        runCronJobs();
-    }, 5 * 60 * 1000); // Run every 5 minutes
-}
+// if (process.env.NODE_ENV === 'development') {
+//     const runCronJobs = require('./jobs/generalJobsRunner');
+//     setInterval(() => {
+//         runCronJobs();
+//     }, 5 * 60 * 1000); // Run every 5 minutes
+// }
 // ===============================================================================
 
 app.get('/', (req, res) => {
-    return res.redirect('/status-check');
-})
+    return res.render('home');
+});
 
 
 // ==== Admin Panel Routes ====
@@ -124,8 +130,10 @@ app.get('/admin/login', renderLoginPage);
 app.post('/admin/login', limiter, handleAuth);
 
 // Middleware to check if the user is authorized to access admin routes
-// app.use('/admin', isAuthenticated);
-// app.use('/api', isAuthenticated);
+if (process.env.NODE_ENV === 'production') {
+    app.use('/admin', isAuthenticated);
+    app.use('/api', isAuthenticated);
+}
 
 app.get('/admin', renderHomePage);
 
@@ -202,7 +210,7 @@ app.get('/admin/back', (req, res) => {
     } else {
         return res.redirect('/admin');
     }
-})
+});
 
 // Disabled OTP implementation for now. Will likely reimplement in the future.
 // app.post('/request-otp', verifyOrigin, generateAndStoreOTP);

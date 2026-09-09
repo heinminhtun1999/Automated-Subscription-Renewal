@@ -1,0 +1,64 @@
+<%- include('partials/header', { pageTitle: 'AR Vending | Subscription Renewal', cssFile: '/css/home.css', headContent: '' }) %>
+
+    <main class="home-content">
+        <section class="hero-section" aria-labelledby="home-title">
+            <div class="hero-copy">
+                <p class="eyebrow">AR Vending Solutions</p>
+                <h1 id="home-title">Keep your vending machines moving.</h1>
+                <p class="hero-text">
+                    A simple, reliable way to manage subscription renewals and keep your machines ready for business.
+                </p>
+                <a class="home-button" href="/status-check">
+                    Check payment status
+                    <span aria-hidden="true">&#8594;</span>
+                </a>
+            </div>
+
+            <div class="hero-visual" aria-hidden="true">
+                <div class="visual-glow"></div>
+                <div class="machine-illustration">
+                    <div class="machine-top"></div>
+                    <div class="machine-window">
+                        <span class="machine-light"></span>
+                        <span class="machine-light"></span>
+                        <span class="machine-light"></span>
+                    </div>
+                    <div class="machine-panel">
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class="machine-base"></div>
+                </div>
+                <div class="visual-badge">
+                    <span class="badge-dot"></span>
+                    Payments monitored
+                </div>
+            </div>
+        </section>
+
+        <section class="steps-section" aria-labelledby="steps-title">
+            <div class="section-heading">
+                <p class="eyebrow">A smoother renewal journey</p>
+                <h2 id="steps-title">Everything you need, in one place.</h2>
+            </div>
+            <div class="steps-grid">
+                <article class="step-item">
+                    <span class="step-number">01</span>
+                    <h3>Make your payment</h3>
+                    <p>Complete your subscription renewal through our secure payment flow.</p>
+                </article>
+                <article class="step-item">
+                    <span class="step-number">02</span>
+                    <h3>Keep your order ID</h3>
+                    <p>Your order ID makes it easy to find the latest details whenever you need them.</p>
+                </article>
+                <article class="step-item">
+                    <span class="step-number">03</span>
+                    <h3>Track the progress</h3>
+                    <p>Check payment and processing updates from the status checker.</p>
+                </article>
+            </div>
+        </section>
+    </main>
+
+<%- include('partials/footer') %>
