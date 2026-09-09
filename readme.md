@@ -148,7 +148,7 @@ Run this once in Node.js to generate bcrypt hash:
 
 ```js
 const bcrypt = require('bcrypt');
-bcrypt.hash('password-here', 10).then(console.log);
+bcrypt.hash('password-here', 12).then(console.log);
 ```
 
 Paste the output into `ADMIN_PASSWORD_HASH` in `.env`.

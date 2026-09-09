@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 
 function renderLoginPage(req, res) {
     return res.render('admin/login', {
-        redirectURL: req.session?.redirectURL || '/admin',
+        redirectURL: req.session.redirectURL || '/admin',
         error: req.session.authError || null
     });
 }
@@ -14,13 +14,12 @@ function handleAuth(req, res) {
         req.session.authError = "Password is required.";
         return res.redirect('/admin/login');
     }
-
+    
     bcrypt.compare(password, process.env.ADMIN_PASSWORD_HASH, (err, result) => {
         if (err || !result) {
             req.session.authError = err ? JSON.stringify(err) : 'Incorrect Password';
             return res.redirect('/admin/login');
         }
-
         // regenerate session to avoid fixation
         req.session.regenerate((regenErr) => {
             if (regenErr) {
@@ -31,6 +30,7 @@ function handleAuth(req, res) {
             // clear stored redirect/error
             delete req.session.redirectURL;
             delete req.session.authError;
+            
             return res.redirect(target);
         });
 

@@ -73,6 +73,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.set('trus proxy', 1);
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -130,7 +131,6 @@ app.get('/admin/login', renderLoginPage);
 app.post('/admin/login', limiter, handleAuth);
 
 // Middleware to check if the user is authorized to access admin routes
-
 app.use('/admin', isAuthenticated);
 app.use('/api', isAuthenticated);
 

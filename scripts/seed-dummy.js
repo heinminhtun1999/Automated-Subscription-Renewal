@@ -46,7 +46,7 @@ function seedData(production) {
 
     const dataPath = production ? "./migration_data.json" : "./data.json";
     const data = require(dataPath);
-
+    console.log(dataPath, production)
     try {
         db.transaction(() => {
             for (const row of data) {
@@ -142,7 +142,6 @@ function seedData(production) {
 // seedData();
 
 const myArgs = process.argv.splice(2)
-
 let isProduction = false
 
 if (myArgs[0]?.toLowerCase() === '--production') isProduction = true;
