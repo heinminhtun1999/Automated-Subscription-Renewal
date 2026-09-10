@@ -277,7 +277,8 @@ async function reconcilePayments() {
                 process.env.CS_EMAIL,
                 '|Subscription Renewal| Reconciliation Successful Orders',
                 emailBody,
-                'Successful Reconciliation Orders'
+                'Successful Reconciliation Orders',
+                [process.env.DEV_EMAIL]
             );
         }
 
@@ -315,7 +316,7 @@ async function reconcilePayments() {
             const emailBody = failedOrdersNotificationTemplate(failedToProcessOrders);
             await sendEmail(process.env.CS_EMAIL, '|Subscription Renewal| Reconciliation Update Failed Orders', emailBody, 'Failed Reconciliation Orders', [ process.env.DEV_EMAIL ]);
 
-            // Critical: If there are orders that failed to update process_status to failed after reconciliation processing error, we need to send an additional alert email to developer with the list of those orders and the corresponding error message for further investigation and manual handling. This is important to ensure that those orders are not left in an inconsistent state without proper attention.
+            // Critical: If there are orders that failed to update process_status to failed after reconciliation processing error, we need to send an additional alert email to the developer with the list of those orders and the corresponding error message for further investigation and manual handling. This is important to ensure that those orders are not left in an inconsistent state without proper attention.
             if (failedToUpdateProcessStatus.length > 0) {
                 const additionalEmailBody = developerNotificationTemplate(failedToProcessOrders, failedToUpdateProcessStatus);
                 await sendEmail(process.env.DEV_EMAIL, '|Subscription Renewal| Critical: Failed to Update Process Status', additionalEmailBody, 'Failed Reconciliation Orders - Update Failed');

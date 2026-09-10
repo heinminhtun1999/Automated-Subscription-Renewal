@@ -748,7 +748,7 @@ const reconciliationSuccessTemplate = (orders) => {
                             </tr>
                             <tr>
                                 <td style="padding: 40px;">
-                                    <p style="font-size: 16px;">The following orders were successfully processed during reconciliation.</p>
+                                    <p style="font-size: 16px;">The following orders were successfully processed.</p>
                                     <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px;">
                                         <thead>
                                             <tr>

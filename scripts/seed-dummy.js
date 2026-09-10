@@ -94,7 +94,7 @@ function seedData(production) {
                     return acc;
                 }, {});
 
-                const machineId = String(row["UID"] || row["TERMINAL-ID"] || row["TID"] || row["Machine ID"]).split(".")[0];
+                const machineId = String(row["UID"] || row["TERMINAL-ID"] || row["TID"] || row["YS2 Machine ID"]).split(".")[0];
                 
                 if (!row["Renewal End Date"] && !row["End Date"] && !row["Arv Renewal End Date"]) {
                     console.warn(`No valid end date found for machine ID ${machineId}. Skipping insertion.`);
@@ -123,7 +123,7 @@ function seedData(production) {
                     subscription_period: 1,
                     registered_date: (new Date(row["Register Date"])).toISOString(),
                     end_date: (new Date(actualEndDate)).toISOString(),
-                    status: new Date(actualEndDate) > new Date() ? "active" : "inactive",
+                    status: new Date(actualEndDate) >= new Date() ? "active" : "inactive",
                     renewal_count: 0,
                     last_renewal_date: null,
                     data: JSON.stringify(filteredFieldsData)

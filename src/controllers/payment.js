@@ -455,7 +455,7 @@ async function paymentCallback(req, res) {
 
 
             const emailBody = subscriptionRenewalSuccessTemplate(emailPayload);
-            await sendEmail(process.env.CS_EMAIL, 'Machines Subscription Renewal', emailBody);
+            await sendEmail(process.env.CS_EMAIL, 'Machines Subscription Renewal', emailBody, 'Subscription Renewal', ['yamin@arvending.com.my']);
         }
     } catch (e) {
         logger.error('Error processing payment callback:', e, 'Order ID:', body.orderid);
