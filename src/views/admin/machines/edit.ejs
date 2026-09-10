@@ -3,7 +3,7 @@
 
 <% if (typeof data !== 'undefined' && typeof data?.machine !== 'undefined') { %>
     <script>
-        window.data = "<%= JSON.stringify(data) %>";
+        window.data = <%- JSON.stringify(data) %>;
     </script>
 
     <%

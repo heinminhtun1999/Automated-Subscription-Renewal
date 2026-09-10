@@ -14,9 +14,6 @@ const subscrptionPeriodInput = document.getElementById('subscription-period');
 const allowRenewBtn = document.getElementById('allow-renew-after-expiration-checkbox');
 const machineStatusErrorSpan = document.querySelector(`[data-error-for="machine-status"]`);
 
-function formatData(data) {
-    return JSON.parse(data.replace(/&#34;/g, '"').replace(/&#39;/g, '\''));
-}
 
 function formatDateInputValue(date) {
     if (!date) {
@@ -89,7 +86,7 @@ async function fetchMachineTypeFields(typeId) {
 }
 
 if (window.data) {
-    const data = formatData(window.data);
+    const data = window.data;
     const machine = data.machine;
     const customerData = data.customers || [];
 
