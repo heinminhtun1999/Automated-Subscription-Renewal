@@ -134,6 +134,7 @@ function getMachinesByType(req, res) {
                 'Registered Date': formatDate(machine.registered_date),
                 'End Date': formatDate(machine.end_date),
                 'Subscription Fees': 'RM ' + machine.subscription_fees.toFixed(2),
+                'Subscription Period (Year)': machine.subscription_period,
                 'Status': machine.status
             };
 

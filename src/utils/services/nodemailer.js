@@ -58,7 +58,7 @@ async function prepareAndSendDueDateEmail(combinedData) {
     const failedEmails = [];
 
     // Using company name because data is grouped by company name which 
-    // will be used in the email body and later will be render in the machines selection page. 
+    // will be used in the email body and later will be rendered in the machine selection page.
     for (const companyName in combinedData) {
 
         const companyData = combinedData[companyName];
@@ -69,7 +69,7 @@ async function prepareAndSendDueDateEmail(combinedData) {
 
         try {
 
-            // Generate the URL for the terminals selection list for subscription renewal.
+            // Generate the URL for the terminal selection list for subscription renewal.
             const body = {
                 customer_id: companyData[0].customer_id
             }
