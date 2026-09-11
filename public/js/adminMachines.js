@@ -15,7 +15,7 @@ const options = {
                 //         td.innerHTML = cellData + ' <strong>(Expired)</strong>';
                 //     }
                 // }
-                if (col == 8 && cellData) {
+                if (col == 9 && cellData) {
                     td.innerHTML = cellData === 'active'
                         ? `<span class=" text-emerald-500 !block !ml-auto text-center">${cellData}</span>`
                         : `<span class=" text-red-500 !block !ml-auto text-center ">${cellData}</span>`;
